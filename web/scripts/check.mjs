@@ -81,7 +81,12 @@ const chrome = spawn(process.env.CHROME || "/Applications/Google Chrome.app/Cont
   `--user-data-dir=${profile}`, "--window-size=1280,720", "--autoplay-policy=no-user-gesture-required", "about:blank",
 ], { stdio: "ignore" });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const quit = (code) => { chrome.kill(); fs.rmSync(profile, { recursive: true, force: true }); process.exit(code); };
+// Wait for Chrome to exit before removing its profile (it keeps writing to it while shutting down).
+const quit = (code) => {
+  chrome.once("exit", () => { fs.rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); process.exit(code); });
+  chrome.kill();
+  setTimeout(() => process.exit(code), 5000);
+};
 
 let tabs;
 for (let i = 0; i < 50 && !tabs; i++) { await sleep(200); tabs = await fetch(`http://127.0.0.1:${port}/json`).then((r) => r.json()).catch(() => null); }
