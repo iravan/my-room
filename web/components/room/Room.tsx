@@ -17,7 +17,8 @@ function BackWall() {
   const cx = (OPENING.x0 + OPENING.x1) / 2 + dx, cy = (OPENING.y0 + OPENING.y1) / 2 + dy;
   const hw = ((OPENING.x1 - OPENING.x0) / 2) * k, hh = ((OPENING.y1 - OPENING.y0) / 2) * k;
   const x0 = cx - hw, x1 = cx + hw, y0 = cy - hh, y1 = cy + hh, X0 = -size.w / 2, X1 = size.w / 2, Y0 = -0.05, Y1 = size.h - 0.05;
-  const pieces: [number, number, number, number][] = [[X0, Y0, x0, Y1], [x1, Y0, X1, Y1], [x0, Y0, x1, y0], [x0, y1, x1, Y1]];
+  const noWindow = useLayout((s) => s.hidden.includes("window")); // hidden window: the wall is solid
+  const pieces: [number, number, number, number][] = noWindow ? [[X0, Y0, X1, Y1]] : [[X0, Y0, x0, Y1], [x1, Y0, X1, Y1], [x0, Y0, x1, y0], [x0, y1, x1, Y1]];
   return (
     <>
       {pieces.map(([a, b, c, d]) => {

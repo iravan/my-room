@@ -98,4 +98,16 @@ describe("layout", () => {
     expect(normalizeRoom({ style: "<script>" }).style).toBe("cyber");
     expect(normalizeRoom({}).style).toBe("cyber");
   });
+
+  it("hides and shows items: ids only, undoable, deselects what it hides", () => {
+    expect(normalizeRoom({ hidden: ["rug", "rug", "../x", 5, "desk"] }).hidden).toEqual(["desk", "rug"]);
+    useLayout.setState({ hidden: [], selected: "bed", past: [] });
+    useLayout.getState().setHidden("bed", true);
+    expect(useLayout.getState()).toMatchObject({ hidden: ["bed"], selected: null });
+    useLayout.getState().setHidden("rug", true);
+    useLayout.getState().undo();
+    expect(useLayout.getState().hidden).toEqual(["bed"]);
+    useLayout.getState().showAll();
+    expect(useLayout.getState().hidden).toEqual([]);
+  });
 });

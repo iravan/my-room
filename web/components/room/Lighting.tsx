@@ -144,17 +144,21 @@ export function Lighting() {
       </RoomItem>
 
       {/* Neon cove along the ceiling: magenta left/back, cyan right/front. */}
+      <RoomItem id="neon-cove" home={HOMES["neon-cove"]}>
       <Neon position={[0, size.h - 0.12, -size.d / 2 + 0.03]} size={[size.w - 0.1, 0.03, 0.03]} color={MAGENTA} />
       <Neon position={[-size.w / 2 + 0.03, size.h - 0.12, 0]} size={[0.03, 0.03, size.d - 0.1]} color={MAGENTA} />
       <Neon position={[0, size.h - 0.12, size.d / 2 - 0.03]} size={[size.w - 0.1, 0.03, 0.03]} color={CYAN} />
       <Neon position={[size.w / 2 - 0.03, size.h - 0.12, 0]} size={[0.03, 0.03, size.d - 0.1]} color={CYAN} />
+      </RoomItem>
       {/* Rug: glowing synthwave grid, or a woven rug */}
+      <RoomItem id="rug" home={HOMES.rug}>
       <mesh position={[0, 0.005, -0.2]} receiveShadow>
         <boxGeometry args={[1.8, 0.01, 1.3]} />
         {style.rug.kind === "grid"
           ? <meshBasicMaterial map={rug} color={[1.6, 1.6, 1.6]} toneMapped={false} />
           : <meshStandardMaterial map={rug} roughness={1} />}
       </mesh>
+      </RoomItem>
 
       <NightLamp />
       <Reflections />

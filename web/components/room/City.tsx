@@ -145,11 +145,13 @@ function views(kind: "city" | "country" | "sea", pines: boolean) {
 }
 
 function Outside() {
+  const noWindow = useLayout((s) => s.hidden.includes("window"));
   const preset = useGame((s) => s.preset), shift = useLayout((s) => 2 - s.size.d / 2); // the city stays behind the back wall as the room's depth changes
   const style = useStyle(), tint = style.presets[preset % 3].window;
   const kind = style.outside, pines = style.name === "Scandinavian";
   // Views are painted once per kind and kept: switching styles back and forth costs nothing the second time.
   const { skyMap, layers, ground } = useMemo(() => views(kind, pines), [kind, pines]);
+  if (noWindow) return null;
   return (
     <group position={[0, 0, shift]}>
       <mesh position={[-0.3, EYE, WALL]}>

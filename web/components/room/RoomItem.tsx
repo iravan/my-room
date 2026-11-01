@@ -69,6 +69,7 @@ const noRaycast = () => {};
 
 export function RoomItem({ id, home, children, shellModel }: { id: string; home: Home; children: ReactNode; shellModel?: boolean }) {
   const pose = useLayout((s) => s.items[id]), editing = useLayout((s) => s.editing), size = useLayout((s) => s.size);
+  const hidden = useLayout((s) => s.hidden.includes(id));
   const { camera, gl, scene } = useThree();
   const yaw = home.rotationY ?? 0;
   useEffect(() => { if (!shellModel) liveHomes.set(id, home); }, [id, home, shellModel]);
@@ -101,6 +102,7 @@ export function RoomItem({ id, home, children, shellModel }: { id: string; home:
     };
     if (ref.current) walk(ref.current, !!shellModel);
   });
+  if (hidden) return null; // hidden: nothing drawn, lit, clickable or casting shadows
   return (
     <group
       ref={ref}

@@ -66,6 +66,10 @@ export const HOMES: Record<string, Home> = {
   "poster-desk": { position: [-1.975, 2.1, 1.35] },
   "poster-1": { position: [1.995, 1.65, 1.05] },
   "poster-2": { position: [1.995, 1.55, 0.3] },
+  rug: { position: [0, 0, -0.2] },
+  "neon-cove": { position: [0, 2.68, 0] },
+  "ceiling-light": { position: [0, 2.685, 0.2] },
+  "smoke-detector": { position: [0.9, 2.69, -0.6] },
 };
 
 // Wall fixtures slide along their wall: the coordinate across the wall and the facing stay as at home.
@@ -148,7 +152,13 @@ export function normalizeShells(raw: unknown): Shells {
   return out;
 }
 
-export type RoomData = { style: StyleId; size: RoomSize; items: Layout; options: Options; models: Models; shells: Shells };
+// Hidden items (any item id, built-in or uploaded).
+export function normalizeHidden(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.filter((id): id is string => typeof id === "string" && /^[\w-]{1,64}$/.test(id)))].slice(0, 500).sort();
+}
+
+export type RoomData = { hidden: string[]; style: StyleId; size: RoomSize; items: Layout; options: Options; models: Models; shells: Shells };
 // Untrusted room layout (a share file): every part cleaned; model files optionally renamed (visit: prefix).
 export function normalizeRoom(raw: unknown, assetPrefix = ""): RoomData {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
@@ -156,10 +166,13 @@ export function normalizeRoom(raw: unknown, assetPrefix = ""): RoomData {
   const shells = normalizeShells(r.shells);
   for (const m of [...Object.values(models), ...Object.values(shells)]) m.asset = assetPrefix + m.asset.replace(/^visit:/, "");
   const size = normalizeSize(r.size), style = (typeof r.style === "string" && r.style in STYLES ? r.style : "cyber") as StyleId;
-  return { style, size, items: normalizeLayout(r.items, size), options: normalizeOptions(r.options), models, shells };
+  return { hidden: normalizeHidden(r.hidden), style, size, items: normalizeLayout(r.items, size), options: normalizeOptions(r.options), models, shells };
 }
 
 type State = {
+  hidden: string[];
+  setHidden: (id: string, hide: boolean) => void;
+  showAll: () => void;
   style: StyleId;
   setStyle: (style: StyleId) => void;
   size: RoomSize;
@@ -187,6 +200,12 @@ type State = {
 export const useLayout = create<State>()(
   persist(
     (set, get) => ({
+      hidden: [],
+      setHidden: (id, hide) => {
+        get().snapshot();
+        set((s) => ({ hidden: normalizeHidden(hide ? [...s.hidden, id] : s.hidden.filter((h) => h !== id)), selected: hide && s.selected === id ? null : s.selected }));
+      },
+      showAll: () => { get().snapshot(); set({ hidden: [] }); },
       style: "cyber",
       setStyle: (style) => { get().snapshot(); set({ style }); },
       size: DEFAULT_SIZE,
@@ -236,11 +255,11 @@ export const useLayout = create<State>()(
           return { models, items, options, selected: s.selected === id ? null : s.selected };
         });
       },
-      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), { style: s.style, size: s.size, items: s.items, options: s.options, models: s.models, shells: s.shells }] })),
+      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), { hidden: s.hidden, style: s.style, size: s.size, items: s.items, options: s.options, models: s.models, shells: s.shells }] })),
       undo: () => set((s) => (s.past.length ? { ...s.past[s.past.length - 1], past: s.past.slice(0, -1) } : {})),
     }),
     {
-      name: "my-room-layout", version: 1, storage, partialize: ({ style, size, items, options, models, shells }) => ({ style, size, items, options, models, shells }),
+      name: "my-room-layout", version: 1, storage, partialize: ({ hidden, style, size, items, options, models, shells }) => ({ hidden, style, size, items, options, models, shells }),
       merge: (saved, cur) => ({ ...cur, ...normalizeRoom(saved) }),
     },
   ),

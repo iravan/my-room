@@ -16,6 +16,8 @@ import { FINISHES, finishLabel, finishType, VARIANTS } from "@/lib/options";
 const NAMES: Record<string, string> = {
   "socket-desk": "Socket (desk)", "socket-window": "Socket (window)", "socket-right": "Socket (right wall)", switch: "Light switch",
   frames: "Framed records", "wall-shelf": "Wall shelf", "poster-desk": "Poster (desk)", "poster-1": "Poster", "poster-2": "Poster (small)",
+  cabinet: "Record cabinet (+ turntable)", crate: "Record crate", "neon-cove": "Ceiling neon", "ceiling-light": "Ceiling light",
+  "smoke-detector": "Smoke detector", bed: "Bed (+ laptop, phone)", nightstand: "Nightstand (+ lamp)", desk: "Desk (+ PC, monitor)",
 };
 const nameOf = (id: string) => useLayout.getState().models[id]?.name ?? NAMES[id] ?? id[0].toUpperCase() + id.slice(1);
 const STEP = Math.PI / 12; // 15°
@@ -43,6 +45,7 @@ function useEditKeys() {
       else if (e.key === "r" || e.key === "R") rotate(e.shiftKey ? -STEP : STEP);
       else if (e.key === "=" || e.key === "+") resize(1.1);
       else if (e.key === "-") resize(1 / 1.1);
+      else if ((e.key === "Delete" || e.key === "Backspace") && L.selected) { e.preventDefault(); L.setHidden(L.selected, true); }
       else if (e.key === "Escape") { if (L.selected) useLayout.setState({ selected: null }); else exitEdit(); }
     };
     window.addEventListener("keydown", key);
@@ -103,6 +106,30 @@ function BudgetMeter() {
         </div>
       ))}
     </div>
+  );
+}
+
+// Every item in the room with a show/hide toggle (hidden items can't be clicked, so this is how they come back).
+function ItemList() {
+  const hidden = useLayout((s) => s.hidden), models = useLayout((s) => s.models);
+  const ids = [...new Set([...liveHomes.keys(), ...Object.keys(models)])].filter((id) => !id.startsWith("model-") || models[id])
+    .sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+  return (
+    <details className="text-xs">
+      <summary className="cursor-pointer font-bold text-cyan-300">Items ({ids.length - hidden.filter((h) => ids.includes(h)).length} of {ids.length} shown)</summary>
+      <div className="mt-1 max-h-48 space-y-0.5 overflow-y-auto pr-1">
+        {ids.map((id) => {
+          const off = hidden.includes(id);
+          return (
+            <label key={id} className={`flex cursor-pointer items-center justify-between gap-2 rounded px-1 py-0.5 hover:bg-white/5 ${off ? "text-zinc-500" : "text-zinc-200"}`}>
+              <span className="truncate">{nameOf(id)}</span>
+              <input type="checkbox" aria-label={`Show ${nameOf(id)}`} checked={!off} onChange={(e) => useLayout.getState().setHidden(id, !e.target.checked)} />
+            </label>
+          );
+        })}
+      </div>
+      {hidden.length > 0 && <Button size="xs" variant="outline" className="mt-1" onClick={() => useLayout.getState().showAll()}>Show all</Button>}
+    </details>
   );
 }
 
@@ -198,7 +225,10 @@ export function EditPanel() {
             <Button size="sm" variant="secondary" onClick={() => resize(1 / 1.1)}>Smaller [−]</Button>
             <Button size="sm" variant="secondary" onClick={() => resize(1.1)}>Bigger [+]</Button>
           </div>
-          <Button size="sm" variant="outline" disabled={!moved} onClick={() => useLayout.getState().reset(selected)}>Put back where it was</Button>
+          <div className="grid grid-cols-2 gap-1">
+            <Button size="sm" variant="outline" disabled={!moved} onClick={() => useLayout.getState().reset(selected)}>Put back</Button>
+            <Button size="sm" variant="outline" onClick={() => useLayout.getState().setHidden(selected, true)}>Hide [Del]</Button>
+          </div>
           <Options id={selected} />
           {isModel && <Button size="sm" variant="destructive" onClick={() => useLayout.getState().removeModel(selected)}>Remove model</Button>}
           {!isModel && (shell ? (
@@ -216,6 +246,7 @@ export function EditPanel() {
             onChange={(e) => { replaceLook(e.target.files?.[0]); e.target.value = ""; }} />
         </>
       )}
+      {!selected && <ItemList />}
       {!selected && <StylePicker />}
       {!selected && <RoomSizeControls />}
       <Button size="sm" variant="secondary" onClick={() => file.current?.click()}>+ Add a 3D model (.glb)</Button>

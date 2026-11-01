@@ -165,6 +165,7 @@ function Blob({ p, size }: { p: U3; size: [number, number] }) {
 // A cable through Unity world points, Catmull-Rom smoothed (6 steps per span, as in Unity), never below the floor.
 function Cable({ c, width, pts, owners }: { c: THREE.Color; width: number; pts: U3[]; owners?: string[] }) {
   const items = useLayout((s) => s.items), size = useLayout((s) => s.size);
+  const gone = useLayout((s) => !!owners && s.hidden.includes(owners[0])); // the device it belongs to is hidden
   const key = (owners?.map((o) => JSON.stringify(items[o] ?? null)).join("|") ?? "") + JSON.stringify(size);
   const geometry = useMemo(() => {
     const P = pts.map((q, i) => (owners ? placePoint(owners[i], flip(q), items, undefined, size) : new THREE.Vector3(...flip(q)))), out: THREE.Vector3[] = [];
@@ -183,6 +184,7 @@ function Cable({ c, width, pts, owners }: { c: THREE.Color; width: number; pts: 
     return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(out), out.length * 3, width / 2, 6);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` captures the owners' poses
   }, [pts, width, key]);
+  if (gone) return null;
   return (
     <mesh geometry={geometry} receiveShadow>
       <meshStandardMaterial color={c} roughness={0.5} />
@@ -287,9 +289,13 @@ function RoomBasics() {
         </G></RoomItem>
       ))}
       {/* Ceiling: flush light, off at night (faint white dish); smoke detector with its red LED */}
-      <Plastic t="cylinder" p={[0, h - 0.115, 0.2]} s={[0.36, 0.015, 0.36]} c={C(0.75, 0.75, 0.78)} emissive={C(0.06, 0.055, 0.07)} />
-      <Plastic t="cylinder" p={[0.9, h - 0.11, -0.6]} s={[0.11, 0.01, 0.11]} c={white} />
-      <Prim t="sphere" p={[0.93, h - 0.122, -0.6]} s={[0.008, 0.008, 0.008]} glow={C(2, 0.1, 0.1)} />
+      <RoomItem id="ceiling-light" home={HOMES["ceiling-light"]}>
+        <Plastic t="cylinder" p={[0, h - 0.115, 0.2]} s={[0.36, 0.015, 0.36]} c={C(0.75, 0.75, 0.78)} emissive={C(0.06, 0.055, 0.07)} />
+      </RoomItem>
+      <RoomItem id="smoke-detector" home={HOMES["smoke-detector"]}>
+        <Plastic t="cylinder" p={[0.9, h - 0.11, -0.6]} s={[0.11, 0.01, 0.11]} c={white} />
+        <Prim t="sphere" p={[0.93, h - 0.122, -0.6]} s={[0.008, 0.008, 0.008]} glow={C(2, 0.1, 0.1)} />
+      </RoomItem>
       {/* Contact shadows under the core furniture: bed, nightstand, cabinet, crate */}
       <RoomItem id="bed" home={HOMES.bed}><BedBlob /></RoomItem>
       <RoomItem id="nightstand" home={HOMES.nightstand}><Blob p={[-1.7, 0, -0.45]} size={[0.6, 0.55]} /></RoomItem>
