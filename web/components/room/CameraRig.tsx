@@ -9,7 +9,7 @@ import { playAlbum, togglePlay, useCollection } from "@/lib/collection";
 import { SHOTS } from "@/lib/layout";
 import { HOMES, itemMatrix, poseOf, useLayout } from "@/lib/room";
 
-const SHOT_ITEM = { turntable: "cabinet", shelf: "cabinet", crate: "crate" } as const;
+const SHOT_ITEM = { turntable: "turntable", shelf: "cabinet", crate: "crate" } as const;
 const shotMat = new THREE.Matrix4(), shotAt = new THREE.Vector3();
 
 const DEG = Math.PI / 180;

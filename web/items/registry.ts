@@ -13,6 +13,7 @@ import pc from "./pc/item";
 import bin from "./bin/item";
 import chair from "./chair/item";
 import cabinet from "./cabinet/item";
+import turntable from "./turntable/item";
 import crate from "./crate/item";
 import window from "./window/item";
 import door from "./door/item";
@@ -48,6 +49,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
     bin,
     chair,
     cabinet,
+    turntable,
     crate,
     window,
     door,
