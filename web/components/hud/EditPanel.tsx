@@ -6,7 +6,8 @@ import { addModelFile, importModelFile } from "@/lib/models";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_SIZE, liveHomes, ON_WALL, poseOf, SIZE_RANGE, useLayout, type Pose, type RoomSize } from "@/lib/room";
 import { Slider } from "@/components/ui/slider";
-import { STYLE_IDS, STYLES, styleOf } from "@/lib/styles";
+import { DEFAULT_STYLE, STYLE_IDS, STYLES } from "@/lib/styles";
+import { finishDefaults } from "@/lib/config";
 import { typing, useGame } from "@/lib/store";
 import { Panel } from "./Panel";
 import { ITEMS } from "@/items/registry";
@@ -50,7 +51,7 @@ function useEditKeys() {
 
 // Colour/material per part the item has, and its variants (e.g. bed size).
 function Options({ id }: { id: string }) {
-  const slots = useLayout((s) => s.slots), opts = useLayout((s) => s.options[id]) ?? {}, def = styleOf(useLayout((s) => s.style)).finishes;
+  const slots = useLayout((s) => s.slots), opts = useLayout((s) => s.options[id]) ?? {}, def = finishDefaults(useLayout((s) => s.style), id);
   const variants = VARIANTS[id] ?? {};
   const set = (k: string, v: string) => useLayout.getState().setOption(id, k, v);
   return (
@@ -249,7 +250,7 @@ export function EditPanel() {
         onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ""; }} />
       <div className="grid grid-cols-2 gap-1">
         <Button size="sm" variant="outline" disabled={!canUndo} onClick={() => useLayout.getState().undo()}>Undo [⌘Z]</Button>
-        <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {}, options: {}, size: DEFAULT_SIZE, style: "cyber" }); }}>Reset room</Button>
+        <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {}, options: {}, size: DEFAULT_SIZE, style: DEFAULT_STYLE }); }}>Reset room</Button>
       </div>
       <BudgetMeter />
       <Button size="sm" onClick={exitEdit}>Done [Esc]</Button>

@@ -4,7 +4,7 @@ import * as THREE from "three";
 import type { Vec3 } from "./store";
 import { ITEMS } from "@/items/registry";
 import { normalizeOptions, type Options } from "./options";
-import { STYLES, styleOf, type Style, type StyleId } from "./styles";
+import { DEFAULT_STYLE, STYLES, styleOf, type Style, type StyleId } from "./styles";
 
 // The room as data. Every item renders through <RoomItem id home>: its children are modelled in place at `home`
 // (the default room), and a saved pose moves the whole item rigidly about that home point. Only moved items are
@@ -143,7 +143,7 @@ export function normalizeRoom(raw: unknown, assetPrefix = ""): RoomData {
   const models = normalizeModels(r.models);
   const shells = normalizeShells(r.shells);
   for (const m of [...Object.values(models), ...Object.values(shells)]) m.asset = assetPrefix + m.asset.replace(/^visit:/, "");
-  const size = normalizeSize(r.size), style = (typeof r.style === "string" && r.style in STYLES ? r.style : "cyber") as StyleId;
+  const size = normalizeSize(r.size), style = (typeof r.style === "string" && r.style in STYLES ? r.style : DEFAULT_STYLE) as StyleId;
   return { hidden: normalizeHidden(r.hidden), style, size, items: normalizeLayout(r.items, size), options: normalizeOptions(r.options), models, shells };
 }
 
@@ -184,7 +184,7 @@ export const useLayout = create<State>()(
         set((s) => ({ hidden: normalizeHidden(hide ? [...s.hidden, id] : s.hidden.filter((h) => h !== id)), selected: hide && s.selected === id ? null : s.selected }));
       },
       showAll: () => { get().snapshot(); set({ hidden: [] }); },
-      style: "cyber",
+      style: DEFAULT_STYLE,
       setStyle: (style) => { get().snapshot(); set({ style }); },
       size: DEFAULT_SIZE,
       // Resize: moved items standing against a wall go with it; everything is then kept inside the new room.

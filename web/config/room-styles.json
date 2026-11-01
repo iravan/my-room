@@ -1,13 +1,279 @@
 {
   "default": "cyber",
   "styles": {
-    "cyber": { "items": { "rug": { "variant": "neon-grid" } } },
-    "countryside": { "items": {} },
-    "vintage": { "items": {} },
-    "scandinavian": { "items": {} },
-    "industrial": { "items": {} },
-    "japandi": { "items": {} },
-    "coastal": { "items": {} },
-    "academia": { "items": {} }
+    "cyber": {
+      "name": "Cyber Neon",
+      "blurb": "Magenta and cyan neon, a night city outside.",
+      "swatch": ["#38305c", "#ff40c0", "#1ae6ff"],
+      "room": {
+        "walls": [0.22, 0.2, 0.36],
+        "ceiling": [0.22, 0.2, 0.36, 0.7],
+        "paintedWalls": false,
+        "floor": { "set": "dark_wooden_planks", "tint": [0.6, 0.55, 0.7], "tile": 2 },
+        "outside": "city",
+        "exposure": 1
+      },
+      "light": {
+        "presets": [
+          { "name": "Neon Night", "ambient": [0.22, 0.17, 0.34], "sun": 0.3, "window": [1, 1, 1] },
+          { "name": "Synthwave Dusk", "ambient": [0.3, 0.16, 0.28], "sun": 0.7, "window": [1, 0.75, 0.85] },
+          { "name": "Blackout", "ambient": [0.1, 0.085, 0.17], "sun": 0, "window": [0.35, 0.3, 0.45] }
+        ],
+        "sun": [0.6, 0.5, 1],
+        "window": [0.6, 0.45, 1],
+        "fill": [0.1, 0.9, 1],
+        "lamp": { "light": [1, 0.3, 0.8], "shade": [1, 0.15, 0.75] }
+      },
+      "neon": { "a": [1, 0.15, 0.75], "b": [0.1, 0.9, 1], "glow": true },
+      "rug": { "a": [1, 0.15, 0.75], "b": [0.02, 0, 0.05] },
+      "covers": [
+        [0.38, 0.24, 0.62],
+        [0.16, 0.46, 0.56],
+        [0.6, 0.16, 0.44],
+        [0.26, 0.26, 0.32]
+      ],
+      "finishes": {},
+      "items": {
+        "rug": { "variant": "neon-grid" }
+      }
+    },
+    "countryside": {
+      "name": "Countryside",
+      "blurb": "Farmhouse pine and cream, fields and hills outside.",
+      "swatch": ["#ebdcbc", "#8fae7c", "#c76b5a"],
+      "room": {
+        "walls": [0.92, 0.86, 0.74],
+        "ceiling": [0.95, 0.92, 0.86],
+        "paintedWalls": true,
+        "floor": { "set": "coated_pine", "tint": [1, 0.9, 0.78], "tile": 1.2 },
+        "outside": "country",
+        "exposure": 0.13
+      },
+      "light": {
+        "presets": [
+          { "name": "Golden Hour", "ambient": [0.52, 0.44, 0.36], "sun": 1.2, "window": [1, 0.92, 0.78] },
+          { "name": "Evening", "ambient": [0.3, 0.26, 0.3], "sun": 0.4, "window": [0.6, 0.55, 0.72] },
+          { "name": "Night", "ambient": [0.12, 0.11, 0.16], "sun": 0, "window": [0.28, 0.3, 0.45] }
+        ],
+        "sun": [1, 0.85, 0.65],
+        "window": [1, 0.85, 0.65],
+        "fill": [1, 0.85, 0.65],
+        "lamp": { "light": [1, 0.75, 0.45], "shade": [1, 0.82, 0.58] }
+      },
+      "neon": { "a": [0.55, 0.42, 0.3], "b": [0.85, 0.8, 0.7], "glow": false },
+      "rug": { "a": [0.62, 0.18, 0.15], "b": [0.9, 0.85, 0.74] },
+      "covers": [
+        [0.45, 0.58, 0.42],
+        [0.88, 0.82, 0.7],
+        [0.75, 0.4, 0.42],
+        [0.78, 0.6, 0.25]
+      ],
+      "finishes": { "wood": "pine", "fabric:Headboard": "cream", "fabric:Sheets": "cream", "fabric:Throw": "rose", "leather": "tan", "metal": "white" },
+      "items": {}
+    },
+    "vintage": {
+      "name": "Vintage 70s",
+      "blurb": "Mustard, rust and walnut, sunset over the city.",
+      "swatch": ["#bf8c52", "#8a4b2a", "#6f7a3a"],
+      "room": {
+        "walls": [0.75, 0.56, 0.34],
+        "ceiling": [0.9, 0.84, 0.7],
+        "paintedWalls": true,
+        "floor": { "set": "dark_wooden_planks", "tint": [0.9, 0.66, 0.46], "tile": 2 },
+        "outside": "city",
+        "exposure": 0.25
+      },
+      "light": {
+        "presets": [
+          { "name": "Sunset", "ambient": [0.5, 0.36, 0.26], "sun": 0.8, "window": [1, 0.72, 0.5] },
+          { "name": "Lamp Light", "ambient": [0.24, 0.18, 0.14], "sun": 0.2, "window": [0.7, 0.55, 0.5] },
+          { "name": "Late Night", "ambient": [0.1, 0.08, 0.08], "sun": 0, "window": [0.35, 0.3, 0.38] }
+        ],
+        "sun": [1, 0.7, 0.45],
+        "window": [1, 0.65, 0.4],
+        "fill": [1, 0.7, 0.45],
+        "lamp": { "light": [1, 0.6, 0.3], "shade": [1, 0.65, 0.3] }
+      },
+      "neon": { "a": [0.35, 0.22, 0.14], "b": [0.6, 0.45, 0.25], "glow": false },
+      "rug": { "a": [0.55, 0.3, 0.15], "b": [0.85, 0.6, 0.25] },
+      "covers": [
+        [0.78, 0.56, 0.16],
+        [0.62, 0.3, 0.16],
+        [0.42, 0.45, 0.2],
+        [0.86, 0.8, 0.68]
+      ],
+      "finishes": { "fabric:Headboard": "mustard", "fabric:Throw": "rust", "leather": "tan", "metal": "brass" },
+      "items": {}
+    },
+    "scandinavian": {
+      "name": "Scandinavian",
+      "blurb": "White walls, pale wood, soft greys, a forest view.",
+      "swatch": ["#e6e6e0", "#c9b9a0", "#4a4a50"],
+      "room": {
+        "walls": [0.9, 0.9, 0.88],
+        "ceiling": [0.95, 0.95, 0.94],
+        "paintedWalls": true,
+        "floor": { "set": "coated_pine", "tint": [1.05, 1.02, 0.98], "tile": 1.2 },
+        "outside": "country",
+        "exposure": 0.15
+      },
+      "light": {
+        "presets": [
+          { "name": "Daylight", "ambient": [0.72, 0.72, 0.75], "sun": 1.5, "window": [1, 1, 1] },
+          { "name": "Overcast", "ambient": [0.48, 0.5, 0.54], "sun": 0.6, "window": [0.8, 0.84, 0.9] },
+          { "name": "Evening", "ambient": [0.17, 0.16, 0.19], "sun": 0.1, "window": [0.35, 0.38, 0.5] }
+        ],
+        "sun": [1, 0.97, 0.9],
+        "window": [0.9, 0.95, 1],
+        "fill": [1, 0.95, 0.88],
+        "lamp": { "light": [1, 0.88, 0.7], "shade": [1, 0.95, 0.85] }
+      },
+      "neon": { "a": [0.85, 0.85, 0.83], "b": [0.85, 0.85, 0.83], "glow": false },
+      "rug": { "a": [0.3, 0.3, 0.32], "b": [0.9, 0.9, 0.88] },
+      "covers": [
+        [0.86, 0.8, 0.68],
+        [0.14, 0.14, 0.16],
+        [0.5, 0.6, 0.5],
+        [0.7, 0.72, 0.76]
+      ],
+      "finishes": { "wood": "pine", "fabric:Headboard": "charcoal", "fabric:Sheets": "cream", "leather": "white", "metal": "black" },
+      "items": {}
+    },
+    "industrial": {
+      "name": "Industrial Loft",
+      "blurb": "Concrete, black steel, tan leather, warm bulbs.",
+      "swatch": ["#5e5d5c", "#1a1a1c", "#b06a35"],
+      "room": {
+        "walls": [0.42, 0.41, 0.4],
+        "ceiling": [0.32, 0.32, 0.32],
+        "paintedWalls": false,
+        "floor": { "set": "grey_plaster", "tint": [0.6, 0.6, 0.6], "tile": 2 },
+        "outside": "city",
+        "exposure": 0.5
+      },
+      "light": {
+        "presets": [
+          { "name": "City Night", "ambient": [0.2, 0.18, 0.18], "sun": 0.3, "window": [1, 0.85, 0.7] },
+          { "name": "Morning", "ambient": [0.48, 0.48, 0.5], "sun": 1, "window": [1, 1, 1] },
+          { "name": "Blackout", "ambient": [0.07, 0.07, 0.08], "sun": 0, "window": [0.3, 0.3, 0.35] }
+        ],
+        "sun": [0.9, 0.9, 1],
+        "window": [1, 0.8, 0.6],
+        "fill": [1, 0.7, 0.4],
+        "lamp": { "light": [1, 0.62, 0.3], "shade": [1, 0.6, 0.25] }
+      },
+      "neon": { "a": [1, 0.55, 0.2], "b": [1, 0.65, 0.3], "glow": true },
+      "rug": { "a": [0.18, 0.18, 0.2], "b": [0.6, 0.32, 0.18] },
+      "covers": [
+        [0.14, 0.14, 0.16],
+        [0.62, 0.3, 0.16],
+        [0.12, 0.16, 0.38],
+        [0.86, 0.8, 0.68]
+      ],
+      "finishes": { "wood": "black", "fabric:Headboard": "charcoal", "leather": "tan", "metal": "black" },
+      "items": {}
+    },
+    "japandi": {
+      "name": "Japandi",
+      "blurb": "Warm beige, light wood, paper-lantern glow, quiet hills.",
+      "swatch": ["#d1c2a8", "#8c9a7a", "#2e2e2e"],
+      "room": {
+        "walls": [0.82, 0.76, 0.66],
+        "ceiling": [0.88, 0.84, 0.76],
+        "paintedWalls": true,
+        "floor": { "set": "coated_pine", "tint": [1, 0.92, 0.8], "tile": 1.2 },
+        "outside": "country",
+        "exposure": 0.15
+      },
+      "light": {
+        "presets": [
+          { "name": "Morning", "ambient": [0.58, 0.56, 0.5], "sun": 1.2, "window": [1, 0.97, 0.9] },
+          { "name": "Dusk", "ambient": [0.32, 0.28, 0.3], "sun": 0.5, "window": [1, 0.8, 0.7] },
+          { "name": "Night", "ambient": [0.12, 0.11, 0.12], "sun": 0, "window": [0.3, 0.32, 0.42] }
+        ],
+        "sun": [1, 0.93, 0.8],
+        "window": [1, 0.92, 0.8],
+        "fill": [1, 0.9, 0.75],
+        "lamp": { "light": [1, 0.8, 0.55], "shade": [1, 0.88, 0.7] }
+      },
+      "neon": { "a": [0.4, 0.33, 0.26], "b": [0.5, 0.42, 0.32], "glow": false },
+      "rug": { "a": [0.8, 0.72, 0.55], "b": [0.25, 0.25, 0.24] },
+      "covers": [
+        [0.82, 0.74, 0.6],
+        [0.5, 0.58, 0.46],
+        [0.14, 0.14, 0.16],
+        [0.86, 0.8, 0.68]
+      ],
+      "finishes": { "wood": "pine", "fabric:Headboard": "sand", "fabric:Sheets": "cream", "leather": "black", "metal": "black" },
+      "items": {}
+    },
+    "coastal": {
+      "name": "Coastal",
+      "blurb": "Whitewashed wood, navy and sand, the sea outside.",
+      "swatch": ["#dae6f2", "#1f3a66", "#d8c6a0"],
+      "room": {
+        "walls": [0.86, 0.9, 0.95],
+        "ceiling": [0.95, 0.96, 0.97],
+        "paintedWalls": true,
+        "floor": { "set": "coated_pine", "tint": [1.1, 1.08, 1.05], "tile": 1.2 },
+        "outside": "sea",
+        "exposure": 0.14
+      },
+      "light": {
+        "presets": [
+          { "name": "Sunny", "ambient": [0.74, 0.78, 0.86], "sun": 1.6, "window": [1, 1, 1] },
+          { "name": "Sunset", "ambient": [0.55, 0.42, 0.4], "sun": 0.7, "window": [1, 0.75, 0.6] },
+          { "name": "Night", "ambient": [0.1, 0.12, 0.18], "sun": 0, "window": [0.25, 0.3, 0.45] }
+        ],
+        "sun": [1, 0.97, 0.9],
+        "window": [0.85, 0.92, 1],
+        "fill": [0.85, 0.92, 1],
+        "lamp": { "light": [1, 0.9, 0.75], "shade": [1, 0.95, 0.85] }
+      },
+      "neon": { "a": [0.9, 0.92, 0.95], "b": [0.9, 0.92, 0.95], "glow": false },
+      "rug": { "a": [0.12, 0.2, 0.4], "b": [0.92, 0.9, 0.85] },
+      "covers": [
+        [0.2, 0.42, 0.62],
+        [0.84, 0.76, 0.6],
+        [0.9, 0.88, 0.82],
+        [0.12, 0.16, 0.38]
+      ],
+      "finishes": { "wood": "white", "fabric:Headboard": "navy", "fabric:Sheets": "cream", "fabric:Throw": "sand", "leather": "white", "metal": "white" },
+      "items": {}
+    },
+    "academia": {
+      "name": "Dark Academia",
+      "blurb": "Deep green, walnut, burgundy and brass by candlelight.",
+      "swatch": ["#283d33", "#6b1f2a", "#b8954a"],
+      "room": {
+        "walls": [0.16, 0.25, 0.2],
+        "ceiling": [0.2, 0.22, 0.2],
+        "paintedWalls": true,
+        "floor": { "set": "dark_wooden_planks", "tint": [0.55, 0.42, 0.34], "tile": 2 },
+        "outside": "city",
+        "exposure": 1
+      },
+      "light": {
+        "presets": [
+          { "name": "Candlelight", "ambient": [0.17, 0.14, 0.12], "sun": 0.1, "window": [0.5, 0.55, 0.7] },
+          { "name": "Rainy Afternoon", "ambient": [0.36, 0.37, 0.39], "sun": 0.5, "window": [0.78, 0.82, 0.88] },
+          { "name": "Midnight", "ambient": [0.08, 0.08, 0.1], "sun": 0, "window": [0.3, 0.3, 0.4] }
+        ],
+        "sun": [0.8, 0.85, 1],
+        "window": [0.7, 0.75, 0.9],
+        "fill": [1, 0.65, 0.35],
+        "lamp": { "light": [1, 0.62, 0.3], "shade": [1, 0.7, 0.35] }
+      },
+      "neon": { "a": [0.6, 0.48, 0.25], "b": [0.6, 0.48, 0.25], "glow": false },
+      "rug": { "a": [0.4, 0.08, 0.12], "b": [0.7, 0.55, 0.28] },
+      "covers": [
+        [0.4, 0.08, 0.12],
+        [0.14, 0.32, 0.2],
+        [0.12, 0.16, 0.38],
+        [0.86, 0.8, 0.68]
+      ],
+      "finishes": { "fabric:Headboard": "forest", "fabric:Throw": "burgundy", "leather": "red", "metal": "brass" },
+      "items": {}
+    }
   }
 }

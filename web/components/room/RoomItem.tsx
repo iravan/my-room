@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { hiddenOf, liveHomes, ON_WALL, poseOf, restPosition, useLayout, type Home } from "@/lib/room";
 import { ITEMS } from "@/items/registry";
 import { applyFinish, finishType } from "@/lib/options";
-import { styleOf } from "@/lib/styles";
+import { finishDefaults } from "@/lib/config";
 import { lifts } from "./Shell";
 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3(), normal = new THREE.Vector3();
@@ -84,7 +84,7 @@ export function RoomItem({ id, home, children, shellModel }: { id: string; home:
     const L = useLayout.getState(), shell = !shellModel && !!L.shells[id];
     // On a replaced parent: rise (or sink) onto the replacement's top.
     if (on && !L.items[id] && ref.current?.children[0]) ref.current.children[0].position.y = -home.position[1] + (L.shells[on] ? lifts.get(on) ?? 0 : 0);
-    const style = styleOf(L.style).finishes, own = L.options[id];
+    const style = finishDefaults(L.style, id), own = L.options[id];
     const styled = Object.keys(style).length > 0, opts = own || styled ? { ...style, ...own } : undefined;
     if (!opts && !touched.current && !shell && !shelled.current) return;
     touched.current = !!opts;
