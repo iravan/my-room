@@ -11,6 +11,8 @@ import { useGame, type Vec3 } from "@/lib/store";
 import { Neon } from "./Lighting";
 import { unityEuler } from "./Surface";
 import { Clickable } from "./Clickable";
+import { RoomItem } from "./RoomItem";
+import { HOMES } from "@/lib/room";
 
 const SLEEVE = new THREE.BoxGeometry(0.31, 0.31, 0.006);
 const FACE = new THREE.PlaneGeometry(0.31, 0.31);
@@ -150,10 +152,12 @@ export function Records() {
   const albums = useCollection((s) => s.albums), spinning = useCollection((s) => s.albums.find((a) => a.id === s.spinningId));
   return (
     <>
-      <CrateRecords albums={albums} />
-      <CabinetSpines albums={albums} />
-      <WallDisplay albums={albums} />
-      {spinning && <NowSpinning a={spinning} />}
+      <RoomItem id="crate" home={HOMES.crate}><CrateRecords albums={albums} /></RoomItem>
+      <RoomItem id="cabinet" home={HOMES.cabinet}>
+        <CabinetSpines albums={albums} />
+        {spinning && <NowSpinning a={spinning} />}
+      </RoomItem>
+      <RoomItem id="frames" home={{ position: [-1.99, 1.35, -0.85] }}><WallDisplay albums={albums} /></RoomItem>
     </>
   );
 }

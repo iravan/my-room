@@ -9,6 +9,8 @@ import { paint } from "@/lib/paint";
 import { Slab } from "./Surface";
 import { Clickable } from "./Clickable";
 import { Nightstand } from "./Nightstand";
+import { RoomItem } from "./RoomItem";
+import { HOMES } from "@/lib/room";
 
 const METAL = srgb(0.55, 0.55, 0.7);
 const LAMP: Vec3 = [-1.7, 0.54, 0.45];
@@ -43,7 +45,7 @@ function NightLamp() {
   const lamp = useGame((s) => s.lamp), toggleLamp = useGame((s) => s.toggleLamp), quality = useGame((s) => s.quality);
   const shade = useMemo(() => MAGENTA.clone().multiplyScalar(2), []);
   return (
-    <>
+    <RoomItem id="nightstand" home={HOMES.nightstand}>
       <Nightstand />
       <Clickable onTap={toggleLamp} position={LAMP}>
         <mesh position={[0, 0.01, 0]} castShadow>
@@ -71,7 +73,7 @@ function NightLamp() {
         shadow-bias={-0.002}
         shadow-radius={quality === 2 ? 4 : 1} // three r18x dropped PCFSoftShadowMap: PCF softens by radius instead
       />
-    </>
+    </RoomItem>
   );
 }
 

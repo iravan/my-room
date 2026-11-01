@@ -10,6 +10,8 @@ import { Metal, Neon } from "./Lighting";
 import { Clickable } from "./Clickable";
 import { Part, Slab, unityEuler } from "./Surface";
 import { Bed } from "./Bed";
+import { RoomItem } from "./RoomItem";
+import { HOMES } from "@/lib/room";
 import { Disc } from "./Records";
 import { togglePlay, useCollection } from "@/lib/collection";
 import { setHum, sfx } from "@/lib/audio";
@@ -137,11 +139,13 @@ function BlindsAndGlass() {
 export function Furniture() {
   return (
     <>
-      <Bed />
-      <Cabinet />
-      <Turntable />
-      <SleeveStand />
-      <Crate />
+      <RoomItem id="bed" home={HOMES.bed}><Bed /></RoomItem>
+      <RoomItem id="cabinet" home={HOMES.cabinet}>
+        <Cabinet />
+        <Turntable />
+        <SleeveStand />
+      </RoomItem>
+      <RoomItem id="crate" home={HOMES.crate}><Crate /></RoomItem>
       <BlindsAndGlass />
     </>
   );

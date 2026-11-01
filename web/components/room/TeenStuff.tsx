@@ -10,6 +10,8 @@ import { Neon } from "./Lighting";
 import { bedSurfaceY } from "./Bed";
 import { Desk, T } from "./Desk";
 import { Chair } from "./Chair";
+import { RoomItem } from "./RoomItem";
+import { HOMES } from "@/lib/room";
 import { PbrCapsule, PbrMaterial, Slab, unityEuler, type TextureSet } from "./Surface";
 
 // A teenager lives here: gaming desk and PC, chair, closet, and the mess, which lands somewhere new every visit.
@@ -279,10 +281,10 @@ function RoomBasics() {
       <Plastic t="cylinder" p={[0.9, 2.69, -0.6]} s={[0.11, 0.01, 0.11]} c={white} />
       <Prim t="sphere" p={[0.93, 2.678, -0.6]} s={[0.008, 0.008, 0.008]} glow={C(2, 0.1, 0.1)} />
       {/* Contact shadows under the core furniture: bed, nightstand, cabinet, crate */}
-      <Blob p={[-1.45, 0, 0.9]} size={[1.3, 2.25]} />
-      <Blob p={[-1.7, 0, -0.45]} size={[0.6, 0.55]} />
-      <Blob p={[1.26, 0, 1.8]} size={[1.6, 0.55]} />
-      <Blob p={[1.45, 0, 0.35]} size={[0.55, 0.8]} />
+      <RoomItem id="bed" home={HOMES.bed}><Blob p={[-1.45, 0, 0.9]} size={[1.3, 2.25]} /></RoomItem>
+      <RoomItem id="nightstand" home={HOMES.nightstand}><Blob p={[-1.7, 0, -0.45]} size={[0.6, 0.55]} /></RoomItem>
+      <RoomItem id="cabinet" home={HOMES.cabinet}><Blob p={[1.26, 0, 1.8]} size={[1.6, 0.55]} /></RoomItem>
+      <RoomItem id="crate" home={HOMES.crate}><Blob p={[1.45, 0, 0.35]} size={[0.55, 0.8]} /></RoomItem>
     </>
   );
 }
@@ -339,10 +341,15 @@ function Teen() {
     const pad = { x: padX, z: padZ, y: onBed(padX, padZ, 0.023), yaw: R(0, 360) };
     const plugAt = rotY([0, 0, -0.085], phone.yaw), plug: U3 = [phone.p[0] + plugAt[0], phone.p[1], phone.p[2] + plugAt[2]];
     const cableBlack = C(0.03, 0.03, 0.035);
+    // Clutter: where each piece landed this load (Unity coords) — also its home for the layout.
+    const pile: U3 = [R(0.6, 1), 0, R(-1.25, -0.9)], jeansAt: U3 = [R(-0.6, 0.2), 0, R(-1.1, -0.7)], hasJeans = chance(0.7);
+    const shoesAt: U3 = [R(-0.85, -0.6), 0, R(-0.6, -0.4)], bagAt: U3 = [-0.76, 0, R(0.2, 0.6)], boardAt: U3 = [1.76, 0, R(-0.45, -0.25)];
+    const at = (p: U3) => ({ position: flip(p) });
 
     return (
       <>
         {/* Desk against the left wall. Local frame: −z faces the room, +z the wall, +x towards the bed. */}
+        <RoomItem id="desk" home={HOMES.desk}>
         <G p={[-1.68, 0, -1.35]} yaw={-90}>
           <Desk />
           <Blob p={[0, 0, 0]} size={[1.35, 0.75]} />
@@ -414,8 +421,12 @@ function Teen() {
             {hoodieAt === 0 && <Fabric p={[0, 1.36, -0.36]} s={[0.56, 0.06, 0.22]} c={hoodie} e={[-10, 0, R(-6, 6)]} />}
           </G>
         </G>
+        <Cable c={cableBlack} width={0.007} pts={[[-1.92, 0.35, -0.95], [-1.95, 0.012, -1], [-1.975, 0.012, -1.18], [-1.99, 0.3, -1.2]]} />
+        <Cable c={cableBlack} width={0.006} pts={[[-1.88, 0.95, -1.35], [-1.965, 0.76, -1.33], [-1.97, 0.012, -1.27], [-1.99, 0.29, -1.21]]} />
+        </RoomItem>
 
         {/* Built-in closet: two sliding doors flush with the front wall, a hook for the hoodie */}
+        <RoomItem id="closet" home={{ position: [0.1, 0, 2] }}>
         <G p={[0.1, 0, -2]}>
           {[-1, 1].map((s) => (
             <group key={s}>
@@ -431,20 +442,21 @@ function Teen() {
             </>
           )}
         </G>
+        </RoomItem>
 
         {/* Clothes where they fell: hoodie (unless it's on the chair or the hook), jeans, sneakers */}
         {hoodieAt === 1 && (
-          <G p={[R(0.6, 1), 0, R(-1.25, -0.9)]} yaw={R(0, 360)}>
+          <RoomItem id="hoodie" home={at(pile)}><G p={pile} yaw={R(0, 360)}>
             <Blob p={[0, 0, 0]} size={[0.6, 0.5]} />
             {[0, 1, 2].map((i) => <Fabric key={i} p={[R(-0.06, 0.06), 0.02 + i * 0.035, R(-0.06, 0.06)]} s={[0.5 - i * 0.1, 0.04, 0.4 - i * 0.08]} c={hoodie} e={[0, R(-30, 30), 0]} />)}
-          </G>
+          </G></RoomItem>
         )}
-        {chance(0.7) && (
-          <G p={[R(-0.6, 0.2), 0, R(-1.1, -0.7)]} yaw={R(0, 360)}>
+        {hasJeans && (
+          <RoomItem id="jeans" home={at(jeansAt)}><G p={jeansAt} yaw={R(0, 360)}>
             {[-1, 1].map((s) => <Fabric key={s} p={[s * 0.09, 0.015, 0]} s={[0.16, 0.03, 0.75]} c={[0.2, 0.3, 0.55]} e={[0, s * R(2, 12), 0]} />)}
-          </G>
+          </G></RoomItem>
         )}
-        <G p={[R(-0.85, -0.6), 0, R(-0.6, -0.4)]} yaw={R(0, 360)}>
+        <RoomItem id="sneakers" home={at(shoesAt)}><G p={shoesAt} yaw={R(0, 360)}>
           <Blob p={[0, 0, 0]} size={[0.4, 0.42]} />
           {[-1, 1].map((s) => {
             const knocked = s === 1 && flipShoe;
@@ -455,29 +467,34 @@ function Teen() {
               </G>
             );
           })}
-        </G>
+        </G></RoomItem>
 
         {/* Backpack dumped against the bed */}
-        <G p={[-0.76, 0, R(0.2, 0.6)]} yaw={90 + R(-15, 15)}>
+        <RoomItem id="backpack" home={at(bagAt)}><G p={bagAt} yaw={90 + R(-15, 15)}>
           <Blob p={[0, 0, 0]} size={[0.42, 0.3]} />
           <PbrCapsule set="cotton_jersey" tile={0.26} position={flip([0, 0.21, 0])} scale={[0.3, 0.21, 0.17]} rotation={[-12, 0, 0]} color={Ck(bagColor, 1.4)} cast={false} />
           <PbrSphere set="cotton_jersey" tile={0.26} p={[0, 0.14, -0.085]} s={[0.22, 0.17, 0.07]} e={[-12, 0, 0]} c={Ck(bagColor, 1.2)} />
-        </G>
+        </G></RoomItem>
 
         {/* On the bed (gadgets sit on the duvet folds, ~.55): laptop mid-chat, phone, controller */}
+        <RoomItem id="bed" home={HOMES.bed}>
         <BedGadgets laptop={laptop} phone={phone} pad={pad} />
 
-        {/* Cables to the sockets (behind the desk at (-2, .3, -1.2), under the window at (.25, .3, 2)): drop behind, along the floor, up the wall */}
-        <Cable c={cableBlack} width={0.007} pts={[[-1.92, 0.35, -0.95], [-1.95, 0.012, -1], [-1.975, 0.012, -1.18], [-1.99, 0.3, -1.2]]} />
-        <Cable c={cableBlack} width={0.006} pts={[[-1.88, 0.95, -1.35], [-1.965, 0.76, -1.33], [-1.97, 0.012, -1.27], [-1.99, 0.29, -1.21]]} />
-        <Cable c={cableBlack} width={0.005} pts={[[-1.75, 0.55, -0.45], [-1.95, 0.5, -0.5], [-1.975, 0.012, -0.6], [-1.98, 0.012, -1.1], [-1.99, 0.31, -1.19]]} />
-        {/* Phone charger: over the bed edge, across the floor to the window socket */}
+        {/* Phone charger: over the bed edge, across the floor to the window socket (moves with the bed until cables re-route) */}
         <Cable c={C(0.85, 0.85, 0.82)} width={0.006} pts={[plug, [-0.93, onBed(-0.93, plug[2] + 0.1, 0.006), plug[2] + 0.1], [-0.8, 0.2, plug[2] + 0.2], [-0.75, 0.012, 1.6], [0.1, 0.012, 1.96], [0.25, 0.29, 1.99]]} />
+        </RoomItem>
+
+        {/* Cables to the sockets (behind the desk at (-2, .3, -1.2), under the window at (.25, .3, 2)): PC + monitor in the desk item; the lamp's goes with the nightstand */}
+        <RoomItem id="nightstand" home={HOMES.nightstand}>
+        <Cable c={cableBlack} width={0.005} pts={[[-1.75, 0.55, -0.45], [-1.95, 0.5, -0.5], [-1.975, 0.012, -0.6], [-1.98, 0.012, -1.1], [-1.99, 0.31, -1.19]]} />
+        </RoomItem>
 
         {/* Basketball; skateboard against the right wall with two posters above it */}
+        <RoomItem id="basketball" home={at(ball)}>
         <Blob p={ball} size={[0.32, 0.32]} />
         <PbrSphere set="fabric_leather_02" tile={0.25} p={ball} s={[0.24, 0.24, 0.24]} e={[R(0, 360), R(0, 360), 0]} c={C(1.6, 0.65, 0.25)} />
-        <G p={[1.76, 0, R(-0.45, -0.25)]} e={[0, 0, -12]}>
+        </RoomItem>
+        <RoomItem id="skateboard" home={at(boardAt)}><G p={boardAt} e={[0, 0, -12]}>
           <Deck seed={int(1e9)} />
           {[0.14, 0.7].map((y) => (
             <group key={y}>
@@ -485,9 +502,9 @@ function Teen() {
               {[-1, 1].map((s) => <Plastic key={s} t="cylinder" p={[-0.04, y, s * 0.08]} s={[0.055, 0.015, 0.055]} e={[0, 0, 90]} c={C(0.95, 0.9, 0.8)} />)}
             </group>
           ))}
-        </G>
-        <Poster p={[1.995, 1.65, -1.05]} e={[0, 90, R(-2, 2)]} size={[0.5, 0.7]} seed={int(1e9)} />
-        <Poster p={[1.995, 1.55, -0.3]} e={[0, 90, R(-3, 3)]} size={[0.4, 0.56]} seed={int(1e9)} />
+        </G></RoomItem>
+        <RoomItem id="poster-1" home={at([1.995, 1.65, -1.05])}><Poster p={[1.995, 1.65, -1.05]} e={[0, 90, R(-2, 2)]} size={[0.5, 0.7]} seed={int(1e9)} /></RoomItem>
+        <RoomItem id="poster-2" home={at([1.995, 1.55, -0.3])}><Poster p={[1.995, 1.55, -0.3]} e={[0, 90, R(-3, 3)]} size={[0.4, 0.56]} seed={int(1e9)} /></RoomItem>
       </>
     );
   }, []);
@@ -529,7 +546,7 @@ export function TeenStuff() {
     <>
       <RoomBasics />
       <Teen />
-      <Dust />
+      <RoomItem id="nightstand" home={HOMES.nightstand}><Dust /></RoomItem>
     </>
   );
 }

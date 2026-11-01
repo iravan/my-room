@@ -9,6 +9,9 @@ export const CABINET: Vec3 = [1.26, 0, -1.8];
 export const TURNTABLE: Vec3 = [0.85, CABINET_H, -1.79];
 export const PLATTER: Vec3 = [TURNTABLE[0] - 0.05, TURNTABLE[1] + 0.1, TURNTABLE[2]];
 export const CRATE: Vec3 = [1.45, 0, -0.35];
+export const BED_HOME: Vec3 = [-1.45, 0, -0.9];
+export const NIGHTSTAND: Vec3 = [-1.7, 0, 0.45];
+export const DESK: Vec3 = [-1.68, 0, 1.35];
 
 const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 

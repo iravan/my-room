@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useGame, type Vec3 } from "@/lib/store";
+import { BED_HOME } from "@/lib/layout";
 import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { perlin, rng } from "@/lib/paint";
 import { Neon } from "./Lighting";
@@ -15,7 +16,7 @@ import { PbrMaterial, projectUVs, rounded, type TextureSet } from "./Surface";
 // droops at the corners, turned down at the head) and a knitted throw across the foot.
 // Local frame: head at −z (against the back wall), foot at +z. Click = next duvet colour.
 
-export const BED_POS: Vec3 = [-1.45, 0, -0.9];
+export const BED_POS: Vec3 = BED_HOME;
 const W = 1.02, L = 1.94, MT = 0.48, MB = 0.24; // mattress width, length, top, bottom
 const HEAD = -0.97, FOOT = HEAD + L;
 

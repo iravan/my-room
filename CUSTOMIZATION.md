@@ -117,7 +117,6 @@ type RoomLayout = { version: 1; items: ItemInstance[] };
 | **5. Catalog (B)** | A handful of CC0 models per item, pre-anchored, using phases 3–4 | 2–3 passes + picking models |
 | **6. Optimise + budgets** | Web-worker loading, simplification, compression, room budget meter | 2–3 passes |
 | **7. Cloud (needs Supabase)** | `models` bucket + RLS, room items table, share-by-link with models | 2 passes |
-| **Later: D, E** | Named-anchor convention; optional photo/text-to-3D service | — |
 
 Phases 1–2 also make the `REALISM.md` work easier: each rebuilt item becomes a registered type with options.
 
@@ -129,13 +128,29 @@ Phases 1–2 also make the `REALISM.md` work easier: each rebuilt item becomes a
 - **Style clash**: a photoreal or cartoon model next to the neon room can look pasted-in; the "match room style"
   option helps but won't fix everything.
 
-## Decisions for you
-1. **Scope**: start with A + C (my recommendation), or also commit to D (fully working uploaded items)?
-2. **What can move**: everything, or only furniture/decor (walls, window, door and sockets stay fixed)?
-3. **Formats**: GLB only (simplest, recommended), or also convert OBJ/FBX/USDZ?
-4. **New dependency**: OK to add `@gltf-transform` + `meshoptimizer` for in-browser optimisation (~400 KB, loaded only
-   in edit mode)?
-5. **Limits**: 20 MB per model and 100 MB per share file OK?
-6. **Generation (E)**: interested in a paid photo/text-to-3D service later, or leave it out?
-7. **REALISM.md loop**: it's paused at the record cabinet (desk, chair, nightstand done). Resume it first, or start
-   phase 1 here? (Phase 1 first would let the rest of the realism items be built as customisable types.)
+## Decisions (owner, 2026-11-01)
+1. Scope: **A + C**. D (named-anchor working uploads) and E (photo/text-to-3D) are out.
+2. **Everything can move**, including wall fixtures (window, door, sockets) — those slide along their wall.
+3. **GLB only** (plus `.gltf` with embedded data); no OBJ/FBX/USDZ conversion.
+4. `@gltf-transform` + `meshoptimizer` OK, loaded only in edit mode.
+5. Limits OK: 20 MB per model, 100 MB per share file.
+6. No generation service.
+7. REALISM.md loop paused (record cabinet next); this plan goes first.
+
+## Checklist
+### Phase 1: room as data (no visible change)
+- [x] Layout store + `RoomItem` wrapper: every item renders through a transform from the layout (pivot = the item's own home position, so moving/rotating an item never orbits the room); default layout = today's room; saved in localStorage; untrusted layouts normalised; Vitest checks. — `lib/room.ts` (poses stored only for moved items, `my-room-layout`, `normalizeLayout` clamps to the room, `itemMatrix`), `RoomItem.tsx` (same id in several places moves together). Items: bed (+ gadgets, charger, shadow), nightstand (+ lamp, light, dust, lamp cable), desk (+ chair, PC, shelf, poster, desk cables), cabinet (+ turntable, spines, stand sleeve), crate (+ records), frames, closet (+ hook hoodie), and per-load clutter (hoodie pile, jeans, sneakers, backpack, basketball, skateboard, 2 posters). Turntable/shelf/crate camera shots follow their item. 4 new Vitest checks (clamping, junk, pivot, home yaw). Verified in Chrome: default room unchanged (check 0 flagged, 60 fps); a layout moving + turning the bed, cabinet and crate moved each with everything on it, shelf shot followed the cabinet. Known until the next items: cables keep their socket end attached to the moved item; window/door/sockets/switch not yet items; chair still part of the desk.
+- [ ] Split the bundled groups so each real object is its own item (chair out of the desk group; clutter pieces, posters, skateboard, ball; gadgets on the bed follow the bed); contact shadows move with their item.
+- [ ] Wall fixtures as items constrained to their wall (window opening follows the window; door, closet, sockets, switch); cables re-route to their ends.
+### Phase 2: edit mode + options (A)
+- [ ] Edit mode: select, move on the floor / along walls, rotate, snap, reset, undo.
+- [ ] Options per item (colour, material, size, variant) from a schema in the registry; option panel.
+### Phase 3: upload decor (C, part 1)
+- [ ] GLB upload: guards (20 MB, no external URIs, triangle/texture/material limits), worker loading, normalise (Y-up, ground, auto-fit), stored in IndexedDB.
+- [ ] Place uploaded models anywhere; included in share files (100 MB cap) and visits.
+### Phase 4: shell replacement (C, part 2)
+- [ ] Upload a model to replace an item's look; cores (platter/tonearm, spines, crate sleeves, lamp light, screens, bed surface) placed on it automatically or by dragging a box.
+### Phase 5–6: optimise and budgets
+- [ ] `@gltf-transform` + `meshoptimizer` simplify/compress over budget; room budget meter; stress `npm run check`.
+### Phase 7: cloud (needs Supabase running)
+- [ ] `models` bucket + RLS, room items table, share-by-link with models.
