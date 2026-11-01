@@ -1,6 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { checkModel, LIMITS, type ModelStats } from "./glb";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
+import { BudgetError, checkModel, LIMITS, type ModelStats } from "./glb";
+import { uploadTarget } from "./budget";
+import type { OptimizeReply } from "./optimize.worker";
 import { getImage, putImage } from "./images";
 import { useLayout } from "./room";
 import { useGame } from "./store";
@@ -27,7 +30,20 @@ function normalise(scene: THREE.Object3D) {
   return wrap;
 }
 
-const parse = async (buf: ArrayBuffer) => normalise((await new GLTFLoader().parseAsync(buf, "")).scene);
+const parse = async (buf: ArrayBuffer) => normalise((await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(buf, "")).scene);
+
+// Bring a model under the limits in a worker (simplify, shrink textures, compress); the UI stays responsive.
+function optimize(bytes: Uint8Array, maxTriangles: number) {
+  return new Promise<Uint8Array>((resolve, reject) => {
+    const w = new Worker(new URL("./optimize.worker.ts", import.meta.url), { type: "module" });
+    w.onmessage = (e: MessageEvent<OptimizeReply>) => {
+      w.terminate();
+      if (e.data.ok) resolve(e.data.bytes); else reject(new Error(`Couldn't simplify that model (${e.data.error}).`));
+    };
+    w.onerror = () => { w.terminate(); reject(new Error("Couldn't simplify that model.")); };
+    w.postMessage({ bytes, maxTriangles, maxTexture: LIMITS.texture });
+  });
+}
 
 export function loadModel(asset: string) {
   if (!templates.has(asset))
@@ -39,27 +55,38 @@ export function loadModel(asset: string) {
 }
 
 // Check, parse and store an uploaded file; returns its stored name. Throws with a user-facing message.
-export async function importModelFile(file: File): Promise<{ asset: string; name: string; stats: ModelStats }> {
+export async function importModelFile(file: File): Promise<{ asset: string; name: string; stats: ModelStats; optimized?: { from: number } }> {
   if (!/\.(glb|gltf)$/i.test(file.name)) throw new Error("Choose a .glb (or self-contained .gltf) file.");
   if (file.size > LIMITS.bytes) throw new Error(`The model is ${(file.size / 1048576).toFixed(1)} MB; the limit is 20 MB.`);
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const stats = checkModel(bytes);
+  let bytes: Uint8Array = new Uint8Array(await file.arrayBuffer()), stats: ModelStats, optimized: { from: number } | undefined;
+  const target = uploadTarget(LIMITS.triangles);
+  try {
+    stats = checkModel(bytes);
+    if (stats.triangles > target) throw new BudgetError("over the room's budget");
+  } catch (e) {
+    if (!(e instanceof BudgetError)) throw e;
+    // Too many triangles or too-big textures: simplify it rather than refuse (to fit the room's budget too).
+    const from = checkModel(bytes, { budget: false }).triangles;
+    bytes = await optimize(bytes, target);
+    stats = checkModel(bytes);
+    optimized = { from };
+  }
   let template: THREE.Object3D;
-  try { template = await parse(bytes.slice().buffer); } catch { throw new Error("Couldn't read that model."); }
+  try { template = await parse(bytes.slice().buffer as ArrayBuffer); } catch { throw new Error("Couldn't read that model."); }
   const asset = `${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}.glb`;
-  await putImage(asset, new Blob([bytes], { type: "model/gltf-binary" }));
+  await putImage(asset, new Blob([bytes as BlobPart], { type: "model/gltf-binary" }));
   templates.set(asset, Promise.resolve(template));
-  return { asset, name: file.name.replace(/\.(glb|gltf)$/i, ""), stats };
+  return { asset, name: file.name.replace(/\.(glb|gltf)$/i, ""), stats, optimized };
 }
 
 // Upload a model as free decor, placed in front of the camera.
-export async function addModelFile(file: File): Promise<ModelStats> {
-  const { asset, name, stats } = await importModelFile(file);
+export async function addModelFile(file: File) {
+  const { asset, name, stats, optimized } = await importModelFile(file);
   // In front of the camera, on the floor, facing it.
   const { roomPos, yaw } = useGame.getState(), a = (yaw * Math.PI) / 180, fx = Math.sin(a), fz = -Math.cos(a);
   const clamp = (v: number) => Math.min(1.7, Math.max(-1.7, v));
   useLayout.getState().addModel(asset, name, {
     position: [clamp(roomPos[0] + fx * 1.2), 0, clamp(roomPos[2] + fz * 1.2)], rotationY: Math.atan2(-fx, -fz), scale: 1,
   });
-  return stats;
+  return { stats, optimized };
 }

@@ -15,6 +15,7 @@ import { Inspector } from "./Inspector";
 import { SelectionBox } from "./SelectionBox";
 import { DecorModels } from "./Decor";
 import { ShellModels } from "./Shell";
+import { BudgetProbe } from "./BudgetProbe";
 import { useLayout } from "@/lib/room";
 import { EditPanel } from "@/components/hud/EditPanel";
 import { AudioDriver } from "./AudioDriver";
@@ -45,6 +46,7 @@ export default function Scene() {
       </Suspense>
       <CameraRig />
       <SelectionBox />
+      <BudgetProbe />
       <AudioDriver />
       <PostFX />
     </Canvas>

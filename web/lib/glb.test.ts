@@ -1,6 +1,6 @@
 // Uploaded-model guard: real GLBs pass with their stats; hostile or over-budget files are refused with a reason.
 import { describe, expect, it } from "vitest";
-import { checkModel, imageSize } from "./glb";
+import { BudgetError, checkModel, imageSize } from "./glb";
 import { glb, png } from "./glb.fixture";
 
 describe("model guard", () => {
@@ -33,5 +33,18 @@ describe("model guard", () => {
     expect(imageSize(png(300, 200))).toEqual([300, 200]);
     const jpg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 4, 0, 0, 0xff, 0xc0, 0, 17, 8, 0x01, 0x90, 0x02, 0x58, 3]);
     expect(imageSize(jpg)).toEqual([600, 400]);
+  });
+
+  it("marks budget problems as fixable, and accepts our own compressed output", () => {
+    expect(() => checkModel(glb({ accessors: [{ count: 600_000 }] }))).toThrow(BudgetError);
+    expect(() => checkModel(glb({}, png(4096, 4096)))).toThrow(BudgetError);
+    expect(() => checkModel(glb({ buffers: [{ byteLength: 36, uri: "http://x/y.bin" }] }))).not.toThrow(BudgetError);
+    expect(checkModel(glb({ accessors: [{ count: 600_000 }] }), { budget: false }).triangles).toBe(200_000);
+    const meshopt = glb({
+      extensionsUsed: ["EXT_meshopt_compression"], extensionsRequired: ["EXT_meshopt_compression"],
+      buffers: [{ byteLength: 40 }, { byteLength: 36, extensions: { EXT_meshopt_compression: { fallback: true } } }],
+    });
+    expect(checkModel(meshopt).triangles).toBe(1);
+    expect(() => checkModel(glb({ buffers: [{ byteLength: 40 }, { byteLength: 36 }] }))).toThrow(/doesn't contain/);
   });
 });

@@ -8,12 +8,13 @@ const SAFE_EXTENSIONS = new Set([
   "KHR_materials_emissive_strength", "KHR_materials_transmission", "KHR_materials_clearcoat", "KHR_materials_sheen",
   "KHR_materials_specular", "KHR_materials_ior", "KHR_materials_volume", "KHR_materials_unlit", "KHR_materials_iridescence",
   "KHR_materials_anisotropy", "KHR_texture_transform", "KHR_mesh_quantization", "KHR_lights_punctual",
+  "EXT_meshopt_compression", // what our own optimiser writes; three decodes it
 ]);
 
 type Json = {
   asset?: { version?: string };
   extensionsRequired?: string[];
-  buffers?: { uri?: string; byteLength: number }[];
+  buffers?: { uri?: string; byteLength: number; extensions?: { EXT_meshopt_compression?: { fallback?: boolean } } }[];
   bufferViews?: { buffer: number; byteOffset?: number; byteLength: number }[];
   accessors?: { count: number }[];
   images?: { uri?: string; bufferView?: number; mimeType?: string }[];
@@ -23,6 +24,9 @@ type Json = {
 };
 
 export type ModelStats = { triangles: number; materials: number; maxTexture: number };
+
+// Thrown when a model is fine except for its size budget: the optimiser can fix these (triangles, textures).
+export class BudgetError extends Error {}
 
 const fail = (msg: string): never => { throw new Error(msg); };
 const decodeDataUri = (uri: string) => {
@@ -48,7 +52,8 @@ export function imageSize(b: Uint8Array): [number, number] {
   return fail("The model has a texture that isn't PNG or JPEG.");
 }
 
-export function checkModel(bytes: Uint8Array): ModelStats {
+// `budget: false` skips the triangle/texture limits (for measuring a model before optimising it).
+export function checkModel(bytes: Uint8Array, { budget = true } = {}): ModelStats {
   if (bytes.byteLength > LIMITS.bytes) fail(`The model is ${(bytes.byteLength / 1048576).toFixed(1)} MB; the limit is 20 MB.`);
   let json: Json, bin: Uint8Array | undefined;
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -71,7 +76,11 @@ export function checkModel(bytes: Uint8Array): ModelStats {
 
   // Everything must be inside the file: no links to other files or the web.
   const buffers = (json.buffers ?? []).map((b, i) => {
-    if (b.uri === undefined) return i === 0 && bin ? bin : fail("The model refers to data it doesn't contain.");
+    if (b.uri === undefined) {
+      if (i === 0 && bin) return bin;
+      if (b.extensions?.EXT_meshopt_compression?.fallback) return new Uint8Array(0); // placeholder for compressed data
+      return fail("The model refers to data it doesn't contain.");
+    }
     if (!b.uri.startsWith("data:")) fail("The model links to outside files; export it as a single .glb.");
     return decodeDataUri(b.uri);
   });
@@ -87,7 +96,7 @@ export function checkModel(bytes: Uint8Array): ModelStats {
       data = buf.subarray(bv.byteOffset ?? 0, (bv.byteOffset ?? 0) + bv.byteLength);
     }
     const [w, h] = imageSize(data);
-    if (Math.max(w, h) > LIMITS.texture) fail(`The model has a ${w}×${h} texture; the limit is ${LIMITS.texture} px.`);
+    if (budget && Math.max(w, h) > LIMITS.texture) throw new BudgetError(`The model has a ${w}×${h} texture; the limit is ${LIMITS.texture} px.`);
     maxTexture = Math.max(maxTexture, w, h);
   }
 
@@ -101,6 +110,6 @@ export function checkModel(bytes: Uint8Array): ModelStats {
   }, 0));
   const uses = (json.nodes ?? []).filter((n) => n.mesh !== undefined);
   const triangles = Math.round(uses.length ? uses.reduce((s, n) => s + (tris[n.mesh!] ?? 0), 0) : tris.reduce((a, b) => a + b, 0));
-  if (triangles > LIMITS.triangles) fail(`The model has ${triangles.toLocaleString()} triangles; the limit is ${LIMITS.triangles.toLocaleString()}.`);
+  if (budget && triangles > LIMITS.triangles) throw new BudgetError(`The model has ${triangles.toLocaleString()} triangles; the limit is ${LIMITS.triangles.toLocaleString()}.`);
   return { triangles, materials, maxTexture };
 }

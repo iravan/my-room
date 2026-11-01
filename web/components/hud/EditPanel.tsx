@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { homePose, liveHomes, ON_WALL, useLayout } from "@/lib/room";
 import { useGame } from "@/lib/store";
 import { Panel } from "./Panel";
+import { ROOM_BUDGET, useBudget } from "@/lib/budget";
 import * as THREE from "three";
 import { FINISHES, finishLabel, finishType, VARIANTS } from "@/lib/options";
 
@@ -83,6 +84,26 @@ function Options({ id }: { id: string }) {
   );
 }
 
+// How much of the room's budget is in use (all items + uploads). Past it, new uploads are simplified to fit.
+function BudgetMeter() {
+  const u = useBudget();
+  const rows: [string, number, number, string][] = [
+    ["Triangles", u.triangles, ROOM_BUDGET.triangles, `${Math.round(u.triangles / 1000)}k`],
+    ["Draw calls", u.draws, ROOM_BUDGET.draws, String(u.draws)],
+    ["Textures", u.textureMB, ROOM_BUDGET.textureMB, `${u.textureMB} MB`],
+  ];
+  return (
+    <div className="space-y-1 text-xs text-zinc-400" aria-label="Room budget">
+      {rows.map(([label, v, max, text]) => (
+        <div key={label}>
+          <div className="flex justify-between"><span>{label}</span><span>{text} / {label === "Textures" ? `${max} MB` : label === "Triangles" ? `${max / 1000}k` : max}</span></div>
+          <div className="h-1 rounded bg-white/10"><div className={`h-1 rounded ${v > max ? "bg-red-500" : v > max * 0.8 ? "bg-amber-400" : "bg-cyan-400"}`} style={{ width: `${Math.min(100, (v / max) * 100)}%` }} /></div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function EditPanel() {
   useEditKeys();
   const editing = useLayout((s) => s.editing), selected = useLayout((s) => s.selected), canUndo = useLayout((s) => s.past.length > 0);
@@ -94,9 +115,9 @@ export function EditPanel() {
   const replaceLook = async (f?: File) => {
     if (!f || !selected) return;
     try {
-      const { asset, name, stats } = await importModelFile(f);
+      const { asset, name, stats, optimized } = await importModelFile(f);
       useLayout.getState().setShell(selected, { asset, name, yaw: 0 });
-      toast.success(`${nameOf(selected)} now uses ${f.name} (${stats.triangles.toLocaleString()} triangles).`);
+      toast.success(`${nameOf(selected)} now uses ${f.name} (${optimized ? `simplified ${optimized.from.toLocaleString()} → ` : ""}${stats.triangles.toLocaleString()} triangles).`);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -104,8 +125,14 @@ export function EditPanel() {
   const upload = async (f?: File) => {
     if (!f) return;
     try {
-      const st = await addModelFile(f);
-      toast.success(`Added ${f.name} (${st.triangles.toLocaleString()} triangles). Drag it into place.`);
+      const id = toast.loading(`Adding ${f.name}…`);
+      try {
+        const { stats, optimized } = await addModelFile(f);
+        toast.success(`Added ${f.name} (${optimized ? `simplified ${optimized.from.toLocaleString()} → ` : ""}${stats.triangles.toLocaleString()} triangles). Drag it into place.`, { id });
+      } catch (e) {
+        toast.dismiss(id);
+        throw e;
+      }
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -153,6 +180,7 @@ export function EditPanel() {
         <Button size="sm" variant="outline" disabled={!canUndo} onClick={() => useLayout.getState().undo()}>Undo [⌘Z]</Button>
         <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {}, options: {} }); }}>Reset room</Button>
       </div>
+      <BudgetMeter />
       <Button size="sm" onClick={exitEdit}>Done [Esc]</Button>
     </Panel>
   );
