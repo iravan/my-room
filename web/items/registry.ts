@@ -31,7 +31,6 @@ import smoke_detector from "./smoke-detector/item";
 import hoodie from "./hoodie/item";
 import jeans from "./jeans/item";
 import sneakers from "./sneakers/item";
-import backpack from "./backpack/item";
 import basketball from "./basketball/item";
 import skateboard from "./skateboard/item";
 
@@ -68,7 +67,6 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
     hoodie,
     jeans,
     sneakers,
-    backpack,
     basketball,
     skateboard,
   ).map((d) => [d.id, d]),

@@ -23,7 +23,18 @@ import switchRocker from "./switch/variants/rocker";
 import socketPlate from "./socket/variants/plate";
 import ceilingLightFlush from "./ceiling-light/variants/flush";
 import smokeDetectorRound from "./smoke-detector/variants/round";
+import hoodiePile from "./hoodie/variants/pile";
+import jeansDenim from "./jeans/variants/denim";
+import sneakersCanvas from "./sneakers/variants/canvas";
+import basketballClassic from "./basketball/variants/classic";
+import skateboardStreet from "./skateboard/variants/street";
+import posterPrint from "./poster/variants/print";
+import wallShelfWalnut from "./wall-shelf/variants/walnut";
+import rugWoven from "./rug/variants/woven";
+import rugNeonGrid from "./rug/variants/neon-grid";
+import neonCoveStrips from "./neon-cove/variants/strips";
 
 export const VARIANTS: Record<string, Record<string, VariantDef>> = {};
 for (const v of [bedPlatform, nightstandMidcentury, lampDrum, deskGaming, monitorFlat24, keyboardRgb, speakersBookshelf, headsetStand, drinksCans, pcTower, binMesh, chairRacing, cabinetCubbies, turntableClassic, cratePine,
-  windowMetalFrame, windowCoveringVenetian, doorSlab, closetSliding, switchRocker, socketPlate, ceilingLightFlush, smokeDetectorRound]) for (const item of ([] as string[]).concat(v.item)) (VARIANTS[item] ??= {})[v.id] = v;
+  windowMetalFrame, windowCoveringVenetian, doorSlab, closetSliding, switchRocker, socketPlate, ceilingLightFlush, smokeDetectorRound,
+  hoodiePile, jeansDenim, sneakersCanvas, basketballClassic, skateboardStreet, posterPrint, wallShelfWalnut, rugWoven, rugNeonGrid, neonCoveStrips]) for (const item of ([] as string[]).concat(v.item)) (VARIANTS[item] ??= {})[v.id] = v;

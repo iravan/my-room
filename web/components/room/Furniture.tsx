@@ -31,7 +31,8 @@ export function Furniture() {
       <LampItem />
       <ChairItem />
       {["desk", "monitor", "keyboard", "speakers", "headset", "drinks", "pc", "bin", "cabinet", "turntable", "crate", "window", "window-covering", "door", "closet", "switch",
-        "socket-desk", "socket-window", "socket-right", "ceiling-light", "smoke-detector"].map((id) => <ItemView key={id} id={id} />)}
+        "socket-desk", "socket-window", "socket-right", "ceiling-light", "smoke-detector",
+        "wall-shelf", "poster-desk", "poster-1", "poster-2", "rug", "neon-cove"].map((id) => <ItemView key={id} id={id} />)}
       <RoomItem id="cabinet" home={HOMES.cabinet}><Core lift><SleeveStand /></Core></RoomItem>
     </>
   );

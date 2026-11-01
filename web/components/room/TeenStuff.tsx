@@ -1,34 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { drawText, hsv, lerp, paint, rng, type RGBA } from "@/lib/paint";
 import { bedSurfaceY } from "@/items/bed";
-import { Blob, C, Ck, Fabric, flip, G, LOAD_SEED, Plastic, Prim, Walnut, type U3 } from "@/items/_shared/prims";
-import { HOODIE } from "@/items/hoodie/roll";
+import { C, flip, G, LOAD_SEED, Plastic, Prim, type U3 } from "@/items/_shared/prims";
+import { HOODIE, PILE } from "@/items/hoodie/roll";
+import { JEANS } from "@/items/jeans/place";
+import { SNEAKERS } from "@/items/sneakers/place";
+import { BALL } from "@/items/basketball/place";
+import { BOARD } from "@/items/skateboard/place";
+import { ItemView } from "@/items/_shared/ItemView";
 import { Core } from "./Shell";
 import { RoomItem } from "./RoomItem";
 import { HOMES, hiddenOf, placePoint, useLayout } from "@/lib/room";
 import { ITEMS } from "@/items/registry";
-import { PbrCapsule, PbrMaterial, unityEuler, type TextureSet } from "./Surface";
 
 // A teenager lives here: gaming desk and PC, chair, closet, and the mess, which lands somewhere new every visit.
 // Straight port of the Unity build's VinylRoomStuff.cs (git tag unity-final): everything below is written in Unity coordinates (p, s, e) and flipped here,
 // so it can be checked line by line against the C#. A yaw-ed group's local −z faces into the room.
 
-function PbrSphere({ set, tile, p, s, e, c }: { set: TextureSet; tile: number; p: U3; s: U3; e?: U3; c: THREE.Color }) {
-  const geometry = useMemo(() => {
-    const g = new THREE.SphereGeometry(0.5, 32, 20);
-    const uv = g.attributes.uv as THREE.BufferAttribute, girth = (Math.PI * (s[0] + s[2])) / 2;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) * girth) / tile, (uv.getY(i) * s[1] * 1.57) / tile);
-    return g;
-  }, [s, tile]);
-  return (
-    <mesh geometry={geometry} position={flip(p)} rotation={unityEuler(e ?? [0, 0, 0])} scale={s} receiveShadow>
-      <PbrMaterial set={set} color={c} />
-    </mesh>
-  );
-}
 
 
 // ---------- generated textures ----------
@@ -50,23 +41,6 @@ const phoneScreen = () => paint(40, 80, (u, v) => {
     return hsv((Math.floor(u * 4.4) * 0.23 + Math.floor(v * 7.6) * 0.37) % 1, 0.7, 0.95);
   return lerp([0.55, 0.15, 0.6], [1, 0.45, 0.5], v) as RGBA;
 });
-
-// Gig poster: two-colour gradient, striped sun or rings, title blocks along the bottom.
-function posterTexture(seed: number) {
-  const r = rng(seed), h = r(), h2 = (h + 0.3 + r() * 0.4) % 1;
-  const a = hsv(h, 0.8, 0.35), b = hsv(h2, 0.7, 0.9), ink = hsv((h + 0.5) % 1, 0.6, 1), rings = r() < 0.5;
-  return paint(90, 128, (u, v) => {
-    if (v < 0.16) return u > 0.1 && u < 0.9 && v > 0.05 && v < 0.11 && (u * 12) % 1 < 0.8 ? [1, 1, 1] : [0.05, 0.05, 0.07];
-    const d = Math.hypot(u - 0.5, v * 1.42 - 0.85);
-    if (rings ? d < 0.38 && (d * 12) % 1 < 0.5 : d < 0.3 && (v > 0.6 || (v * 40) % 1 < 0.6)) return ink;
-    return lerp(a, b, v) as RGBA;
-  });
-}
-
-function Poster({ p, e, size, seed }: { p: U3; e: U3; size: [number, number]; seed: number }) {
-  const map = useMemo(() => posterTexture(seed), [seed]);
-  return <Prim t="quad" p={p} e={e} s={size} map={map} gloss={0.1} />;
-}
 
 // ---------- realism ----------
 
@@ -142,25 +116,10 @@ function Teen() {
   return useMemo(() => {
     const rnd = rng(LOAD_SEED);
     const R = (a: number, b: number) => a + rnd() * (b - a);
-    const chance = (p: number) => rnd() < p;
-    const int = (n: number) => Math.floor(rnd() * n);
-    const hue = (s: number, v: number) => hsv(R(0, 1), s, v);
-    const steel = C(0.2, 0.2, 0.25);
-    const books: ReactNode[] = [];
-    let bx = -0.42;
-    while (bx < 0.18) {
-      const w = R(0.025, 0.05), h = R(0.17, 0.26);
-      books.push(<Prim key={bx} p={[bx + w / 2, 1.5125 + h / 2, 0.19]} s={[w, h, R(0.14, 0.19)]} c={Ck(hue(R(0.3, 0.7), R(0.25, 0.7)))} />);
-      bx += w + 0.002;
-    }
-
     const rotY = ([x, y, z]: U3, deg: number): U3 => {
       const a = (deg * Math.PI) / 180;
       return [x * Math.cos(a) + z * Math.sin(a), y, -x * Math.sin(a) + z * Math.cos(a)];
     };
-    const shoeColor = hue(0.6, 0.8).map((v) => v * 1.4);
-    const flipShoe = chance(0.3);
-    const ball: U3 = [R(1.45, 1.8), 0.12, R(-1.3, -0.7)];
     // Bed gadgets, rolled here so the phone charger cable can find the phone; they rest on the duvet's real surface.
     const onBed = (x: number, z: number, lift: number) => bedSurfaceY(x, -z) + lift; // Unity z → three z
     const laptopZ = R(0.2, 0.45);
@@ -171,56 +130,18 @@ function Teen() {
     const pad = { x: padX, z: padZ, y: onBed(padX, padZ, 0.023), yaw: R(0, 360) };
     const plugAt = rotY([0, 0, -0.085], phone.yaw), plug: U3 = [phone.p[0] + plugAt[0], phone.p[1], phone.p[2] + plugAt[2]];
     const cableBlack = C(0.03, 0.03, 0.035);
-    // Clutter: where each piece landed this load (Unity coords) — also its home for the layout.
-    const pile: U3 = [R(0.6, 1), 0, R(-1.25, -0.9)], jeansAt: U3 = [R(-0.6, 0.2), 0, R(-1.1, -0.7)], hasJeans = chance(0.7);
-    const shoesAt: U3 = [R(-0.85, -0.6), 0, R(-0.6, -0.4)], boardAt: U3 = [1.76, 0, R(-0.45, -0.25)];
-    const at = (p: U3) => ({ position: flip(p) });
 
     return (
       <>
         <Cable c={cableBlack} width={0.007} pts={[[-1.92, 0.35, -0.95], [-1.95, 0.012, -1], [-1.975, 0.012, -1.18], [-1.99, 0.3, -1.2]]} owners={["pc", "pc", "socket-desk", "socket-desk"]} />
         <Cable c={cableBlack} width={0.006} pts={[[-1.88, 0.95, -1.35], [-1.965, 0.76, -1.33], [-1.97, 0.012, -1.27], [-1.99, 0.29, -1.21]]} owners={["monitor", "monitor", "socket-desk", "socket-desk"]} />
 
-        {/* Wall shelf above the desk (books, the one leaning over, a plant) and the poster over it: wall items of their own, modelled in the desk's frame */}
-        <RoomItem id="wall-shelf" home={{ position: [-1.87, 1.5, 1.35] }}>
-        <G p={[-1.68, 0, -1.35]} yaw={-90}>
-          <Walnut p={[0, 1.5, 0.19]} s={[0.9, 0.025, 0.22]} c={[0.75, 0.7, 0.68]} />
-          {books}
-          <Prim p={[bx + 0.06, 1.6, 0.19]} s={[0.035, 0.22, 0.16]} e={[0, 0, -28]} c={Ck(hue(0.5, 0.5))} />
-          <Prim t="cylinder" p={[0.36, 1.5525, 0.19]} s={[0.1, 0.04, 0.1]} c={C(0.6, 0.3, 0.2)} />
-          <Prim t="sphere" p={[0.36, 1.65, 0.19]} s={[0.17, 0.14, 0.17]} c={C(0.15, 0.35, 0.12)} />
-        </G>
-        </RoomItem>
-        <RoomItem id="poster-desk" home={{ position: [-1.975, 2.1, 1.35] }}>
-        <G p={[-1.68, 0, -1.35]} yaw={-90}>
-          <Poster p={[0, 2.1, 0.295]} e={[0, 0, R(-2, 2)]} size={[0.45, 0.62]} seed={int(1e9)} />
-        </G>
-        </RoomItem>
-
-        {/* Clothes where they fell: hoodie (unless it's on the chair or the hook), jeans, sneakers */}
-        {HOODIE.at === 1 && (
-          <RoomItem id="hoodie" home={at(pile)}><G p={pile} yaw={R(0, 360)}>
-            <Blob p={[0, 0, 0]} size={[0.6, 0.5]} />
-            {[0, 1, 2].map((i) => <Fabric key={i} p={[R(-0.06, 0.06), 0.02 + i * 0.035, R(-0.06, 0.06)]} s={[0.5 - i * 0.1, 0.04, 0.4 - i * 0.08]} c={HOODIE.color} e={[0, R(-30, 30), 0]} />)}
-          </G></RoomItem>
-        )}
-        {hasJeans && (
-          <RoomItem id="jeans" home={at(jeansAt)}><G p={jeansAt} yaw={R(0, 360)}>
-            {[-1, 1].map((s) => <Fabric key={s} p={[s * 0.09, 0.015, 0]} s={[0.16, 0.03, 0.75]} c={[0.2, 0.3, 0.55]} e={[0, s * R(2, 12), 0]} />)}
-          </G></RoomItem>
-        )}
-        <RoomItem id="sneakers" home={at(shoesAt)}><G p={shoesAt} yaw={R(0, 360)}>
-          <Blob p={[0, 0, 0]} size={[0.4, 0.42]} />
-          {[-1, 1].map((s) => {
-            const knocked = s === 1 && flipShoe;
-            return (
-              <G key={s} p={[s * 0.09 + (knocked ? 0.05 : 0), knocked ? 0.05 : 0, R(-0.05, 0.05)]} e={[0, R(-20, 20), knocked ? 80 : 0]}>
-                <Plastic p={[0, 0.018, 0]} s={[0.1, 0.035, 0.28]} c={C(0.92, 0.92, 0.9)} />
-                <PbrCapsule set="cotton_jersey" tile={0.26} position={flip([0, 0.06, -0.01])} scale={[0.09, 0.12, 0.07]} rotation={[90, 0, 0]} color={Ck(shoeColor)} cast={false} />
-              </G>
-            );
-          })}
-        </G></RoomItem>
+        {/* Clutter: where each piece landed this load */}
+        {HOODIE.at === 1 && <ItemView id="hoodie" place={PILE} />}
+        {JEANS.here && <ItemView id="jeans" place={JEANS} />}
+        <ItemView id="sneakers" place={SNEAKERS} />
+        <ItemView id="basketball" place={BALL} />
+        <ItemView id="skateboard" place={BOARD} />
 
         {/* On the bed (gadgets sit on the duvet folds, ~.55): laptop mid-chat, phone, controller */}
         <RoomItem id="bed" home={HOMES.bed}>
@@ -234,30 +155,9 @@ function Teen() {
         {/* Phone charger: over the bed edge, across the floor to the window socket */}
         <Cable c={C(0.85, 0.85, 0.82)} width={0.006} pts={[plug, [-0.93, onBed(-0.93, plug[2] + 0.1, 0.006), plug[2] + 0.1], [-0.8, 0.2, plug[2] + 0.2], [-0.75, 0.012, 1.6], [0.1, 0.012, 1.96], [0.25, 0.29, 1.99]]} owners={["bed", "bed", "bed", "socket-window", "socket-window", "socket-window"]} />
 
-        {/* Basketball; skateboard against the right wall with two posters above it */}
-        <RoomItem id="basketball" home={at(ball)}>
-        <Blob p={ball} size={[0.32, 0.32]} />
-        <PbrSphere set="fabric_leather_02" tile={0.25} p={ball} s={[0.24, 0.24, 0.24]} e={[R(0, 360), R(0, 360), 0]} c={C(1.6, 0.65, 0.25)} />
-        </RoomItem>
-        <RoomItem id="skateboard" home={at(boardAt)}><G p={boardAt} e={[0, 0, -12]}>
-          <Deck seed={int(1e9)} />
-          {[0.14, 0.7].map((y) => (
-            <group key={y}>
-              <Plastic p={[-0.02, y, 0]} s={[0.025, 0.03, 0.15]} c={steel} />
-              {[-1, 1].map((s) => <Plastic key={s} t="cylinder" p={[-0.04, y, s * 0.08]} s={[0.055, 0.015, 0.055]} e={[0, 0, 90]} c={C(0.95, 0.9, 0.8)} />)}
-            </group>
-          ))}
-        </G></RoomItem>
-        <RoomItem id="poster-1" home={at([1.995, 1.65, -1.05])}><Poster p={[1.995, 1.65, -1.05]} e={[0, 90, R(-2, 2)]} size={[0.5, 0.7]} seed={int(1e9)} /></RoomItem>
-        <RoomItem id="poster-2" home={at([1.995, 1.55, -0.3])}><Poster p={[1.995, 1.55, -0.3]} e={[0, 90, R(-3, 3)]} size={[0.4, 0.56]} seed={int(1e9)} /></RoomItem>
       </>
     );
   }, []);
-}
-
-function Deck({ seed }: { seed: number }) {
-  const map = useMemo(() => posterTexture(seed), [seed]);
-  return <Prim p={[0, 0.42, 0]} s={[0.015, 0.8, 0.21]} map={map} />;
 }
 
 function BedGadgets({ laptop: l, phone: ph, pad }: {

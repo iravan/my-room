@@ -4,11 +4,10 @@ import { useEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useGame, type Vec3 } from "@/lib/store";
-import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
-import { paint } from "@/lib/paint";
+import { CYAN, srgb } from "@/lib/lighting";
 import { Slab } from "./Surface";
 import { RoomItem } from "./RoomItem";
-import { HOMES, useLayout, useStyle } from "@/lib/room";
+import { HOMES, useStyle } from "@/lib/room";
 
 const METAL = srgb(0.55, 0.55, 0.7);
 const LIGHT_SCALE = { hemi: 14, sun: 2, fill: 4, city: 8, lamp: 4 }; // tuned by eye against the Unity screenshots
@@ -33,27 +32,6 @@ export function Neon({ position, size, color }: { position: Vec3; size: Vec3; co
   );
 }
 
-type RGB3 = [number, number, number];
-function gridTexture(a: RGB3, b: RGB3) {
-  return paint(128, 128, (u, v) => {
-    const x = Math.round(u * 127), y = Math.round(v * 127);
-    return x % 16 === 0 || y % 16 === 0 || x === 127 || y === 127 ? a : b;
-  });
-}
-
-// Woven rug in the style's two colours: a double border, a field of fine stripes, a medallion in the middle.
-function wovenTexture(a: RGB3, b: RGB3) {
-  return paint(256, 256, (u, v) => {
-    const edge = Math.min(u, 1 - u, v, 1 - v), weave = 0.93 + 0.07 * Math.sin(u * 256 * Math.PI) * Math.sin(v * 256 * Math.PI);
-    const d = Math.abs(u - 0.5) + Math.abs(v - 0.5) * 1.4; // diamond medallion
-    let c: number[] = b;
-    if (edge < 0.05 || (edge > 0.07 && edge < 0.085)) c = a;
-    else if (edge >= 0.085 && (Math.abs(d - 0.22) < 0.02 || d < 0.08 || (v * 18) % 1 < 0.07)) c = a.map((x, i) => x * 0.7 + b[i] * 0.3);
-    return [c[0] * weave, c[1] * weave, c[2] * weave];
-  });
-}
-
-
 // Glossy surfaces reflect the room itself (neon in the floor), re-captured when the lighting changes.
 function Reflections() {
   const { gl, scene } = useThree();
@@ -76,7 +54,7 @@ function Reflections() {
 }
 
 export function Lighting() {
-  const preset = useGame((s) => s.preset), size = useLayout((s) => s.size), style = useStyle();
+  const preset = useGame((s) => s.preset), style = useStyle();
   const p = style.presets[preset % 3];
   // Trilight-style ambient: up-facing surfaces catch the ceiling's cove (its neon tint when it glows), undersides
   // only see the floor.
@@ -85,7 +63,6 @@ export function Lighting() {
     p.ambient.clone().multiplyScalar(0.4),
   ], [p, style]);
   const [sunTarget, cityTarget] = useMemo(() => [new THREE.Object3D(), new THREE.Object3D()], []);
-  const rug = useMemo(() => (style.rug.kind === "grid" ? gridTexture : wovenTexture)(style.rug.a, style.rug.b), [style]);
   const city = useMemo(() => style.windowLight.clone().multiply(p.window), [p, style]);
 
   return (
@@ -99,23 +76,6 @@ export function Lighting() {
       <RoomItem id="window" home={HOMES.window}>
         <primitive object={cityTarget} position={[-0.3, 1.17, -1.1]} />
         <spotLight position={[-0.3, 1.7, -1.95]} target={cityTarget} angle={(57.5 * Math.PI) / 180} penumbra={0.65} distance={5.5} color={city} intensity={LIGHT_SCALE.city * style.exposure} />
-      </RoomItem>
-
-      {/* Neon cove along the ceiling: magenta left/back, cyan right/front. */}
-      <RoomItem id="neon-cove" home={HOMES["neon-cove"]}>
-      <Neon position={[0, size.h - 0.12, -size.d / 2 + 0.03]} size={[size.w - 0.1, 0.03, 0.03]} color={MAGENTA} />
-      <Neon position={[-size.w / 2 + 0.03, size.h - 0.12, 0]} size={[0.03, 0.03, size.d - 0.1]} color={MAGENTA} />
-      <Neon position={[0, size.h - 0.12, size.d / 2 - 0.03]} size={[size.w - 0.1, 0.03, 0.03]} color={CYAN} />
-      <Neon position={[size.w / 2 - 0.03, size.h - 0.12, 0]} size={[0.03, 0.03, size.d - 0.1]} color={CYAN} />
-      </RoomItem>
-      {/* Rug: glowing synthwave grid, or a woven rug */}
-      <RoomItem id="rug" home={HOMES.rug}>
-      <mesh position={[0, 0.005, -0.2]} receiveShadow>
-        <boxGeometry args={[1.8, 0.01, 1.3]} />
-        {style.rug.kind === "grid"
-          ? <meshBasicMaterial map={rug} color={[1.6, 1.6, 1.6]} toneMapped={false} />
-          : <meshStandardMaterial map={rug} roughness={1} />}
-      </mesh>
       </RoomItem>
 
       <Reflections />

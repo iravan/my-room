@@ -1,7 +1,7 @@
 {
   "default": "cyber",
   "styles": {
-    "cyber": { "items": {} },
+    "cyber": { "items": { "rug": { "variant": "neon-grid" } } },
     "countryside": { "items": {} },
     "vintage": { "items": {} },
     "scandinavian": { "items": {} },
