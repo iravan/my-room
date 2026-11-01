@@ -1,0 +1,13 @@
+{
+  "default": "cyber",
+  "styles": {
+    "cyber": { "items": {} },
+    "countryside": { "items": {} },
+    "vintage": { "items": {} },
+    "scandinavian": { "items": {} },
+    "industrial": { "items": {} },
+    "japandi": { "items": {} },
+    "coastal": { "items": {} },
+    "academia": { "items": {} }
+  }
+}

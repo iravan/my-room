@@ -9,17 +9,12 @@ import { Slider } from "@/components/ui/slider";
 import { STYLE_IDS, STYLES, styleOf } from "@/lib/styles";
 import { typing, useGame } from "@/lib/store";
 import { Panel } from "./Panel";
+import { ITEMS } from "@/items/registry";
 import { ROOM_BUDGET, useBudget } from "@/lib/budget";
 import * as THREE from "three";
 import { FINISHES, finishLabel, finishType, VARIANTS } from "@/lib/options";
 
-const NAMES: Record<string, string> = {
-  "socket-desk": "Socket (desk)", "socket-window": "Socket (window)", "socket-right": "Socket (right wall)", switch: "Light switch",
-  frames: "Framed records", "wall-shelf": "Wall shelf", "poster-desk": "Poster (desk)", "poster-1": "Poster", "poster-2": "Poster (small)",
-  cabinet: "Record cabinet (+ turntable)", crate: "Record crate", "neon-cove": "Ceiling neon", "ceiling-light": "Ceiling light",
-  "smoke-detector": "Smoke detector", bed: "Bed (+ laptop, phone)", nightstand: "Nightstand (+ lamp)", desk: "Desk (+ PC, monitor)",
-};
-const nameOf = (id: string) => useLayout.getState().models[id]?.name ?? NAMES[id] ?? id[0].toUpperCase() + id.slice(1);
+const nameOf = (id: string) => useLayout.getState().models[id]?.name ?? ITEMS[id]?.name ?? id[0].toUpperCase() + id.slice(1);
 const STEP = Math.PI / 12; // 15°
 
 export const enterEdit = () => { useGame.getState().setView("room"); useLayout.setState({ editing: true, selected: null }); };

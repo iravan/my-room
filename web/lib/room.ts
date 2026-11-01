@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import * as THREE from "three";
 import type { Vec3 } from "./store";
-import { BED_HOME, CABINET, CRATE, NIGHTSTAND, DESK } from "./layout";
+import { ITEMS } from "@/items/registry";
 import { normalizeOptions, type Options } from "./options";
 import { STYLES, styleOf, type Style, type StyleId } from "./styles";
 
@@ -28,12 +28,10 @@ export function normalizeSize(raw: unknown): RoomSize {
 
 // Which walls an item stands against (−1 = left/back, +1 = right/front); it follows them when the room is resized,
 // so a bed against the back wall stays against it. Items not listed follow a wall if they're within 0.5 m of it.
-const ANCHOR: Record<string, { x?: -1 | 1; z?: -1 | 1 }> = {
-  bed: { x: -1, z: -1 }, nightstand: { x: -1 }, desk: { x: -1, z: 1 }, chair: { x: -1, z: 1 }, cabinet: { x: 1, z: -1 },
-  crate: { x: 1 }, window: { z: -1 }, door: { x: 1, z: 1 }, closet: { z: 1 }, switch: { x: 1, z: 1 },
-  "socket-desk": { x: -1, z: 1 }, "socket-window": { z: -1 }, "socket-right": { x: 1, z: 1 }, frames: { x: -1, z: -1 },
-  "wall-shelf": { x: -1, z: 1 }, "poster-desk": { x: -1, z: 1 }, "poster-1": { x: 1 }, "poster-2": { x: 1 }, skateboard: { x: 1 },
-};
+// Walls each item follows (from its definition in items/<id>/item.ts).
+const ANCHOR: Record<string, { x?: -1 | 1; z?: -1 | 1 }> = Object.fromEntries(
+  Object.values(ITEMS).filter((d) => d.walls).map((d) => [d.id, d.walls!]),
+);
 function anchorOf(id: string, p: Vec3, size: RoomSize) {
   const a = ANCHOR[id];
   if (a) return { x: a.x ?? 0, z: a.z ?? 0 };
@@ -48,35 +46,15 @@ export function restPosition(id: string, home: Home, size: RoomSize): Vec3 {
 export const restPose = (id: string, home: Home, size: RoomSize): Pose => ({ position: restPosition(id, home, size), rotationY: home.rotationY ?? 0, scale: 1 });
 
 // Fixed homes of the furniture that other code also needs (camera shots); clutter homes are rolled per load.
-export const HOMES: Record<string, Home> = {
-  bed: { position: BED_HOME },
-  nightstand: { position: NIGHTSTAND },
-  desk: { position: DESK, rotationY: Math.PI / 2 },
-  cabinet: { position: CABINET },
-  crate: { position: CRATE },
-  window: { position: [-0.3, 1.55, -2] },
-  door: { position: [1.4, 0, 2] },
-  closet: { position: [0.1, 0, 2] },
-  switch: { position: [2, 1.1, 1.75] },
-  "socket-desk": { position: [-2, 0.3, 1.2] },
-  "socket-window": { position: [0.25, 0.3, -2] },
-  "socket-right": { position: [2, 0.3, 1.4] },
-  frames: { position: [-1.99, 1.35, -0.85] },
-  "wall-shelf": { position: [-1.87, 1.5, 1.35] },
-  "poster-desk": { position: [-1.975, 2.1, 1.35] },
-  "poster-1": { position: [1.995, 1.65, 1.05] },
-  "poster-2": { position: [1.995, 1.55, 0.3] },
-  rug: { position: [0, 0, -0.2] },
-  "neon-cove": { position: [0, 2.68, 0] },
-  "ceiling-light": { position: [0, 2.685, 0.2] },
-  "smoke-detector": { position: [0.9, 2.69, -0.6] },
-};
+// Fixed homes (from the item definitions); clutter homes are rolled per load and registered by <RoomItem>.
+export const HOMES: Record<string, Home> = Object.fromEntries(
+  Object.values(ITEMS).filter((d) => d.home).map((d) => [d.id, d.home!]),
+);
 
 // Wall fixtures slide along their wall: the coordinate across the wall and the facing stay as at home.
-export const ON_WALL: Record<string, "x" | "z"> = {
-  window: "z", door: "z", closet: "z", "socket-window": "z",
-  switch: "x", "socket-desk": "x", "socket-right": "x", frames: "x", "wall-shelf": "x", "poster-desk": "x", "poster-1": "x", "poster-2": "x",
-};
+export const ON_WALL: Record<string, "x" | "z"> = Object.fromEntries(
+  Object.values(ITEMS).filter((d) => d.onWall).map((d) => [d.id, d.onWall!]),
+);
 // Window: its opening (1.4 × 1 m at scale 1) must stay inside the wall.
 export const WINDOW_SIZE = { w: 1.4, h: 1 };
 function constrain(id: string, p: Pose, size: RoomSize): Pose {
