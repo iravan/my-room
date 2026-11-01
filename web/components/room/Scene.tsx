@@ -14,6 +14,7 @@ import { Tooltip } from "./Clickable";
 import { Inspector } from "./Inspector";
 import { SelectionBox } from "./SelectionBox";
 import { DecorModels } from "./Decor";
+import { ShellModels } from "./Shell";
 import { useLayout } from "@/lib/room";
 import { EditPanel } from "@/components/hud/EditPanel";
 import { AudioDriver } from "./AudioDriver";
@@ -40,6 +41,7 @@ export default function Scene() {
         <Records />
         <Inspector />
         <DecorModels />
+        <ShellModels />
       </Suspense>
       <CameraRig />
       <SelectionBox />

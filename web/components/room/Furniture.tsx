@@ -11,6 +11,7 @@ import { Clickable } from "./Clickable";
 import { Part, Slab, unityEuler } from "./Surface";
 import { Bed } from "./Bed";
 import { RoomItem } from "./RoomItem";
+import { Core } from "./Shell";
 import { HOMES } from "@/lib/room";
 import { Disc } from "./Records";
 import { togglePlay, useCollection } from "@/lib/collection";
@@ -142,8 +143,10 @@ export function Furniture() {
       <RoomItem id="bed" home={HOMES.bed}><Bed /></RoomItem>
       <RoomItem id="cabinet" home={HOMES.cabinet}>
         <Cabinet />
-        <Turntable />
-        <SleeveStand />
+        <Core lift>
+          <Turntable />
+          <SleeveStand />
+        </Core>
       </RoomItem>
       <RoomItem id="crate" home={HOMES.crate}><Crate /></RoomItem>
       <RoomItem id="window" home={HOMES.window}><BlindsAndGlass /></RoomItem>

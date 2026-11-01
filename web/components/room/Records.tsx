@@ -12,6 +12,7 @@ import { Neon } from "./Lighting";
 import { unityEuler } from "./Surface";
 import { Clickable } from "./Clickable";
 import { RoomItem } from "./RoomItem";
+import { Core } from "./Shell";
 import { HOMES } from "@/lib/room";
 
 const SLEEVE = new THREE.BoxGeometry(0.31, 0.31, 0.006);
@@ -152,10 +153,10 @@ export function Records() {
   const albums = useCollection((s) => s.albums), spinning = useCollection((s) => s.albums.find((a) => a.id === s.spinningId));
   return (
     <>
-      <RoomItem id="crate" home={HOMES.crate}><CrateRecords albums={albums} /></RoomItem>
+      <RoomItem id="crate" home={HOMES.crate}><Core><CrateRecords albums={albums} /></Core></RoomItem>
       <RoomItem id="cabinet" home={HOMES.cabinet}>
         <CabinetSpines albums={albums} />
-        {spinning && <NowSpinning a={spinning} />}
+        {spinning && <Core lift><NowSpinning a={spinning} /></Core>}
       </RoomItem>
       <RoomItem id="frames" home={{ position: [-1.99, 1.35, -0.85] }}><WallDisplay albums={albums} /></RoomItem>
     </>

@@ -5,6 +5,7 @@ import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { homePose, liveHomes, ON_WALL, useLayout, type Home } from "@/lib/room";
 import { applyFinish } from "@/lib/options";
+import { lifts } from "./Shell";
 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3(), normal = new THREE.Vector3();
 
@@ -63,21 +64,39 @@ function startDrag(id: string, home: Home, e: ThreeEvent<PointerEvent>, camera: 
 
 // Renders an item where the layout puts it. Children are modelled at `home`; with no saved pose this is a no-op.
 // Several <RoomItem> with the same id (e.g. the cabinet, its spines and the turntable on it) move together.
-export function RoomItem({ id, home, children }: { id: string; home: Home; children: ReactNode }) {
+const noRaycast = () => {};
+
+export function RoomItem({ id, home, children, shellModel }: { id: string; home: Home; children: ReactNode; shellModel?: boolean }) {
   const pose = useLayout((s) => s.items[id]), editing = useLayout((s) => s.editing);
   const { camera, gl, scene } = useThree();
   const yaw = home.rotationY ?? 0;
-  useEffect(() => { liveHomes.set(id, home); }, [id, home]);
+  useEffect(() => { if (!shellModel) liveHomes.set(id, home); }, [id, home, shellModel]);
   // Finishes: put each customisable material into the chosen option (or back), only while the item has or had options.
-  const ref = useRef<THREE.Group>(null), touched = useRef(false);
+  // Shell replacement: hide the built-in look (and stop it taking clicks) except <Core> parts; lift resting cores.
+  const ref = useRef<THREE.Group>(null), touched = useRef(false), shelled = useRef(false);
   useFrame(() => {
-    const opts = useLayout.getState().options[id];
-    if (!opts && !touched.current) return;
+    const L = useLayout.getState(), opts = L.options[id], shell = !shellModel && !!L.shells[id];
+    if (!opts && !touched.current && !shell && !shelled.current) return;
     touched.current = !!opts;
-    ref.current?.traverse((o) => {
-      const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+    const wasShelled = shelled.current;
+    shelled.current = shell;
+    const lift = shell ? lifts.get(id) ?? 0 : 0;
+    const walk = (o: THREE.Object3D, core: boolean) => {
+      if (o.userData.core) {
+        core = true;
+        if (o.userData.lift) o.position.y = lift;
+      }
+      const mesh = o as THREE.Mesh, m = mesh.material as THREE.MeshStandardMaterial | undefined;
       if (m?.userData?.finish) applyFinish(m, opts?.[m.userData.finish]);
-    });
+      if ((mesh.isMesh || (o as THREE.Points).isPoints) && !core && (shell || wasShelled)) {
+        o.visible = !shell;
+        o.userData.hiddenShell = shell;
+        if (shell && o.raycast !== noRaycast) { o.userData.raycast = o.raycast; o.raycast = noRaycast; }
+        if (!shell && o.userData.raycast) { o.raycast = o.userData.raycast; delete o.userData.raycast; }
+      }
+      for (const c of o.children) walk(c, core);
+    };
+    if (ref.current) walk(ref.current, !!shellModel);
   });
   return (
     <group
@@ -85,7 +104,7 @@ export function RoomItem({ id, home, children }: { id: string; home: Home; child
       position={pose?.position ?? home.position}
       rotation={[0, (pose?.rotationY ?? yaw) - yaw, 0]}
       scale={pose?.scale ?? 1}
-      userData={{ roomItem: id, home }}
+      userData={{ roomItem: id, home, shellModel }}
       onPointerDown={editing ? (e) => startDrag(id, home, e, camera, gl.domElement, scene) : undefined}
     >
       <group position={[-home.position[0], -home.position[1], -home.position[2]]}>{children}</group>

@@ -9,6 +9,7 @@ import { paint } from "@/lib/paint";
 import { Slab } from "./Surface";
 import { Clickable } from "./Clickable";
 import { Nightstand } from "./Nightstand";
+import { Core } from "./Shell";
 import { RoomItem } from "./RoomItem";
 import { HOMES } from "@/lib/room";
 
@@ -47,6 +48,7 @@ function NightLamp() {
   return (
     <RoomItem id="nightstand" home={HOMES.nightstand}>
       <Nightstand />
+      <Core lift>
       <Clickable onTap={toggleLamp} position={LAMP}>
         <mesh position={[0, 0.01, 0]} castShadow>
           <cylinderGeometry args={[0.07, 0.07, 0.02, 24]} />
@@ -73,6 +75,7 @@ function NightLamp() {
         shadow-bias={-0.002}
         shadow-radius={quality === 2 ? 4 : 1} // three r18x dropped PCFSoftShadowMap: PCF softens by radius instead
       />
+      </Core>
     </RoomItem>
   );
 }

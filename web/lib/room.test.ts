@@ -1,7 +1,7 @@
 // Layout: untrusted poses are cleaned, and moving an item pivots about its own home, never the room's origin.
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { itemMatrix, normalizeLayout, placePoint } from "./room";
+import { itemMatrix, normalizeLayout, normalizeRoom, placePoint } from "./room";
 
 describe("layout", () => {
   it("keeps good poses and clamps them inside the room", () => {
@@ -54,5 +54,15 @@ describe("layout", () => {
     expect(plug.toArray().map((v) => +v.toFixed(6))).toEqual([-1.99, 0.3, 0.2]);
     const pc = placePoint("desk", [-1.92, 0.35, 0.95], items); // desk not moved
     expect(pc.toArray()).toEqual([-1.92, 0.35, 0.95]);
+  });
+
+  it("cleans replaced looks: built-in items only, stored model names only, quarter turns", () => {
+    const r = normalizeRoom({ shells: {
+      desk: { asset: "1234abcd.glb", name: "My desk", yaw: 1 },
+      bed: { asset: "../../evil.glb", name: "x" },
+      "model-12345678": { asset: "1234abcd.glb" },
+      chair: { asset: "abcd1234.glb", yaw: 7 },
+    } }, "visit:");
+    expect(r.shells).toEqual({ desk: { asset: "visit:1234abcd.glb", name: "My desk", yaw: 1 }, chair: { asset: "visit:abcd1234.glb", name: "Model", yaw: 0 } });
   });
 });

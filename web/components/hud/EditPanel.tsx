@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { addModelFile } from "@/lib/models";
+import { addModelFile, importModelFile } from "@/lib/models";
 import { Button } from "@/components/ui/button";
 import { homePose, liveHomes, ON_WALL, useLayout } from "@/lib/room";
 import { useGame } from "@/lib/store";
@@ -87,9 +87,20 @@ export function EditPanel() {
   useEditKeys();
   const editing = useLayout((s) => s.editing), selected = useLayout((s) => s.selected), canUndo = useLayout((s) => s.past.length > 0);
   const moved = useLayout((s) => !!(s.selected && s.items[s.selected])), anyMoved = useLayout((s) => Object.keys(s.items).length + Object.keys(s.options).length > 0);
-  const file = useRef<HTMLInputElement>(null);
+  const file = useRef<HTMLInputElement>(null), lookFile = useRef<HTMLInputElement>(null);
+  const shell = useLayout((s) => (s.selected ? s.shells[s.selected] : undefined));
   if (!editing) return null;
   const onWall = !!(selected && ON_WALL[selected]), isModel = !!(selected && selected.startsWith("model-"));
+  const replaceLook = async (f?: File) => {
+    if (!f || !selected) return;
+    try {
+      const { asset, name, stats } = await importModelFile(f);
+      useLayout.getState().setShell(selected, { asset, name, yaw: 0 });
+      toast.success(`${nameOf(selected)} now uses ${f.name} (${stats.triangles.toLocaleString()} triangles).`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
   const upload = async (f?: File) => {
     if (!f) return;
     try {
@@ -120,6 +131,19 @@ export function EditPanel() {
           <Button size="sm" variant="outline" disabled={!moved} onClick={() => useLayout.getState().reset(selected)}>Put back where it was</Button>
           <Options id={selected} />
           {isModel && <Button size="sm" variant="destructive" onClick={() => useLayout.getState().removeModel(selected)}>Remove model</Button>}
+          {!isModel && (shell ? (
+            <>
+              <p className="text-xs text-zinc-400">Look: <span className="text-zinc-200">{shell.name}</span></p>
+              <div className="grid grid-cols-2 gap-1">
+                <Button size="sm" variant="secondary" onClick={() => useLayout.getState().setShell(selected, { ...shell, yaw: (shell.yaw + 1) % 4 })}>Turn model 90°</Button>
+                <Button size="sm" variant="outline" onClick={() => useLayout.getState().setShell(selected, null)}>Original look</Button>
+              </div>
+            </>
+          ) : (
+            <Button size="sm" variant="secondary" onClick={() => lookFile.current?.click()}>Replace look with a model…</Button>
+          ))}
+          <input ref={lookFile} type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" className="hidden"
+            onChange={(e) => { replaceLook(e.target.files?.[0]); e.target.value = ""; }} />
         </>
       )}
       <Button size="sm" variant="secondary" onClick={() => file.current?.click()}>+ Add a 3D model (.glb)</Button>

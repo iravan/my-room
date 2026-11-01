@@ -10,6 +10,7 @@ import { Neon } from "./Lighting";
 import { bedSurfaceY, bedWidth } from "./Bed";
 import { Desk, T } from "./Desk";
 import { Chair } from "./Chair";
+import { Core } from "./Shell";
 import { RoomItem } from "./RoomItem";
 import { HOMES, placePoint, useLayout } from "@/lib/room";
 import { PbrCapsule, PbrMaterial, Slab, unityEuler, type TextureSet } from "./Surface";
@@ -155,7 +156,7 @@ const blobTexture = () => (blobTex ??= paint(64, 64, (u, v) =>
 // Sits just above the rug (top at .01); costs no shadow caster.
 function Blob({ p, size }: { p: U3; size: [number, number] }) {
   return (
-    <mesh geometry={GEO.quad} position={flip([p[0], 0.012, p[2]])} rotation={[-Math.PI / 2, 0, 0]} scale={[size[0] * 1.35, size[1] * 1.35, 1]}>
+    <mesh userData={{ core: true }} geometry={GEO.quad} position={flip([p[0], 0.012, p[2]])} rotation={[-Math.PI / 2, 0, 0]} scale={[size[0] * 1.35, size[1] * 1.35, 1]}>
       <meshBasicMaterial color="black" map={blobTexture()} transparent depthWrite={false} polygonOffset polygonOffsetFactor={-1} />
     </mesh>
   );
@@ -366,6 +367,7 @@ function Teen() {
           <Blob p={[0.4, 0, 0.02]} size={[0.32, 0.55]} />
           <Blob p={[-0.45, 0, -0.05]} size={[0.32, 0.32]} />
 
+          <Core lift>
           {/* Monitor with a game running, webcam, a sticky note or two, and its soft blue spill */}
           <Plastic p={[0, T + 0.006, 0.15]} s={[0.24, 0.012, 0.18]} c={black} />
           <Plastic p={[0, T + 0.11, 0.16]} s={[0.05, 0.2, 0.03]} c={black} />
@@ -403,7 +405,9 @@ function Teen() {
           </G>
 
           {drinks}
+          </Core>
 
+          <Core>
           {/* Gaming PC under the desk, glass front, RGB fans */}
           <Plastic p={[0.4, 0.25, 0.02]} s={[0.22, 0.48, 0.44]} c={black} cast />
           {[CYAN, VIOLET, MAGENTA].map((c, i) =>
@@ -415,6 +419,7 @@ function Teen() {
             const d = R(0.05, 0.07);
             return <Prim key={i} t="sphere" p={[R(-0.65, -0.2), 0.03, R(-0.5, -0.2)]} s={[d, d, d]} e={[R(0, 360), R(0, 360), 0]} c={C(0.85, 0.85, 0.8)} />;
           })}
+          </Core>
 
         </G>
         </RoomItem>
@@ -443,7 +448,7 @@ function Teen() {
           <G p={chairLocal} yaw={R(-35, 35)}>
             <Blob p={[0, 0, 0]} size={[0.75, 0.75]} />
             <Chair accent={accent6} hoodieOn={hoodieAt === 0} />
-            {hoodieAt === 0 && <Fabric p={[0, 1.36, -0.36]} s={[0.56, 0.06, 0.22]} c={hoodie} e={[-10, 0, R(-6, 6)]} />}
+            {hoodieAt === 0 && <Core><Fabric p={[0, 1.36, -0.36]} s={[0.56, 0.06, 0.22]} c={hoodie} e={[-10, 0, R(-6, 6)]} /></Core>}
           </G>
         </G>
         </RoomItem>
@@ -508,7 +513,7 @@ function Teen() {
 
         {/* On the bed (gadgets sit on the duvet folds, ~.55): laptop mid-chat, phone, controller */}
         <RoomItem id="bed" home={HOMES.bed}>
-        <BedGadgets laptop={laptop} phone={phone} pad={pad} />
+        <Core lift><BedGadgets laptop={laptop} phone={phone} pad={pad} /></Core>
 
         </RoomItem>
 
@@ -575,7 +580,7 @@ export function TeenStuff() {
     <>
       <RoomBasics />
       <Teen />
-      <RoomItem id="nightstand" home={HOMES.nightstand}><Dust /></RoomItem>
+      <RoomItem id="nightstand" home={HOMES.nightstand}><Core lift><Dust /></Core></RoomItem>
     </>
   );
 }

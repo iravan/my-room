@@ -38,8 +38,8 @@ export function loadModel(asset: string) {
   return templates.get(asset)!;
 }
 
-// Check, parse, store and place an uploaded file. Throws with a user-facing message.
-export async function addModelFile(file: File): Promise<ModelStats> {
+// Check, parse and store an uploaded file; returns its stored name. Throws with a user-facing message.
+export async function importModelFile(file: File): Promise<{ asset: string; name: string; stats: ModelStats }> {
   if (!/\.(glb|gltf)$/i.test(file.name)) throw new Error("Choose a .glb (or self-contained .gltf) file.");
   if (file.size > LIMITS.bytes) throw new Error(`The model is ${(file.size / 1048576).toFixed(1)} MB; the limit is 20 MB.`);
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -49,10 +49,16 @@ export async function addModelFile(file: File): Promise<ModelStats> {
   const asset = `${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}.glb`;
   await putImage(asset, new Blob([bytes], { type: "model/gltf-binary" }));
   templates.set(asset, Promise.resolve(template));
+  return { asset, name: file.name.replace(/\.(glb|gltf)$/i, ""), stats };
+}
+
+// Upload a model as free decor, placed in front of the camera.
+export async function addModelFile(file: File): Promise<ModelStats> {
+  const { asset, name, stats } = await importModelFile(file);
   // In front of the camera, on the floor, facing it.
   const { roomPos, yaw } = useGame.getState(), a = (yaw * Math.PI) / 180, fx = Math.sin(a), fz = -Math.cos(a);
   const clamp = (v: number) => Math.min(1.7, Math.max(-1.7, v));
-  useLayout.getState().addModel(asset, file.name.replace(/\.(glb|gltf)$/i, ""), {
+  useLayout.getState().addModel(asset, name, {
     position: [clamp(roomPos[0] + fx * 1.2), 0, clamp(roomPos[2] + fz * 1.2)], rotationY: Math.atan2(-fx, -fz), scale: 1,
   });
   return stats;

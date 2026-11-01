@@ -102,24 +102,40 @@ const storage = createJSONStorage(() => ({
   removeItem: (k: string) => { if (!frozen) localStorage.removeItem(k); },
 }));
 
-export type RoomData = { items: Layout; options: Options; models: Models };
+// Built-in items whose look is replaced by an uploaded model: item id → model file, name, and a quarter-turn yaw.
+export type Shells = Record<string, { asset: string; name: string; yaw: number }>;
+export function normalizeShells(raw: unknown): Shells {
+  const out: Shells = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const [id, m] of Object.entries(raw as Record<string, unknown>).slice(0, 200)) {
+    const v = m as { asset?: unknown; name?: unknown; yaw?: unknown };
+    if (/^[\w-]{1,64}$/.test(id) && !id.startsWith("model-") && typeof v?.asset === "string" && /^(visit:)?[0-9a-f]{8}\.glb$/.test(v.asset))
+      out[id] = { asset: v.asset, name: typeof v.name === "string" ? v.name.slice(0, 60) : "Model", yaw: [0, 1, 2, 3].includes(v.yaw as number) ? (v.yaw as number) : 0 };
+  }
+  return out;
+}
+
+export type RoomData = { items: Layout; options: Options; models: Models; shells: Shells };
 // Untrusted room layout (a share file): every part cleaned; model files optionally renamed (visit: prefix).
 export function normalizeRoom(raw: unknown, assetPrefix = ""): RoomData {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const models = normalizeModels(r.models);
-  for (const m of Object.values(models)) m.asset = assetPrefix + m.asset.replace(/^visit:/, "");
-  return { items: normalizeLayout(r.items), options: normalizeOptions(r.options), models };
+  const shells = normalizeShells(r.shells);
+  for (const m of [...Object.values(models), ...Object.values(shells)]) m.asset = assetPrefix + m.asset.replace(/^visit:/, "");
+  return { items: normalizeLayout(r.items), options: normalizeOptions(r.options), models, shells };
 }
 
 type State = {
   items: Layout;
   models: Models;
+  shells: Shells;
+  setShell: (id: string, shell: Shells[string] | null) => void;
   options: Options; // per item: finish slot or variant → choice
   // Edit mode (not saved): which item is selected, whether it's being dragged, and undo history.
   editing: boolean;
   selected: string | null;
   dragging: boolean;
-  past: { items: Layout; options: Options; models: Models }[];
+  past: RoomData[];
   addModel: (asset: string, name: string, pose: Pose) => string;
   removeModel: (id: string) => void;
   // In edit mode: the finish slots the selected item has (found by SelectionBox).
@@ -135,6 +151,15 @@ export const useLayout = create<State>()(
     (set, get) => ({
       items: {},
       models: {},
+      shells: {},
+      setShell: (id, shell) => {
+        get().snapshot();
+        set((s) => {
+          const shells = { ...s.shells };
+          if (shell) Object.assign(shells, normalizeShells({ [id]: shell })); else delete shells[id];
+          return { shells };
+        });
+      },
       options: {},
       slots: [],
       editing: false,
@@ -161,15 +186,12 @@ export const useLayout = create<State>()(
           return { models, items, options, selected: s.selected === id ? null : s.selected };
         });
       },
-      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), { items: s.items, options: s.options, models: s.models }] })),
+      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), { items: s.items, options: s.options, models: s.models, shells: s.shells }] })),
       undo: () => set((s) => (s.past.length ? { ...s.past[s.past.length - 1], past: s.past.slice(0, -1) } : {})),
     }),
     {
-      name: "my-room-layout", version: 1, storage, partialize: ({ items, options, models }) => ({ items, options, models }),
-      merge: (saved, cur) => {
-        const s = saved as { items?: unknown; options?: unknown; models?: unknown } | undefined;
-        return { ...cur, items: normalizeLayout(s?.items), options: normalizeOptions(s?.options), models: normalizeModels(s?.models) };
-      },
+      name: "my-room-layout", version: 1, storage, partialize: ({ items, options, models, shells }) => ({ items, options, models, shells }),
+      merge: (saved, cur) => ({ ...cur, ...normalizeRoom(saved) }),
     },
   ),
 );

@@ -17,7 +17,7 @@ function fit(helper: THREE.Box3Helper, scene: THREE.Object3D) {
   scene.traverse((o) => {
     if (o.userData.roomItem !== id) return;
     o.traverse((m) => {
-      if (!(m as THREE.Mesh).isMesh) return;
+      if (!(m as THREE.Mesh).isMesh || m.userData.hiddenShell) return;
       box.union(part.setFromObject(m));
       const f = ((m as THREE.Mesh).material as THREE.Material).userData?.finish;
       if (f) slots.add(f);
