@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode, type Ref } from "react";
 import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { useGame, type Vec3 } from "@/lib/store";
+import { useLayout } from "@/lib/room";
 
 const HOVER = new THREE.Color(0.06, 0.05, 0.1); // added to emissive: a lift like Unity's colour × 1.4 + violet
 
@@ -50,7 +51,7 @@ export function Clickable({ onTap, hint, onHover, children, position, rotation, 
       onPointerOver={hover(true)}
       onPointerOut={hover(false)}
       onClick={(e) => {
-        if (e.delta > 4 || useGame.getState().title) return;
+        if (e.delta > 4 || useGame.getState().title || useLayout.getState().editing) return; // in edit mode a press selects instead
         e.stopPropagation();
         onTap();
       }}

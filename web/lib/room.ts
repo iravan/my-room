@@ -35,7 +35,7 @@ export const HOMES: Record<string, Home> = {
 };
 
 // Wall fixtures slide along their wall: the coordinate across the wall and the facing stay as at home.
-const ON_WALL: Record<string, "x" | "z"> = {
+export const ON_WALL: Record<string, "x" | "z"> = {
   window: "z", door: "z", closet: "z", "socket-window": "z",
   switch: "x", "socket-desk": "x", "socket-right": "x", frames: "x", "wall-shelf": "x", "poster-desk": "x", "poster-1": "x", "poster-2": "x",
 };
@@ -74,19 +74,40 @@ export function normalizeLayout(raw: unknown): Layout {
   return out;
 }
 
+// Homes of the items currently rendered (clutter homes are rolled per load), registered by <RoomItem>.
+export const liveHomes = new Map<string, Home>();
+
+export const homePose = (home: Home): Pose => ({ position: [...home.position], rotationY: home.rotationY ?? 0, scale: 1 });
+
 type State = {
   items: Layout;
+  // Edit mode (not saved): which item is selected, whether it's being dragged, and undo history.
+  editing: boolean;
+  selected: string | null;
+  dragging: boolean;
+  past: Layout[];
   move: (id: string, pose: Pose) => void;
   reset: (id: string) => void;
+  snapshot: () => void; // call before a change that should be undoable
+  undo: () => void;
 };
 export const useLayout = create<State>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       items: {},
+      editing: false,
+      selected: null,
+      dragging: false,
+      past: [],
       move: (id, pose) => set((s) => ({ items: { ...s.items, ...normalizeLayout({ [id]: pose }) } })),
-      reset: (id) => set((s) => { const items = { ...s.items }; delete items[id]; return { items }; }),
+      reset: (id) => { get().snapshot(); set((s) => { const items = { ...s.items }; delete items[id]; return { items }; }); },
+      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), s.items] })),
+      undo: () => set((s) => (s.past.length ? { items: s.past[s.past.length - 1], past: s.past.slice(0, -1) } : {})),
     }),
-    { name: "my-room-layout", version: 1, merge: (saved, cur) => ({ ...cur, items: normalizeLayout((saved as { items?: unknown })?.items) }) },
+    {
+      name: "my-room-layout", version: 1, partialize: ({ items }) => ({ items }),
+      merge: (saved, cur) => ({ ...cur, items: normalizeLayout((saved as { items?: unknown })?.items) }),
+    },
   ),
 );
 

@@ -12,6 +12,9 @@ import { CityWindow } from "./City";
 import { Records } from "./Records";
 import { Tooltip } from "./Clickable";
 import { Inspector } from "./Inspector";
+import { SelectionBox } from "./SelectionBox";
+import { useLayout } from "@/lib/room";
+import { EditPanel } from "@/components/hud/EditPanel";
 import { AudioDriver } from "./AudioDriver";
 import { InspectPanel } from "@/components/hud/InspectPanel";
 import { TurntablePanel } from "@/components/hud/TurntablePanel";
@@ -26,7 +29,7 @@ export default function Scene() {
   const quality = useGame((s) => s.quality), hideUI = useGame((s) => s.hideUI), title = useGame((s) => s.title);
   return (
     <>
-    <Canvas shadows="percentage" camera={{ fov: 55, near: 0.03, far: 1200 }} dpr={[1, DPR_CAP[quality]]} style={{ touchAction: "none" }}>
+    <Canvas onPointerMissed={() => { if (useLayout.getState().editing) useLayout.setState({ selected: null }); }} shadows="percentage" camera={{ fov: 55, near: 0.03, far: 1200 }} dpr={[1, DPR_CAP[quality]]} style={{ touchAction: "none" }}>
       <Suspense fallback={null}>
         <RoomShell />
         <Lighting />
@@ -37,6 +40,7 @@ export default function Scene() {
         <Inspector />
       </Suspense>
       <CameraRig />
+      <SelectionBox />
       <AudioDriver />
       <PostFX />
     </Canvas>
@@ -47,6 +51,7 @@ export default function Scene() {
         <InspectPanel />
         <TurntablePanel />
         <CratePanel />
+        <EditPanel />
       </>
     )}
     <AlbumEditor />

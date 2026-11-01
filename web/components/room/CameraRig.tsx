@@ -36,7 +36,7 @@ export function CameraRig() {
     };
     const move = (e: PointerEvent) => {
       const s = useGame.getState();
-      if (!last || last.id !== e.pointerId || s.view !== "room" || s.title) return;
+      if (!last || last.id !== e.pointerId || s.view !== "room" || s.title || useLayout.getState().dragging) return;
       // Unity read mouse axes ×3: ~0.3° per pixel at sensitivity 1. FPS-style: drag right turns right, drag down looks down.
       s.look((e.clientX - last.x) * 0.3 * s.sensitivity, (e.clientY - last.y) * 0.3 * s.sensitivity);
       last = { id: e.pointerId, x: e.clientX, y: e.clientY };
@@ -47,9 +47,10 @@ export function CameraRig() {
       const s = useGame.getState();
       if (s.draft || s.dialog || s.title) return; // dialogs own the keyboard; the first key just enters
       if (e.type === "keydown") {
-        if (KEYS[e.key]) s.setView(KEYS[e.key]);
+        const editing = useLayout.getState().editing;
+        if (KEYS[e.key] && !editing) s.setView(KEYS[e.key]); // edit mode stays in the room view
         if (e.key === "m") useGame.setState({ muted: !s.muted });
-        if (e.key === "Escape" || e.key === "Backspace") s.back();
+        if ((e.key === "Escape" || e.key === "Backspace") && !editing) s.back();
         if (s.view === "inspect") {
           if (e.key === "f") useGame.setState({ inspectRot: [s.inspectRot[0] + 180, s.inspectRot[1]] });
           if (e.key === "v") { useGame.setState({ discOut: !s.discOut }); sfx("slide", 0.7); }

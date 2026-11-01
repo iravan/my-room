@@ -11,6 +11,8 @@ import { downloadCollection, importFromFile, leaveVisit, visitFromFile } from "@
 import { takePhoto } from "@/lib/photo";
 import { editAlbum } from "./AlbumEditor";
 import { Panel } from "./Panel";
+import { enterEdit } from "./EditPanel";
+import { useLayout } from "@/lib/room";
 
 const VIEWS: [View, string, string][] = [["room", "Room", "1"], ["turntable", "Turntable", "2"], ["crate", "Crate", "3"], ["shelf", "Cabinet", "4"]];
 const HELP: Record<View, string> = {
@@ -53,6 +55,7 @@ function LeftPanel() {
         </div>
         <Button size="sm" variant="outline" onClick={takePhoto}>Photo [P]</Button>
         <Button size="sm" variant="outline" onClick={() => useGame.setState({ hideUI: true })}>Showcase mode [H]</Button>
+        <Button size="sm" variant="outline" onClick={enterEdit}>Edit room</Button>
         <div className="grid grid-cols-2 gap-1">
           <Button size="sm" variant="outline" onClick={() => useGame.setState({ dialog: "settings" })}>Settings</Button>
           <Button size="sm" variant="outline" onClick={() => useGame.setState({ dialog: "controls" })}>Controls [?]</Button>
@@ -78,9 +81,9 @@ function LeftPanel() {
 
 // Room and cabinet views: what's spinning and how many records there are.
 function RoomPanel() {
-  const view = useGame((s) => s.view), albums = useCollection((s) => s.albums);
+  const view = useGame((s) => s.view), albums = useCollection((s) => s.albums), editing = useLayout((s) => s.editing);
   const spinning = useCollection((s) => s.albums.find((a) => a.id === s.spinningId));
-  if (view !== "room" && view !== "shelf") return null;
+  if ((view !== "room" && view !== "shelf") || editing) return null;
   return (
     <Panel side="right">
       {view === "room" && <p>{spinning ? <>Now spinning:<br /><b className="text-fuchsia-400">{spinning.title}</b> — {spinning.artist}</> : "Nothing on the turntable."}</p>}
