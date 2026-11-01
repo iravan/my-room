@@ -345,6 +345,8 @@ function Teen() {
     const pile: U3 = [R(0.6, 1), 0, R(-1.25, -0.9)], jeansAt: U3 = [R(-0.6, 0.2), 0, R(-1.1, -0.7)], hasJeans = chance(0.7);
     const shoesAt: U3 = [R(-0.85, -0.6), 0, R(-0.6, -0.4)], bagAt: U3 = [-0.76, 0, R(0.2, 0.6)], boardAt: U3 = [1.76, 0, R(-0.45, -0.25)];
     const at = (p: U3) => ({ position: flip(p) });
+    const chairLocal: U3 = [R(-0.12, 0.12), 0, -0.62 + R(-0.08, 0.08)], chairOff = rotY(chairLocal, -90);
+    const chairAt: U3 = [-1.68 + chairOff[0], 0, -1.35 + chairOff[2]];
 
     return (
       <>
@@ -406,23 +408,36 @@ function Teen() {
             return <Prim key={i} t="sphere" p={[R(-0.65, -0.2), 0.03, R(-0.5, -0.2)]} s={[d, d, d]} e={[R(0, 360), R(0, 360), 0]} c={C(0.85, 0.85, 0.8)} />;
           })}
 
-          {/* Wall shelf above the desk: books, the one leaning over, a plant, and a poster over it all */}
+        </G>
+        <Cable c={cableBlack} width={0.007} pts={[[-1.92, 0.35, -0.95], [-1.95, 0.012, -1], [-1.975, 0.012, -1.18], [-1.99, 0.3, -1.2]]} />
+        <Cable c={cableBlack} width={0.006} pts={[[-1.88, 0.95, -1.35], [-1.965, 0.76, -1.33], [-1.97, 0.012, -1.27], [-1.99, 0.29, -1.21]]} />
+        </RoomItem>
+
+        {/* Wall shelf above the desk (books, the one leaning over, a plant) and the poster over it: wall items of their own, modelled in the desk's frame */}
+        <RoomItem id="wall-shelf" home={{ position: [-1.87, 1.5, 1.35] }}>
+        <G p={[-1.68, 0, -1.35]} yaw={-90}>
           <Walnut p={[0, 1.5, 0.19]} s={[0.9, 0.025, 0.22]} c={[0.75, 0.7, 0.68]} />
           {books}
           <Prim p={[bx + 0.06, 1.6, 0.19]} s={[0.035, 0.22, 0.16]} e={[0, 0, -28]} c={Ck(hue(0.5, 0.5))} />
           <Prim t="cylinder" p={[0.36, 1.5525, 0.19]} s={[0.1, 0.04, 0.1]} c={C(0.6, 0.3, 0.2)} />
           <Prim t="sphere" p={[0.36, 1.65, 0.19]} s={[0.17, 0.14, 0.17]} c={C(0.15, 0.35, 0.12)} />
+        </G>
+        </RoomItem>
+        <RoomItem id="poster-desk" home={{ position: [-1.975, 2.1, 1.35] }}>
+        <G p={[-1.68, 0, -1.35]} yaw={-90}>
           <Poster p={[0, 2.1, 0.295]} e={[0, 0, R(-2, 2)]} size={[0.45, 0.62]} seed={int(1e9)} />
+        </G>
+        </RoomItem>
 
-          {/* Gaming chair, pushed back from the desk at whatever angle it was left */}
-          <G p={[R(-0.12, 0.12), 0, -0.62 + R(-0.08, 0.08)]} yaw={R(-35, 35)}>
+        {/* Gaming chair, pushed back from the desk at whatever angle it was left: its own item (rolled in the desk's frame) */}
+        <RoomItem id="chair" home={at(chairAt)}>
+        <G p={[-1.68, 0, -1.35]} yaw={-90}>
+          <G p={chairLocal} yaw={R(-35, 35)}>
             <Blob p={[0, 0, 0]} size={[0.75, 0.75]} />
             <Chair accent={accent6} hoodieOn={hoodieAt === 0} />
             {hoodieAt === 0 && <Fabric p={[0, 1.36, -0.36]} s={[0.56, 0.06, 0.22]} c={hoodie} e={[-10, 0, R(-6, 6)]} />}
           </G>
         </G>
-        <Cable c={cableBlack} width={0.007} pts={[[-1.92, 0.35, -0.95], [-1.95, 0.012, -1], [-1.975, 0.012, -1.18], [-1.99, 0.3, -1.2]]} />
-        <Cable c={cableBlack} width={0.006} pts={[[-1.88, 0.95, -1.35], [-1.965, 0.76, -1.33], [-1.97, 0.012, -1.27], [-1.99, 0.29, -1.21]]} />
         </RoomItem>
 
         {/* Built-in closet: two sliding doors flush with the front wall, a hook for the hoodie */}
