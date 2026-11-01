@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { addModelFile, importModelFile } from "@/lib/models";
 import { Button } from "@/components/ui/button";
 import { homePose, liveHomes, ON_WALL, useLayout } from "@/lib/room";
-import { useGame } from "@/lib/store";
+import { typing, useGame } from "@/lib/store";
 import { Panel } from "./Panel";
 import { ROOM_BUDGET, useBudget } from "@/lib/budget";
 import * as THREE from "three";
@@ -36,7 +36,7 @@ function useEditKeys() {
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       const L = useLayout.getState();
-      if (!L.editing || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (!L.editing || typing(e)) return;
       if ((e.metaKey || e.ctrlKey) && e.key === "z") { e.preventDefault(); L.undo(); }
       else if (e.key === "r" || e.key === "R") rotate(e.shiftKey ? -STEP : STEP);
       else if (e.key === "=" || e.key === "+") resize(1.1);

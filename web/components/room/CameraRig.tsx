@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { useGame } from "@/lib/store";
+import { typing, useGame } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { playAlbum, togglePlay, useCollection } from "@/lib/collection";
 import { SHOTS } from "@/lib/layout";
@@ -43,7 +43,8 @@ export function CameraRig() {
     };
     const up = () => { fingers = Math.max(0, fingers - 1); last = null; };
     const key = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.type === "keyup") { held.current.delete(e.key.toLowerCase()); return; } // a release always counts, wherever focus is
+      if (typing(e)) return;
       const s = useGame.getState();
       if (s.draft || s.dialog || s.title) return; // dialogs own the keyboard; the first key just enters
       if (e.type === "keydown") {
@@ -65,7 +66,7 @@ export function CameraRig() {
           if ((e.key === "Enter" || e.key === "e") && albums[s.selected]) s.inspect(albums[s.selected].id);
         }
         held.current.add(e.key.toLowerCase());
-      } else held.current.delete(e.key.toLowerCase());
+      }
     };
     const blur = () => held.current.clear();
     // Crate: the wheel flips records (down = next).

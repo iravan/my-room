@@ -6,6 +6,11 @@ import { sfx } from "./audio";
 export type View = "room" | "turntable" | "crate" | "shelf" | "inspect";
 export type Vec3 = [number, number, number];
 
+// A key belongs to a field only while typing in it. A focused slider (it keeps focus after a drag) only keeps its arrows,
+// so WASD and the shortcuts still work after touching the volume.
+export const typing = (e: KeyboardEvent) =>
+  e.target instanceof HTMLTextAreaElement || (e.target instanceof HTMLInputElement && (e.target.type !== "range" || e.key.startsWith("Arrow")));
+
 // Room coordinates are Unity's with z flipped (three is right-handed): Unity (x, y, z) = three (x, y, -z).
 type State = {
   view: View;

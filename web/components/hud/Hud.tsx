@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { useGame, type View } from "@/lib/store";
+import { typing, useGame, type View } from "@/lib/store";
 import { useCollection } from "@/lib/collection";
 import { PRESETS } from "@/lib/lighting";
 import { downloadCollection, importFromFile, leaveVisit, visitFromFile } from "@/lib/share";
@@ -143,7 +143,7 @@ function Dialogs() {
 function useHudKeys() {
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (typing(e)) return;
       const s = useGame.getState();
       if (s.title) { enter(); return; }
       if (s.draft || s.dialog) return;
