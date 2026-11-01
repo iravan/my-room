@@ -80,14 +80,30 @@ export const liveHomes = new Map<string, Home>();
 
 export const homePose = (home: Home): Pose => ({ position: [...home.position], rotationY: home.rotationY ?? 0, scale: 1 });
 
+// Uploaded models placed in the room: instance id → stored file (IndexedDB) and its original file name.
+export type Models = Record<string, { asset: string; name: string }>;
+export function normalizeModels(raw: unknown): Models {
+  const out: Models = {};
+  if (!raw || typeof raw !== "object") return out;
+  for (const [id, m] of Object.entries(raw as Record<string, unknown>).slice(0, 200)) {
+    const v = m as { asset?: unknown; name?: unknown };
+    if (/^model-[0-9a-f]{8}$/.test(id) && typeof v?.asset === "string" && /^(visit:)?[0-9a-f]{8}\.glb$/.test(v.asset))
+      out[id] = { asset: v.asset, name: typeof v.name === "string" ? v.name.slice(0, 60) : "Model" };
+  }
+  return out;
+}
+
 type State = {
   items: Layout;
+  models: Models;
   options: Options; // per item: finish slot or variant → choice
   // Edit mode (not saved): which item is selected, whether it's being dragged, and undo history.
   editing: boolean;
   selected: string | null;
   dragging: boolean;
-  past: { items: Layout; options: Options }[];
+  past: { items: Layout; options: Options; models: Models }[];
+  addModel: (asset: string, name: string, pose: Pose) => string;
+  removeModel: (id: string) => void;
   // In edit mode: the finish slots the selected item has (found by SelectionBox).
   slots: string[];
   setOption: (id: string, key: string, value: string) => void;
@@ -100,6 +116,7 @@ export const useLayout = create<State>()(
   persist(
     (set, get) => ({
       items: {},
+      models: {},
       options: {},
       slots: [],
       editing: false,
@@ -112,14 +129,28 @@ export const useLayout = create<State>()(
         get().snapshot();
         set((s) => ({ options: { ...s.options, ...normalizeOptions({ [id]: { ...s.options[id], [key]: value } }) } }));
       },
-      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), { items: s.items, options: s.options }] })),
+      addModel: (asset, name, pose) => {
+        const id = `model-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
+        get().snapshot();
+        set((s) => ({ models: { ...s.models, [id]: { asset, name } }, items: { ...s.items, ...normalizeLayout({ [id]: pose }) }, selected: id }));
+        return id;
+      },
+      removeModel: (id) => {
+        get().snapshot();
+        set((s) => {
+          const models = { ...s.models }, items = { ...s.items }, options = { ...s.options };
+          delete models[id]; delete items[id]; delete options[id];
+          return { models, items, options, selected: s.selected === id ? null : s.selected };
+        });
+      },
+      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), { items: s.items, options: s.options, models: s.models }] })),
       undo: () => set((s) => (s.past.length ? { ...s.past[s.past.length - 1], past: s.past.slice(0, -1) } : {})),
     }),
     {
-      name: "my-room-layout", version: 1, partialize: ({ items, options }) => ({ items, options }),
+      name: "my-room-layout", version: 1, partialize: ({ items, options, models }) => ({ items, options, models }),
       merge: (saved, cur) => {
-        const s = saved as { items?: unknown; options?: unknown } | undefined;
-        return { ...cur, items: normalizeLayout(s?.items), options: normalizeOptions(s?.options) };
+        const s = saved as { items?: unknown; options?: unknown; models?: unknown } | undefined;
+        return { ...cur, items: normalizeLayout(s?.items), options: normalizeOptions(s?.options), models: normalizeModels(s?.models) };
       },
     },
   ),

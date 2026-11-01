@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
+import { addModelFile } from "@/lib/models";
 import { Button } from "@/components/ui/button";
 import { homePose, liveHomes, ON_WALL, useLayout } from "@/lib/room";
 import { useGame } from "@/lib/store";
@@ -12,7 +14,7 @@ const NAMES: Record<string, string> = {
   "socket-desk": "Socket (desk)", "socket-window": "Socket (window)", "socket-right": "Socket (right wall)", switch: "Light switch",
   frames: "Framed records", "wall-shelf": "Wall shelf", "poster-desk": "Poster (desk)", "poster-1": "Poster", "poster-2": "Poster (small)",
 };
-const nameOf = (id: string) => NAMES[id] ?? id[0].toUpperCase() + id.slice(1);
+const nameOf = (id: string) => useLayout.getState().models[id]?.name ?? NAMES[id] ?? id[0].toUpperCase() + id.slice(1);
 const STEP = Math.PI / 12; // 15°
 
 export const enterEdit = () => { useGame.getState().setView("room"); useLayout.setState({ editing: true, selected: null }); };
@@ -85,8 +87,18 @@ export function EditPanel() {
   useEditKeys();
   const editing = useLayout((s) => s.editing), selected = useLayout((s) => s.selected), canUndo = useLayout((s) => s.past.length > 0);
   const moved = useLayout((s) => !!(s.selected && s.items[s.selected])), anyMoved = useLayout((s) => Object.keys(s.items).length + Object.keys(s.options).length > 0);
+  const file = useRef<HTMLInputElement>(null);
   if (!editing) return null;
-  const onWall = !!(selected && ON_WALL[selected]);
+  const onWall = !!(selected && ON_WALL[selected]), isModel = !!(selected && selected.startsWith("model-"));
+  const upload = async (f?: File) => {
+    if (!f) return;
+    try {
+      const st = await addModelFile(f);
+      toast.success(`Added ${f.name} (${st.triangles.toLocaleString()} triangles). Drag it into place.`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
   return (
     <Panel side="right">
       <p><b className="text-cyan-300">Edit room</b><br /><span className="text-zinc-400">
@@ -107,8 +119,12 @@ export function EditPanel() {
           </div>
           <Button size="sm" variant="outline" disabled={!moved} onClick={() => useLayout.getState().reset(selected)}>Put back where it was</Button>
           <Options id={selected} />
+          {isModel && <Button size="sm" variant="destructive" onClick={() => useLayout.getState().removeModel(selected)}>Remove model</Button>}
         </>
       )}
+      <Button size="sm" variant="secondary" onClick={() => file.current?.click()}>+ Add a 3D model (.glb)</Button>
+      <input ref={file} type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" className="hidden"
+        onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ""; }} />
       <div className="grid grid-cols-2 gap-1">
         <Button size="sm" variant="outline" disabled={!canUndo} onClick={() => useLayout.getState().undo()}>Undo [⌘Z]</Button>
         <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {}, options: {} }); }}>Reset room</Button>
