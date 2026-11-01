@@ -338,7 +338,6 @@ function Teen() {
       return [x * Math.cos(a) + z * Math.sin(a), y, -x * Math.sin(a) + z * Math.cos(a)];
     };
     const shoeColor = hue(0.6, 0.8).map((v) => v * 1.4);
-    const bagColor = hue(R(0.6, 0.9), R(0.15, 0.35));
     const flipShoe = chance(0.3);
     const ball: U3 = [R(1.45, 1.8), 0.12, R(-1.3, -0.7)];
     // Bed gadgets, rolled here so the phone charger cable can find the phone; they rest on the duvet's real surface.
@@ -353,7 +352,7 @@ function Teen() {
     const cableBlack = C(0.03, 0.03, 0.035);
     // Clutter: where each piece landed this load (Unity coords) — also its home for the layout.
     const pile: U3 = [R(0.6, 1), 0, R(-1.25, -0.9)], jeansAt: U3 = [R(-0.6, 0.2), 0, R(-1.1, -0.7)], hasJeans = chance(0.7);
-    const shoesAt: U3 = [R(-0.85, -0.6), 0, R(-0.6, -0.4)], bagAt: U3 = [-0.76, 0, R(0.2, 0.6)], boardAt: U3 = [1.76, 0, R(-0.45, -0.25)];
+    const shoesAt: U3 = [R(-0.85, -0.6), 0, R(-0.6, -0.4)], boardAt: U3 = [1.76, 0, R(-0.45, -0.25)];
     const at = (p: U3) => ({ position: flip(p) });
     const chairLocal: U3 = [R(-0.12, 0.12), 0, -0.62 + R(-0.08, 0.08)], chairOff = rotY(chairLocal, -90);
     const chairAt: U3 = [-1.68 + chairOff[0], 0, -1.35 + chairOff[2]];
@@ -503,13 +502,6 @@ function Teen() {
               </G>
             );
           })}
-        </G></RoomItem>
-
-        {/* Backpack dumped against the bed */}
-        <RoomItem id="backpack" home={at(bagAt)}><G p={bagAt} yaw={90 + R(-15, 15)}>
-          <Blob p={[0, 0, 0]} size={[0.42, 0.3]} />
-          <PbrCapsule set="cotton_jersey" tile={0.26} position={flip([0, 0.21, 0])} scale={[0.3, 0.21, 0.17]} rotation={[-12, 0, 0]} color={Ck(bagColor, 1.4)} cast={false} />
-          <PbrSphere set="cotton_jersey" tile={0.26} p={[0, 0.14, -0.085]} s={[0.22, 0.17, 0.07]} e={[-12, 0, 0]} c={Ck(bagColor, 1.2)} />
         </G></RoomItem>
 
         {/* On the bed (gadgets sit on the duvet folds, ~.55): laptop mid-chat, phone, controller */}

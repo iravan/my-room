@@ -38,7 +38,7 @@ second item needs them. `(ask)` items wait for the owner.
 - [ ] Hoodie: soft cloth with hood, sleeves and pocket (on the chair, the floor or the hook).
 - [ ] Jeans: crumpled denim with legs and waistband, denim colour/texture.
 - [ ] Sneakers: sole with toe spring, upper with laces and collar opening.
-- [ ] Backpack: padded body with zip lines, front pocket, straps, top handle.
+- [x] ~~Backpack: padded body with zip lines, front pocket, straps, top handle.~~ Removed: owner doesn't want a backpack.
 - [ ] Basketball: pebbled orange ball with black seams.
 - [ ] Skateboard: concave deck with kicktails and grip tape, trucks and wheels.
 
