@@ -92,4 +92,10 @@ describe("layout", () => {
     expect(Math.abs(s.jeans.position[0]) <= 1.5 && Math.abs(s.jeans.position[2]) <= 1.5).toBe(true);
     useLayout.setState({ size: { w: 4, d: 4, h: 2.8 }, items: {} });
   });
+
+  it("keeps a known style and falls back to cyber for anything else", () => {
+    expect(normalizeRoom({ style: "coastal" }).style).toBe("coastal");
+    expect(normalizeRoom({ style: "<script>" }).style).toBe("cyber");
+    expect(normalizeRoom({}).style).toBe("cyber");
+  });
 });
