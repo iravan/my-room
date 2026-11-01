@@ -26,11 +26,11 @@ export type ItemDef = {
 };
 
 export type VariantDef = {
-  item: string;
+  item: string | string[]; // several ids when an item has instances (sockets, posters)
   id: string;
   name: string;
   anchors?: Record<string, number | Vec3>;
-  Component: ComponentType;
+  Component: ComponentType<{ id: string }>; // modelled at the item's home; id tells instances apart
   // Height of the top surface at world (x, z), for things resting on it (items with a "surface" anchor).
   surfaceY?: (x: number, z: number) => number;
   // Floor footprint [width, depth] in metres, given the item's size option; sizes its contact shadow.

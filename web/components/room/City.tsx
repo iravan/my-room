@@ -3,11 +3,8 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 import { useGame } from "@/lib/store";
-import { CYAN } from "@/lib/lighting";
 import { rng } from "@/lib/paint";
-import { Metal, Neon } from "./Lighting";
-import { RoomItem } from "./RoomItem";
-import { HOMES, useLayout, useStyle } from "@/lib/room";
+import { useLayout, useStyle } from "@/lib/room";
 import { countryLayer, daySky, GROUND, groundTexture, seaLayer } from "./Landscape";
 
 // The view out of the window is real geometry, so it has depth and parallax: a sky dome, then three skyline
@@ -144,7 +141,7 @@ function views(kind: "city" | "country" | "sea", pines: boolean) {
   return viewCache.get(key)!;
 }
 
-function Outside() {
+export function Outside() {
   const noWindow = useLayout((s) => s.hidden.includes("window"));
   const preset = useGame((s) => s.preset), shift = useLayout((s) => 2 - s.size.d / 2); // the city stays behind the back wall as the room's depth changes
   const style = useStyle(), tint = style.presets[preset % 3].window;
@@ -171,23 +168,5 @@ function Outside() {
         </mesh>
       ))}
     </group>
-  );
-}
-
-// Frame round the opening on the room side, and the cyan sill strip.
-export function CityWindow() {
-  const { x0, x1, y0, y1 } = OPENING, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, wdt = x1 - x0, hgt = y1 - y0, z = -1.985;
-  return (
-    <>
-      <Outside />
-      <RoomItem id="window" home={HOMES.window}>
-      <Metal position={[x0 - 0.025, cy, z]} size={[0.05, hgt + 0.1, 0.03]} />
-      <Metal position={[x1 + 0.025, cy, z]} size={[0.05, hgt + 0.1, 0.03]} />
-      <Metal position={[cx, y1 + 0.025, z]} size={[wdt, 0.05, 0.03]} />
-      <Metal position={[cx, y0 - 0.025, z]} size={[wdt, 0.05, 0.03]} />
-      <Metal position={[cx, cy, -2.05]} size={[0.03, hgt, 0.04]} />
-      <Neon position={[cx, 1, -1.97]} size={[1.5, 0.02, 0.05]} color={CYAN} />
-      </RoomItem>
-    </>
   );
 }

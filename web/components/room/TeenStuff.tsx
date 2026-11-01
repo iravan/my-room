@@ -4,13 +4,13 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { drawText, hsv, lerp, paint, rng, type RGBA } from "@/lib/paint";
 import { bedSurfaceY } from "@/items/bed";
-import { Blob, C, Ck, Fabric, flip, G, GEO, LOAD_SEED, Plastic, Prim, type U3 } from "@/items/_shared/prims";
+import { Blob, C, Ck, Fabric, flip, G, LOAD_SEED, Plastic, Prim, Walnut, type U3 } from "@/items/_shared/prims";
 import { HOODIE } from "@/items/hoodie/roll";
 import { Core } from "./Shell";
 import { RoomItem } from "./RoomItem";
 import { HOMES, hiddenOf, placePoint, useLayout } from "@/lib/room";
 import { ITEMS } from "@/items/registry";
-import { PbrCapsule, PbrMaterial, Slab, unityEuler, type TextureSet } from "./Surface";
+import { PbrCapsule, PbrMaterial, unityEuler, type TextureSet } from "./Surface";
 
 // A teenager lives here: gaming desk and PC, chair, closet, and the mess, which lands somewhere new every visit.
 // Straight port of the Unity build's VinylRoomStuff.cs (git tag unity-final): everything below is written in Unity coordinates (p, s, e) and flipped here,
@@ -30,8 +30,6 @@ function PbrSphere({ set, tile, p, s, e, c }: { set: TextureSet; tile: number; p
   );
 }
 
-const Walnut = ({ p, s, c, cast }: { p: U3; s: U3; c: U3; cast?: boolean }) =>
-  <Slab set="black_walnut_veneer_01" tile={1} position={flip(p)} size={s} color={C(...c)} cast={!!cast} />;
 
 // ---------- generated textures ----------
 
@@ -130,44 +128,13 @@ function useClockTexture(make: () => THREE.CanvasTexture, draw: (t: THREE.Canvas
 
 // ---------- the room ----------
 
-// What every real bedroom has: skirting, a door, sockets, a light switch, a ceiling light, a smoke detector.
+// The door, sockets, switch and ceiling fixtures are items (items/<id>/); only the skirting is drawn here.
 
-function RoomBasics() {
-  const paintC = C(0.5, 0.48, 0.56), steel = C(0.7, 0.7, 0.75), white = C(0.8, 0.8, 0.78);
-  const { w, d, h } = useLayout((s) => s.size), hw = w / 2 - 0.0075, hd = d / 2 - 0.0075;
+// Skirting round the walls (follows the room size).
+function Skirting() {
+  const { w, d } = useLayout((s) => s.size), hw = w / 2 - 0.0075, hd = d / 2 - 0.0075;
   const skirting: [U3, U3][] = [[[0, 0.04, hd], [w, 0.08, 0.015]], [[0, 0.04, -hd], [w, 0.08, 0.015]], [[-hw, 0.04, 0], [0.015, 0.08, d]], [[hw, 0.04, 0], [0.015, 0.08, d]]];
-  const sockets: [U3, number, string][] = [[[-2, 0.3, -1.2], -90, "socket-desk"], [[0.25, 0.3, 2], 0, "socket-window"], [[2, 0.3, -1.4], 90, "socket-right"]];
-  return (
-    <>
-      {skirting.map(([p, s], i) => <Plastic key={i} p={p} s={s} c={paintC} />)}
-      {/* Door on the front wall beside the closet; handle on the switch side */}
-      <RoomItem id="door" home={HOMES.door}><G p={[1.4, 0, -2]} yaw={180}>
-        <Walnut p={[0, 1.025, -0.02]} s={[0.8, 2.05, 0.04]} c={[0.55, 0.5, 0.5]} />
-        {[-1, 1].map((s) => <Plastic key={s} p={[s * 0.43, 1.055, -0.01]} s={[0.06, 2.11, 0.02]} c={paintC} />)}
-        <Plastic p={[0, 2.08, -0.01]} s={[0.92, 0.06, 0.02]} c={paintC} />
-        <Plastic t="cylinder" p={[-0.3, 1, -0.045]} s={[0.05, 0.01, 0.05]} e={[90, 0, 0]} c={steel} />
-        <Plastic p={[-0.26, 1, -0.065]} s={[0.12, 0.018, 0.02]} c={steel} />
-      </G></RoomItem>
-      <RoomItem id="switch" home={HOMES.switch}><G p={[2, 1.1, -1.75]} yaw={90}>
-        <Plastic p={[0, 0, -0.004]} s={[0.08, 0.08, 0.008]} c={white} />
-        <Plastic p={[0, 0, -0.01]} s={[0.025, 0.04, 0.006]} e={[8, 0, 0]} c={C(0.8, 0.8, 0.78, 0.9)} />
-      </G></RoomItem>
-      {sockets.map(([p, yaw, id]) => (
-        <RoomItem key={id} id={id} home={HOMES[id]}><G p={p} yaw={yaw}>
-          <Plastic p={[0, 0, -0.004]} s={[0.08, 0.08, 0.008]} c={white} />
-          {[-0.012, 0.012].map((x) => <Prim key={x} p={[x, 0, -0.0085]} s={[0.006, 0.016, 0.002]} c={C(0.05, 0.05, 0.05)} />)}
-        </G></RoomItem>
-      ))}
-      {/* Ceiling: flush light, off at night (faint white dish); smoke detector with its red LED */}
-      <RoomItem id="ceiling-light" home={HOMES["ceiling-light"]}>
-        <Plastic t="cylinder" p={[0, h - 0.115, 0.2]} s={[0.36, 0.015, 0.36]} c={C(0.75, 0.75, 0.78)} emissive={C(0.06, 0.055, 0.07)} />
-      </RoomItem>
-      <RoomItem id="smoke-detector" home={HOMES["smoke-detector"]}>
-        <Plastic t="cylinder" p={[0.9, h - 0.11, -0.6]} s={[0.11, 0.01, 0.11]} c={white} />
-        <Prim t="sphere" p={[0.93, h - 0.122, -0.6]} s={[0.008, 0.008, 0.008]} glow={C(2, 0.1, 0.1)} />
-      </RoomItem>
-    </>
-  );
+  return <>{skirting.map(([p, s], i) => <Plastic key={i} p={p} s={s} c={C(0.5, 0.48, 0.56)} />)}</>;
 }
 
 function Teen() {
@@ -227,32 +194,6 @@ function Teen() {
         <RoomItem id="poster-desk" home={{ position: [-1.975, 2.1, 1.35] }}>
         <G p={[-1.68, 0, -1.35]} yaw={-90}>
           <Poster p={[0, 2.1, 0.295]} e={[0, 0, R(-2, 2)]} size={[0.45, 0.62]} seed={int(1e9)} />
-        </G>
-        </RoomItem>
-
-        {/* Built-in wardrobe: framed opening, top and floor track, two sliding doors with long pulls (the back one a mirror),
-            so it doesn't read as a second room door. A hook for the hoodie. */}
-        <RoomItem id="closet" home={{ position: [0.1, 0, 2] }}>
-        <G p={[0.1, 0, -2]}>
-          {[-1, 1].map((s) => (
-            <group key={s}>
-              <Walnut p={[s * 0.4, 1.03, s < 0 ? 0.015 : 0.04]} s={[0.8, 2.06, 0.025]} c={[0.85, 0.8, 0.78]} />
-              <Plastic p={[s * 0.74, 1.05, s < 0 ? 0.03 : 0.055]} s={[0.025, 1.2, 0.015]} c={C(0.7, 0.7, 0.75)} />
-              <Plastic p={[s * 0.82, 1.06, 0.03]} s={[0.04, 2.12, 0.06]} c={C(0.5, 0.48, 0.56)} />
-            </group>
-          ))}
-          <Plastic p={[0, 2.11, 0.035]} s={[1.68, 0.08, 0.07]} c={C(0.5, 0.48, 0.56)} />
-          <Plastic p={[0, 0.01, 0.03]} s={[1.6, 0.02, 0.06]} c={C(0.7, 0.7, 0.75)} />
-          <mesh geometry={GEO.cube} position={flip([-0.4, 1.05, 0.03])} scale={[0.62, 1.75, 0.004]}>
-            <meshStandardMaterial color={C(0.9, 0.9, 0.92)} metalness={1} roughness={0.04} />
-          </mesh>
-          <Plastic p={[0.55, 1.62, 0.065]} s={[0.02, 0.02, 0.05]} c={C(0.7, 0.7, 0.75)} />
-          {HOODIE.at === 2 && (
-            <>
-              <Fabric p={[0.55, 1.33, 0.1]} s={[0.42, 0.55, 0.06]} c={HOODIE.color} e={[0, 0, R(-4, 4)]} />
-              <Fabric p={[0.55, 1.58, 0.09]} s={[0.2, 0.14, 0.07]} c={HOODIE.color.map((v) => v * 0.85)} />
-            </>
-          )}
         </G>
         </RoomItem>
 
@@ -348,7 +289,7 @@ function BedGadgets({ laptop: l, phone: ph, pad }: {
 export function TeenStuff() {
   return (
     <>
-      <RoomBasics />
+      <Skirting />
       <Teen />
     </>
   );

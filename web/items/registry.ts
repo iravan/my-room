@@ -16,6 +16,7 @@ import cabinet from "./cabinet/item";
 import turntable from "./turntable/item";
 import crate from "./crate/item";
 import window from "./window/item";
+import windowCovering from "./window-covering/item";
 import door from "./door/item";
 import closet from "./closet/item";
 import lightSwitch from "./switch/item";
@@ -52,6 +53,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
     turntable,
     crate,
     window,
+    windowCovering,
     door,
     closet,
     lightSwitch,

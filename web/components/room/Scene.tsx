@@ -8,7 +8,7 @@ import { Lighting } from "./Lighting";
 import { PostFX } from "./PostFX";
 import { Furniture } from "./Furniture";
 import { TeenStuff } from "./TeenStuff";
-import { CityWindow } from "./City";
+import { Outside } from "./City";
 import { Records } from "./Records";
 import { Tooltip } from "./Clickable";
 import { Inspector } from "./Inspector";
@@ -37,7 +37,7 @@ export default function Scene() {
         <RoomShell />
         <Lighting />
         <Furniture />
-        <CityWindow />
+        <Outside />
         <TeenStuff />
         <Records />
         <Inspector />

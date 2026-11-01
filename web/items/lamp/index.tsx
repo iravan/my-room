@@ -11,7 +11,7 @@ export function LampItem() {
   if (!v) return null;
   return (
     <RoomItem id="lamp" home={HOMES.lamp}>
-      <v.Component />
+      <v.Component id="lamp" />
       <Dust />
     </RoomItem>
   );

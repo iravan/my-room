@@ -8,5 +8,5 @@ import { useVariant } from "../resolve";
 export function ItemView({ id }: { id: string }) {
   const v = useVariant(id);
   if (!v) return null;
-  return <RoomItem id={id} home={HOMES[id]}><v.Component /></RoomItem>;
+  return <RoomItem id={id} home={HOMES[id]}><v.Component id={id} /></RoomItem>;
 }

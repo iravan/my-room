@@ -64,3 +64,6 @@ export const DeskFrame = ({ children }: { children: ReactNode }) => <G p={[-1.68
 // Jersey photo is ~70% grey: tints scaled up to match (as in Unity).
 export const Fabric = ({ p, s, c, e }: { p: U3; s: U3; c: number[]; e?: U3 }) =>
   <Slab set="cotton_jersey" tile={0.26} position={flip(p)} size={s} rotation={e} color={Ck(c, 1.4)} cast={false} />;
+
+export const Walnut = ({ p, s, c, cast }: { p: U3; s: U3; c: U3; cast?: boolean }) =>
+  <Slab set="black_walnut_veneer_01" tile={1} position={flip(p)} size={s} color={C(...c)} cast={!!cast} />;

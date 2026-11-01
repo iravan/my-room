@@ -12,7 +12,7 @@ export function NightstandItem() {
   const [w, d] = v.footprint?.() ?? [0.45, 0.4], [x, , z] = HOMES.nightstand.position;
   return (
     <RoomItem id="nightstand" home={HOMES.nightstand}>
-      <v.Component />
+      <v.Component id="nightstand" />
       <ContactShadow x={x} z={z} size={[w + 0.15, d + 0.15]} />
     </RoomItem>
   );

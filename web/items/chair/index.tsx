@@ -23,7 +23,7 @@ export function ChairItem() {
       <DeskFrame>
         <G p={roll.at} yaw={roll.yaw}>
           <Blob p={[0, 0, 0]} size={[w + 0.05, d + 0.05]} />
-          <v.Component />
+          <v.Component id="chair" />
           {HOODIE.at === 0 && <Core><Fabric p={[0, 1.36, -0.36]} s={[0.56, 0.06, 0.22]} c={HOODIE.color} e={[-10, 0, roll.tilt]} /></Core>}
         </G>
       </DeskFrame>

@@ -29,7 +29,7 @@ describe("items + config", () => {
       expect(d.variants[0]).toBeTruthy();
       if (d.onWall) expect(d.home).not.toBeNull();
     }
-    expect(Object.keys(ITEMS).length).toBe(37); // jeans only appear on 70% of loads, so the in-game list may show 27
+    expect(Object.keys(ITEMS).length).toBe(38); // jeans only appear on 70% of loads, so the in-game list may show 27
   });
 
   it("every look an item lists is registered in items/variants.ts (items still on 'default' aren't moved yet)", async () => {

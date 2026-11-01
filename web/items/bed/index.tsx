@@ -14,7 +14,7 @@ export function BedItem() {
   const [w, d] = v.footprint?.(size) ?? [1.1, 2.1], [hx, , hz] = def.home!.position;
   return (
     <RoomItem id="bed" home={HOMES.bed}>
-      <v.Component />
+      <v.Component id="bed" />
       <ContactShadow x={hx + (w - 1.02) / 2} z={hz} size={[w + 0.28, d + 0.31]} />
     </RoomItem>
   );

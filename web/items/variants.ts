@@ -15,6 +15,15 @@ import chairRacing from "./chair/variants/racing";
 import cabinetCubbies from "./cabinet/variants/cubbies";
 import turntableClassic from "./turntable/variants/classic";
 import cratePine from "./crate/variants/pine";
+import windowMetalFrame from "./window/variants/metal-frame";
+import windowCoveringVenetian from "./window-covering/variants/venetian";
+import doorSlab from "./door/variants/slab";
+import closetSliding from "./closet/variants/sliding";
+import switchRocker from "./switch/variants/rocker";
+import socketPlate from "./socket/variants/plate";
+import ceilingLightFlush from "./ceiling-light/variants/flush";
+import smokeDetectorRound from "./smoke-detector/variants/round";
 
 export const VARIANTS: Record<string, Record<string, VariantDef>> = {};
-for (const v of [bedPlatform, nightstandMidcentury, lampDrum, deskGaming, monitorFlat24, keyboardRgb, speakersBookshelf, headsetStand, drinksCans, pcTower, binMesh, chairRacing, cabinetCubbies, turntableClassic, cratePine]) (VARIANTS[v.item] ??= {})[v.id] = v;
+for (const v of [bedPlatform, nightstandMidcentury, lampDrum, deskGaming, monitorFlat24, keyboardRgb, speakersBookshelf, headsetStand, drinksCans, pcTower, binMesh, chairRacing, cabinetCubbies, turntableClassic, cratePine,
+  windowMetalFrame, windowCoveringVenetian, doorSlab, closetSliding, switchRocker, socketPlate, ceilingLightFlush, smokeDetectorRound]) for (const item of ([] as string[]).concat(v.item)) (VARIANTS[item] ??= {})[v.id] = v;
