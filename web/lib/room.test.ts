@@ -128,6 +128,20 @@ describe("layout", () => {
     expect(hiddenOf("pc", { items: {}, hidden: ["desk"] })).toBe(false);
   });
 
+  it("picking a look: saved as the item's option, drops a model in its place, one undo step", () => {
+    const L = useLayout.getState;
+    L().setShell("rug", { asset: "abcd1234.glb", name: "My rug", yaw: 0 });
+    const before = L().past.length;
+    L().setLook("rug", "neon-grid");
+    expect(L().options.rug.look).toBe("neon-grid");
+    expect(L().shells.rug).toBeUndefined();
+    expect(L().past.length).toBe(before + 1);
+    L().undo();
+    expect(L().shells.rug?.name).toBe("My rug");
+    L().setLook("rug", "canopy"); // not one of the rug's looks: not saved
+    expect(L().options.rug?.look).toBeUndefined();
+  });
+
   it("a point on rolled clutter standing on an item goes where that item goes", () => {
     const size = { w: 4, d: 4, h: 2.8 }, items = { bed: { position: [-0.45, 0, -0.9] as [number, number, number], rotationY: 0, scale: 1 } };
     // the phone has no fixed home and isn't drawn in a test: its charger plug follows the bed, 1 m right

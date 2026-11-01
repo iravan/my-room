@@ -170,6 +170,7 @@ type State = {
   // In edit mode: the finish slots the selected item has (found by SelectionBox).
   slots: string[];
   setOption: (id: string, key: string, value: string) => void;
+  setLook: (id: string, look: string) => void;
   move: (id: string, pose: Pose) => void;
   reset: (id: string) => void;
   snapshot: () => void; // call before a change that should be undoable
@@ -218,6 +219,15 @@ export const useLayout = create<State>()(
       setOption: (id, key, value) => {
         get().snapshot();
         set((s) => ({ options: { ...s.options, ...normalizeOptions({ [id]: { ...s.options[id], [key]: value } }) } }));
+      },
+      // Pick one of the item's own looks: drops a model you put in its place (one undo step for both).
+      setLook: (id, look) => {
+        get().snapshot();
+        set((s) => {
+          const shells = { ...s.shells };
+          delete shells[id];
+          return { shells, options: { ...s.options, ...normalizeOptions({ [id]: { ...s.options[id], look } }) } };
+        });
       },
       addModel: (asset, name, pose) => {
         const id = `model-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;

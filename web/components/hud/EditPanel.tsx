@@ -14,6 +14,8 @@ import { ITEMS } from "@/items/registry";
 import { ROOM_BUDGET, useBudget } from "@/lib/budget";
 import * as THREE from "three";
 import { FINISHES, finishLabel, finishType, VARIANTS } from "@/lib/options";
+import { VARIANTS as LOOKS } from "@/items/variants";
+import { variantId } from "@/items/resolve";
 
 const nameOf = (id: string) => useLayout.getState().models[id]?.name ?? ITEMS[id]?.name ?? id[0].toUpperCase() + id.slice(1);
 const STEP = Math.PI / 12; // 15°
@@ -49,7 +51,7 @@ function useEditKeys() {
   }, []);
 }
 
-// Colour/material per part the item has, and its variants (e.g. bed size).
+// Colour/material per part the item has, and its options (e.g. bed size).
 function Options({ id }: { id: string }) {
   const slots = useLayout((s) => s.slots), opts = useLayout((s) => s.options[id]) ?? {}, def = finishDefaults(useLayout((s) => s.style), id);
   const variants = VARIANTS[id] ?? {};
@@ -81,6 +83,24 @@ function Options({ id }: { id: string }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// The selected item's look: one of its own (from items/<id>/variants), or a model of yours in its place.
+function Look({ id, onModel }: { id: string; onModel: () => void }) {
+  const shell = useLayout((s) => s.shells[id]), pick = useLayout((s) => s.options[id]?.look), style = useLayout((s) => s.style);
+  const looks = Object.values(LOOKS[id] ?? {}), current = shell ? null : variantId(id, { style, options: { [id]: { look: pick ?? "" } } });
+  return (
+    <div>
+      <p className="text-xs text-zinc-400">Look: <span className="text-zinc-200">{shell ? shell.name : looks.find((v) => v.id === current)?.name}</span></p>
+      <div className="grid grid-cols-2 gap-1">
+        {looks.map((v) => (
+          <Button key={v.id} size="xs" variant={current === v.id ? "default" : "outline"} onClick={() => useLayout.getState().setLook(id, v.id)}>{v.name}</Button>
+        ))}
+        <Button size="xs" variant={shell ? "default" : "outline"} onClick={onModel}>{shell ? "Other model…" : "Your model…"}</Button>
+        {shell && <Button size="xs" variant="secondary" onClick={() => useLayout.getState().setShell(id, { ...shell, yaw: (shell.yaw + 1) % 4 })}>Turn model 90°</Button>}
+      </div>
     </div>
   );
 }
@@ -175,7 +195,6 @@ export function EditPanel() {
   const editing = useLayout((s) => s.editing), selected = useLayout((s) => s.selected), canUndo = useLayout((s) => s.past.length > 0);
   const moved = useLayout((s) => !!(s.selected && s.items[s.selected])), anyMoved = useLayout((s) => Object.keys(s.items).length + Object.keys(s.options).length > 0 || (Object.keys(DEFAULT_SIZE) as (keyof RoomSize)[]).some((k) => s.size[k] !== DEFAULT_SIZE[k]));
   const file = useRef<HTMLInputElement>(null), lookFile = useRef<HTMLInputElement>(null);
-  const shell = useLayout((s) => (s.selected ? s.shells[s.selected] : undefined));
   if (!editing) return null;
   const onWall = !!(selected && ON_WALL[selected]), isModel = !!(selected && selected.startsWith("model-"));
   const replaceLook = async (f?: File) => {
@@ -227,17 +246,7 @@ export function EditPanel() {
           </div>
           <Options id={selected} />
           {isModel && <Button size="sm" variant="destructive" onClick={() => useLayout.getState().removeModel(selected)}>Remove model</Button>}
-          {!isModel && (shell ? (
-            <>
-              <p className="text-xs text-zinc-400">Look: <span className="text-zinc-200">{shell.name}</span></p>
-              <div className="grid grid-cols-2 gap-1">
-                <Button size="sm" variant="secondary" onClick={() => useLayout.getState().setShell(selected, { ...shell, yaw: (shell.yaw + 1) % 4 })}>Turn model 90°</Button>
-                <Button size="sm" variant="outline" onClick={() => useLayout.getState().setShell(selected, null)}>Original look</Button>
-              </div>
-            </>
-          ) : (
-            <Button size="sm" variant="secondary" onClick={() => lookFile.current?.click()}>Replace look with a model…</Button>
-          ))}
+          {!isModel && <Look id={selected} onModel={() => lookFile.current?.click()} />}
           <input ref={lookFile} type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" className="hidden"
             onChange={(e) => { replaceLook(e.target.files?.[0]); e.target.value = ""; }} />
         </>
