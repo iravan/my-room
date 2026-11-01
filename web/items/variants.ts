@@ -11,6 +11,7 @@ import headsetStand from "./headset/variants/stand";
 import drinksCans from "./drinks/variants/cans";
 import pcTower from "./pc/variants/tower";
 import binMesh from "./bin/variants/mesh";
+import chairRacing from "./chair/variants/racing";
 
 export const VARIANTS: Record<string, Record<string, VariantDef>> = {};
-for (const v of [bedPlatform, nightstandMidcentury, lampDrum, deskGaming, monitorFlat24, keyboardRgb, speakersBookshelf, headsetStand, drinksCans, pcTower, binMesh]) (VARIANTS[v.item] ??= {})[v.id] = v;
+for (const v of [bedPlatform, nightstandMidcentury, lampDrum, deskGaming, monitorFlat24, keyboardRgb, speakersBookshelf, headsetStand, drinksCans, pcTower, binMesh, chairRacing]) (VARIANTS[v.item] ??= {})[v.id] = v;

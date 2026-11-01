@@ -3,7 +3,10 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 import { srgb } from "@/lib/lighting";
-import { PbrMaterial, projectUVs, rounded, softBox } from "./Surface";
+import { PbrMaterial, projectUVs, rounded, softBox } from "@/components/room/Surface";
+import { dice } from "../../_shared/prims";
+import { HOODIE } from "../../hoodie/roll";
+import { defineVariant } from "../../types";
 
 // Racing-style gaming chair: bucket seat with raised side bolsters, a tall back that narrows at the waist and wraps
 // forward at the sides, accent-coloured bolsters, a headrest pillow, armrests on brackets, chrome gas lift and a
@@ -48,7 +51,7 @@ function build(accent: RGB) {
   };
 }
 
-export function Chair({ accent, hoodieOn }: { accent: RGB; hoodieOn: boolean }) {
+function Chair({ accent, hoodieOn }: { accent: RGB; hoodieOn: boolean }) {
   const g = useMemo(() => build(accent), [accent]);
   const leather = <PbrMaterial set="fabric_leather_02" color={new THREE.Color(1, 1, 1)} metal={0} vertexColors grainOnly />;
   return (
@@ -84,3 +87,9 @@ export function Chair({ accent, hoodieOn }: { accent: RGB; hoodieOn: boolean }) 
     </>
   );
 }
+
+// Accent colour rolled per load (magenta or cyan bolsters); the headrest pillow hides under a draped hoodie.
+const ACCENT = (dice(7).chance(0.5) ? [0.9, 0.2, 0.6] : [0.2, 0.7, 0.9]).map((v) => v * 0.6);
+const Racing = () => <Chair accent={ACCENT} hoodieOn={HOODIE.at === 0} />;
+
+export default defineVariant({ item: "chair", id: "racing", name: "Racing chair", Component: Racing, footprint: () => [0.7, 0.7] });

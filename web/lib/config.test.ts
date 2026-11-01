@@ -31,4 +31,10 @@ describe("items + config", () => {
     }
     expect(Object.keys(ITEMS).length).toBe(36); // jeans only appear on 70% of loads, so the in-game list may show 27
   });
+
+  it("every look an item lists is registered in items/variants.ts (items still on 'default' aren't moved yet)", async () => {
+    const { VARIANTS } = await import("@/items/variants");
+    for (const d of Object.values(ITEMS))
+      for (const v of d.variants) if (v !== "default") expect(VARIANTS[d.id]?.[v], `${d.id}/${v}`).toBeTruthy();
+  });
 });

@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { drawText, hsv, lerp, paint, rng, type RGBA } from "@/lib/paint";
 import { bedSurfaceY } from "@/items/bed";
-import { Blob, C, Ck, flip, G, GEO, LOAD_SEED, Plastic, Prim, type U3 } from "@/items/_shared/prims";
-import { Chair } from "./Chair";
+import { Blob, C, Ck, Fabric, flip, G, GEO, LOAD_SEED, Plastic, Prim, type U3 } from "@/items/_shared/prims";
+import { HOODIE } from "@/items/hoodie/roll";
 import { Core } from "./Shell";
 import { RoomItem } from "./RoomItem";
 import { HOMES, hiddenOf, placePoint, useLayout } from "@/lib/room";
@@ -30,9 +30,6 @@ function PbrSphere({ set, tile, p, s, e, c }: { set: TextureSet; tile: number; p
   );
 }
 
-// Jersey photo is ~70% grey: tints scaled up to match (as in Unity).
-const Fabric = ({ p, s, c, e }: { p: U3; s: U3; c: number[]; e?: U3 }) =>
-  <Slab set="cotton_jersey" tile={0.26} position={flip(p)} size={s} rotation={e} color={Ck(c, 1.4)} cast={false} />;
 const Walnut = ({ p, s, c, cast }: { p: U3; s: U3; c: U3; cast?: boolean }) =>
   <Slab set="black_walnut_veneer_01" tile={1} position={flip(p)} size={s} color={C(...c)} cast={!!cast} />;
 
@@ -193,10 +190,6 @@ function Teen() {
       bx += w + 0.002;
     }
 
-    const accent = chance(0.5) ? [0.9, 0.2, 0.6] : [0.2, 0.7, 0.9];
-    const accent6 = accent.map((v) => v * 0.6);
-    const hoodieAt = int(3); // 0 chair, 1 floor, 2 closet hook
-    const hoodie = hue(R(0, 0.3), R(0.2, 0.5));
     const rotY = ([x, y, z]: U3, deg: number): U3 => {
       const a = (deg * Math.PI) / 180;
       return [x * Math.cos(a) + z * Math.sin(a), y, -x * Math.sin(a) + z * Math.cos(a)];
@@ -218,8 +211,6 @@ function Teen() {
     const pile: U3 = [R(0.6, 1), 0, R(-1.25, -0.9)], jeansAt: U3 = [R(-0.6, 0.2), 0, R(-1.1, -0.7)], hasJeans = chance(0.7);
     const shoesAt: U3 = [R(-0.85, -0.6), 0, R(-0.6, -0.4)], boardAt: U3 = [1.76, 0, R(-0.45, -0.25)];
     const at = (p: U3) => ({ position: flip(p) });
-    const chairLocal: U3 = [R(-0.12, 0.12), 0, -0.62 + R(-0.08, 0.08)], chairOff = rotY(chairLocal, -90);
-    const chairAt: U3 = [-1.68 + chairOff[0], 0, -1.35 + chairOff[2]];
 
     return (
       <>
@@ -242,17 +233,6 @@ function Teen() {
         </G>
         </RoomItem>
 
-        {/* Gaming chair, pushed back from the desk at whatever angle it was left: its own item (rolled in the desk's frame) */}
-        <RoomItem id="chair" home={at(chairAt)}>
-        <G p={[-1.68, 0, -1.35]} yaw={-90}>
-          <G p={chairLocal} yaw={R(-35, 35)}>
-            <Blob p={[0, 0, 0]} size={[0.75, 0.75]} />
-            <Chair accent={accent6} hoodieOn={hoodieAt === 0} />
-            {hoodieAt === 0 && <Core><Fabric p={[0, 1.36, -0.36]} s={[0.56, 0.06, 0.22]} c={hoodie} e={[-10, 0, R(-6, 6)]} /></Core>}
-          </G>
-        </G>
-        </RoomItem>
-
         {/* Built-in wardrobe: framed opening, top and floor track, two sliding doors with long pulls (the back one a mirror),
             so it doesn't read as a second room door. A hook for the hoodie. */}
         <RoomItem id="closet" home={{ position: [0.1, 0, 2] }}>
@@ -270,20 +250,20 @@ function Teen() {
             <meshStandardMaterial color={C(0.9, 0.9, 0.92)} metalness={1} roughness={0.04} />
           </mesh>
           <Plastic p={[0.55, 1.62, 0.065]} s={[0.02, 0.02, 0.05]} c={C(0.7, 0.7, 0.75)} />
-          {hoodieAt === 2 && (
+          {HOODIE.at === 2 && (
             <>
-              <Fabric p={[0.55, 1.33, 0.1]} s={[0.42, 0.55, 0.06]} c={hoodie} e={[0, 0, R(-4, 4)]} />
-              <Fabric p={[0.55, 1.58, 0.09]} s={[0.2, 0.14, 0.07]} c={hoodie.map((v) => v * 0.85)} />
+              <Fabric p={[0.55, 1.33, 0.1]} s={[0.42, 0.55, 0.06]} c={HOODIE.color} e={[0, 0, R(-4, 4)]} />
+              <Fabric p={[0.55, 1.58, 0.09]} s={[0.2, 0.14, 0.07]} c={HOODIE.color.map((v) => v * 0.85)} />
             </>
           )}
         </G>
         </RoomItem>
 
         {/* Clothes where they fell: hoodie (unless it's on the chair or the hook), jeans, sneakers */}
-        {hoodieAt === 1 && (
+        {HOODIE.at === 1 && (
           <RoomItem id="hoodie" home={at(pile)}><G p={pile} yaw={R(0, 360)}>
             <Blob p={[0, 0, 0]} size={[0.6, 0.5]} />
-            {[0, 1, 2].map((i) => <Fabric key={i} p={[R(-0.06, 0.06), 0.02 + i * 0.035, R(-0.06, 0.06)]} s={[0.5 - i * 0.1, 0.04, 0.4 - i * 0.08]} c={hoodie} e={[0, R(-30, 30), 0]} />)}
+            {[0, 1, 2].map((i) => <Fabric key={i} p={[R(-0.06, 0.06), 0.02 + i * 0.035, R(-0.06, 0.06)]} s={[0.5 - i * 0.1, 0.04, 0.4 - i * 0.08]} c={HOODIE.color} e={[0, R(-30, 30), 0]} />)}
           </G></RoomItem>
         )}
         {hasJeans && (

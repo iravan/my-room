@@ -5,7 +5,7 @@ import * as THREE from "three";
 import type { Vec3 } from "@/lib/store";
 import { srgb } from "@/lib/lighting";
 import { rng } from "@/lib/paint";
-import { unityEuler } from "@/components/room/Surface";
+import { Slab, unityEuler } from "@/components/room/Surface";
 import { ContactShadow } from "./ContactShadow";
 
 // Building blocks of the Unity port (VinylRoomStuff.cs, git tag unity-final): written in Unity coordinates (p, s, e)
@@ -60,3 +60,7 @@ export function dice(k: number) {
 // The desk's frame, which the desk and everything on and under it is modelled in: −z faces the room, +z the wall,
 // +x towards the bed. Desk-local (x, y, z) is world (−1.68 − z, y, 1.35 − x).
 export const DeskFrame = ({ children }: { children: ReactNode }) => <G p={[-1.68, 0, -1.35]} yaw={-90}>{children}</G>;
+
+// Jersey photo is ~70% grey: tints scaled up to match (as in Unity).
+export const Fabric = ({ p, s, c, e }: { p: U3; s: U3; c: number[]; e?: U3 }) =>
+  <Slab set="cotton_jersey" tile={0.26} position={flip(p)} size={s} rotation={e} color={Ck(c, 1.4)} cast={false} />;
