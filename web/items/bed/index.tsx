@@ -22,3 +22,7 @@ export function BedItem() {
 
 // Top of whatever bed is there, at world (x, z): for the laptop, phone and controller resting on it.
 export const bedSurfaceY = (x: number, z: number) => variantOf("bed")?.surfaceY?.(x, z) ?? 0.5;
+
+// A gadget left on the bed (Unity x, z, lift above the duvet, yaw) → where it lies now, on the current look's top.
+export const onBed = (q: { x: number; z: number; lift: number; yaw: number }) =>
+  ({ p: [q.x, bedSurfaceY(q.x, -q.z) + q.lift, q.z] as [number, number, number], yaw: q.yaw });

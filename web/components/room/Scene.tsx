@@ -3,11 +3,11 @@
 import { Canvas } from "@react-three/fiber";
 import { Suspense } from "react";
 import { CameraRig } from "./CameraRig";
-import { RoomShell } from "./Room";
+import { RoomShell, Skirting } from "./Room";
 import { Lighting } from "./Lighting";
 import { PostFX } from "./PostFX";
-import { Furniture } from "./Furniture";
-import { TeenStuff } from "./TeenStuff";
+import { Items } from "./Items";
+import { Cables } from "./Cables";
 import { Outside } from "./City";
 import { Records } from "./Records";
 import { Tooltip } from "./Clickable";
@@ -36,9 +36,10 @@ export default function Scene() {
       <Suspense fallback={null}>
         <RoomShell />
         <Lighting />
-        <Furniture />
+        <Items />
         <Outside />
-        <TeenStuff />
+        <Skirting />
+        <Cables />
         <Records />
         <Inspector />
         <DecorModels />

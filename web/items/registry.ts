@@ -1,6 +1,9 @@
 // Every item in the room. Add a folder under items/ and list it here.
 import type { ItemDef } from "./types";
 import bed from "./bed/item";
+import laptop from "./laptop/item";
+import phone from "./phone/item";
+import controller from "./controller/item";
 import nightstand from "./nightstand/item";
 import lamp from "./lamp/item";
 import desk from "./desk/item";
@@ -37,6 +40,9 @@ import skateboard from "./skateboard/item";
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
   ([] as ItemDef[]).concat(
     bed,
+    laptop,
+    phone,
+    controller,
     nightstand,
     lamp,
     desk,

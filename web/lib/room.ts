@@ -271,10 +271,14 @@ export function itemMatrix(home: Home, pose: Pose | undefined, out = new THREE.M
 
 // Where an item-local point (modelled at home) is now: for things joining two items, like cables.
 const tmpM = new THREE.Matrix4();
-export function placePoint(id: string, p: Vec3, items: Layout, out = new THREE.Vector3(), size: RoomSize = DEFAULT_SIZE) {
-  const home = HOMES[id];
+export function placePoint(id: string, p: Vec3, items: Layout, out = new THREE.Vector3(), size: RoomSize = DEFAULT_SIZE): THREE.Vector3 {
+  const home = HOMES[id] ?? liveHomes.get(id);
   out.set(...p);
-  return home ? out.applyMatrix4(itemMatrix(home, poseOf(id, home, { items, size }), tmpM)) : out;
+  if (!home) { // rolled clutter not drawn yet: unmoved, it goes where what it stands on goes
+    const on = ITEMS[id]?.on;
+    return on && !items[id] ? placePoint(on, p, items, out, size) : out;
+  }
+  return out.applyMatrix4(itemMatrix(home, poseOf(id, home, { items, size }), tmpM));
 }
 
 // The room's current style (see styles.ts).

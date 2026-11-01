@@ -127,4 +127,10 @@ describe("layout", () => {
     expect(hiddenOf("monitor", { items: { monitor: own }, hidden: ["desk"] })).toBe(false);
     expect(hiddenOf("pc", { items: {}, hidden: ["desk"] })).toBe(false);
   });
+
+  it("a point on rolled clutter standing on an item goes where that item goes", () => {
+    const size = { w: 4, d: 4, h: 2.8 }, items = { bed: { position: [-0.45, 0, -0.9] as [number, number, number], rotationY: 0, scale: 1 } };
+    // the phone has no fixed home and isn't drawn in a test: its charger plug follows the bed, 1 m right
+    expect(placePoint("phone", [-1.5, 0.55, 1], items, undefined, size).toArray().map((v) => +v.toFixed(6))).toEqual([-0.5, 0.55, 1]);
+  });
 });

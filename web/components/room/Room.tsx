@@ -1,6 +1,7 @@
 "use client";
 
 import { Slab } from "./Surface";
+import { C, Plastic, type U3 } from "@/items/_shared/prims";
 import { OPENING } from "./City";
 import { HOMES, poseOf, useLayout, useStyle } from "@/lib/room";
 import type { Vec3 } from "@/lib/store";
@@ -42,4 +43,11 @@ export function RoomShell() {
       <Slab set="grey_plaster" tile={1} size={[0.1, h, d]} position={[w / 2 + 0.05, h / 2 - 0.05, 0]} color={WALL} cast={false} grainOnly={st.paintedWalls} />
     </>
   );
+}
+
+// Skirting round the walls (follows the room size).
+export function Skirting() {
+  const { w, d } = useLayout((s) => s.size), hw = w / 2 - 0.0075, hd = d / 2 - 0.0075;
+  const skirting: [U3, U3][] = [[[0, 0.04, hd], [w, 0.08, 0.015]], [[0, 0.04, -hd], [w, 0.08, 0.015]], [[-hw, 0.04, 0], [0.015, 0.08, d]], [[hw, 0.04, 0], [0.015, 0.08, d]]];
+  return <>{skirting.map(([p, s], i) => <Plastic key={i} p={p} s={s} c={C(0.5, 0.48, 0.56)} />)}</>;
 }

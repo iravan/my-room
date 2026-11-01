@@ -6,9 +6,9 @@ import * as THREE from "three";
 import { useCollection, type Album } from "@/lib/collection";
 import { grooveTexture, useCover, useDisc } from "@/lib/covers";
 import { BOARD, CABINET, CABINET_H, CABINET_W, COLS, CRATE, CUBBY, ROWS } from "@/lib/layout";
-import { CYAN, srgb } from "@/lib/lighting";
+import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { useGame, type Vec3 } from "@/lib/store";
-import { Neon } from "./Lighting";
+import { Metal, Neon } from "./Lighting";
 import { unityEuler } from "./Surface";
 import { Clickable } from "./Clickable";
 import { RoomItem } from "./RoomItem";
@@ -138,13 +138,23 @@ function WallDisplay({ albums }: { albums: Album[] }) {
   );
 }
 
-// What's spinning: its sleeve leans on the stand beside the turntable (the disc is on the platter, Furniture.tsx).
+// What's spinning: its sleeve leans on the stand beside the turntable (the disc is on the platter, items/turntable).
 function NowSpinning({ a }: { a: Album }) {
   return (
     <>
       <Clickable onTap={() => useGame.getState().inspect(a.id)} position={[1.6, CABINET_H + 0.02, -1.88]} rotation={unityEuler([12, 0, 0])}>
         <Sleeve a={a} />
       </Clickable>
+    </>
+  );
+}
+
+// "Now spinning" sleeve stand beside the turntable.
+function SleeveStand() {
+  return (
+    <>
+      <Metal position={[1.6, CABINET_H + 0.01, -1.88]} size={[0.34, 0.02, 0.08]} />
+      <Neon position={[1.6, CABINET_H + 0.01, -1.839]} size={[0.34, 0.006, 0.004]} color={MAGENTA} />
     </>
   );
 }
@@ -156,6 +166,7 @@ export function Records() {
       <RoomItem id="crate" home={HOMES.crate}><Core><CrateRecords albums={albums} /></Core></RoomItem>
       <RoomItem id="cabinet" home={HOMES.cabinet}>
         <CabinetSpines albums={albums} />
+        <Core lift><SleeveStand /></Core>
         {spinning && <Core lift><NowSpinning a={spinning} /></Core>}
       </RoomItem>
       <RoomItem id="frames" home={{ position: [-1.99, 1.35, -0.85] }}><WallDisplay albums={albums} /></RoomItem>

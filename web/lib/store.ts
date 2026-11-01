@@ -24,7 +24,7 @@ type State = {
   preset: number; // index into PRESETS (lib/lighting.ts)
   lamp: boolean;
   quality: 0 | 1 | 2; // low, medium, high
-  blanket: number; // index into BLANKETS (Furniture.tsx)
+  blanket: number; // which of the style's duvet covers is on the bed (clicking the bed cycles it)
   nextBlanket: () => void;
   setQuality: (q: 0 | 1 | 2) => void;
   cyclePreset: () => void;
