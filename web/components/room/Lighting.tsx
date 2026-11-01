@@ -118,8 +118,10 @@ export function Lighting() {
       <directionalLight position={[0, 0, 0]} target={sunTarget} color={srgb(0.6, 0.5, 1)} intensity={p.sun * LIGHT_SCALE.sun} />
       <pointLight position={[1.2, 1.7, -0.6]} color={CYAN} intensity={LIGHT_SCALE.fill} distance={3.5} />
       {/* City glow through the window: wide, soft, aimed down into the room. */}
-      <primitive object={cityTarget} position={[-0.3, 1.17, -1.1]} />
-      <spotLight position={[-0.3, 1.7, -1.95]} target={cityTarget} angle={(57.5 * Math.PI) / 180} penumbra={0.65} distance={5.5} color={city} intensity={LIGHT_SCALE.city} />
+      <RoomItem id="window" home={HOMES.window}>
+        <primitive object={cityTarget} position={[-0.3, 1.17, -1.1]} />
+        <spotLight position={[-0.3, 1.7, -1.95]} target={cityTarget} angle={(57.5 * Math.PI) / 180} penumbra={0.65} distance={5.5} color={city} intensity={LIGHT_SCALE.city} />
+      </RoomItem>
 
       {/* Neon cove along the ceiling: magenta left/back, cyan right/front. */}
       <Neon position={[0, 2.68, -1.97]} size={[3.9, 0.03, 0.03]} color={MAGENTA} />

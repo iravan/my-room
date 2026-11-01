@@ -146,7 +146,7 @@ export function Furniture() {
         <SleeveStand />
       </RoomItem>
       <RoomItem id="crate" home={HOMES.crate}><Crate /></RoomItem>
-      <BlindsAndGlass />
+      <RoomItem id="window" home={HOMES.window}><BlindsAndGlass /></RoomItem>
     </>
   );
 }

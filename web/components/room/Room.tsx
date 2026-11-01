@@ -2,6 +2,7 @@
 
 import { Slab, tint } from "./Surface";
 import { OPENING } from "./City";
+import { HOMES, useLayout } from "@/lib/room";
 import type { Vec3 } from "@/lib/store";
 
 // Tints multiply the photo albedo (values from the Unity room).
@@ -12,7 +13,11 @@ const CEILING = tint(0.22, 0.2, 0.36, 0.7);
 // Back wall in four pieces round the window opening; the plaster is pinned to wall coordinates (room-side face:
 // u = x, v = y) so the pieces join without seams, and the cut edges form the opening's reveal.
 function BackWall() {
-  const { x0, x1, y0, y1 } = OPENING, X0 = -2, X1 = 2, Y0 = -0.05, Y1 = 2.75;
+  const w = useLayout((s) => s.items.window), home = HOMES.window.position;
+  const k = w?.scale ?? 1, dx = (w?.position[0] ?? home[0]) - home[0], dy = (w?.position[1] ?? home[1]) - home[1];
+  const cx = (OPENING.x0 + OPENING.x1) / 2 + dx, cy = (OPENING.y0 + OPENING.y1) / 2 + dy;
+  const hw = ((OPENING.x1 - OPENING.x0) / 2) * k, hh = ((OPENING.y1 - OPENING.y0) / 2) * k;
+  const x0 = cx - hw, x1 = cx + hw, y0 = cy - hh, y1 = cy + hh, X0 = -2, X1 = 2, Y0 = -0.05, Y1 = 2.75;
   const pieces: [number, number, number, number][] = [[X0, Y0, x0, Y1], [x1, Y0, X1, Y1], [x0, Y0, x1, y0], [x0, y1, x1, Y1]];
   return (
     <>

@@ -1,7 +1,7 @@
 // Layout: untrusted poses are cleaned, and moving an item pivots about its own home, never the room's origin.
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { itemMatrix, normalizeLayout } from "./room";
+import { itemMatrix, normalizeLayout, placePoint } from "./room";
 
 describe("layout", () => {
   it("keeps good poses and clamps them inside the room", () => {
@@ -32,5 +32,27 @@ describe("layout", () => {
   it("respects a home yaw (the desk faces +x by default)", () => {
     const home = { position: [-1.68, 0, 1.35] as [number, number, number], rotationY: Math.PI / 2 };
     expect(itemMatrix(home, { position: home.position, rotationY: Math.PI / 2, scale: 1 }).equals(new THREE.Matrix4())).toBe(true);
+  });
+
+  it("keeps wall fixtures on their wall, facing the room, and the window inside the wall", () => {
+    const l = normalizeLayout({
+      window: { position: [3, 1.6, 0.5], rotationY: 1, scale: 1.5 },
+      "socket-desk": { position: [0, 0.4, -1], rotationY: 2, scale: 1 },
+      door: { position: [0.4, 0, -1], rotationY: 0, scale: 1 },
+    });
+    expect(l.window.position[2]).toBe(-2); // stays in the back wall
+    expect(l.window.rotationY).toBe(0);
+    expect(l.window.position[0]).toBeCloseTo(2 - 0.7 * 1.5 - 0.05); // opening stays inside the wall
+    expect(l["socket-desk"].position).toEqual([-2, 0.4, -1]); // slides along the left wall
+    expect(l["socket-desk"].rotationY).toBe(0);
+    expect(l.door.position).toEqual([0.4, 0, 2]);
+  });
+
+  it("moves a cable end with the socket it plugs into, and leaves other ends alone", () => {
+    const items = normalizeLayout({ "socket-desk": { position: [-2, 0.3, 0.2], rotationY: 0, scale: 1 } });
+    const plug = placePoint("socket-desk", [-1.99, 0.3, 1.2], items); // plug end, modelled at the socket's home
+    expect(plug.toArray().map((v) => +v.toFixed(6))).toEqual([-1.99, 0.3, 0.2]);
+    const pc = placePoint("desk", [-1.92, 0.35, 0.95], items); // desk not moved
+    expect(pc.toArray()).toEqual([-1.92, 0.35, 0.95]);
   });
 });

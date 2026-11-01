@@ -11,6 +11,8 @@ export type Pose = { position: Vec3; rotationY: number; scale: number };
 export type Home = { position: Vec3; rotationY?: number };
 export type Layout = Record<string, Pose>;
 
+const ROOM = { x: 2, yMax: 2.8, z: 2 };
+
 // Fixed homes of the furniture that other code also needs (camera shots); clutter homes are rolled per load.
 export const HOMES: Record<string, Home> = {
   bed: { position: BED_HOME },
@@ -18,9 +20,40 @@ export const HOMES: Record<string, Home> = {
   desk: { position: DESK, rotationY: Math.PI / 2 },
   cabinet: { position: CABINET },
   crate: { position: CRATE },
+  window: { position: [-0.3, 1.55, -2] },
+  door: { position: [1.4, 0, 2] },
+  closet: { position: [0.1, 0, 2] },
+  switch: { position: [2, 1.1, 1.75] },
+  "socket-desk": { position: [-2, 0.3, 1.2] },
+  "socket-window": { position: [0.25, 0.3, -2] },
+  "socket-right": { position: [2, 0.3, 1.4] },
+  frames: { position: [-1.99, 1.35, -0.85] },
+  "wall-shelf": { position: [-1.87, 1.5, 1.35] },
+  "poster-desk": { position: [-1.975, 2.1, 1.35] },
+  "poster-1": { position: [1.995, 1.65, 1.05] },
+  "poster-2": { position: [1.995, 1.55, 0.3] },
 };
 
-const ROOM = { x: 2, yMax: 2.8, z: 2 };
+// Wall fixtures slide along their wall: the coordinate across the wall and the facing stay as at home.
+const ON_WALL: Record<string, "x" | "z"> = {
+  window: "z", door: "z", closet: "z", "socket-window": "z",
+  switch: "x", "socket-desk": "x", "socket-right": "x", frames: "x", "wall-shelf": "x", "poster-desk": "x", "poster-1": "x", "poster-2": "x",
+};
+// Window: its opening (1.4 × 1 m at scale 1) must stay inside the wall.
+export const WINDOW_SIZE = { w: 1.4, h: 1 };
+function constrain(id: string, p: Pose): Pose {
+  const axis = ON_WALL[id], home = HOMES[id];
+  if (!axis || !home) return p;
+  const position: Vec3 = [...p.position];
+  position[axis === "x" ? 0 : 2] = home.position[axis === "x" ? 0 : 2];
+  if (id === "window") {
+    const hw = (WINDOW_SIZE.w * p.scale) / 2 + 0.05, hh = (WINDOW_SIZE.h * p.scale) / 2 + 0.05;
+    position[0] = Math.min(ROOM.x - hw, Math.max(-ROOM.x + hw, position[0]));
+    position[1] = Math.min(2.7 - hh, Math.max(0.1 + hh, position[1]));
+  }
+  return { position, rotationY: home.rotationY ?? 0, scale: id === "window" ? Math.min(p.scale, 1.8) : p.scale };
+}
+
 const finite = (v: unknown, lo: number, hi: number, fallback: number) =>
   typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
 
@@ -32,11 +65,11 @@ export function normalizeLayout(raw: unknown): Layout {
     if (!/^[\w-]{1,64}$/.test(id) || !p || typeof p !== "object") continue;
     const q = p as Record<string, unknown>, pos = Array.isArray(q.position) ? q.position : [];
     if (pos.length !== 3) continue;
-    out[id] = {
+    out[id] = constrain(id, {
       position: [finite(pos[0], -ROOM.x, ROOM.x, 0), finite(pos[1], 0, ROOM.yMax, 0), finite(pos[2], -ROOM.z, ROOM.z, 0)],
       rotationY: finite(q.rotationY, -1e3, 1e3, 0) % (2 * Math.PI),
       scale: finite(q.scale, 0.25, 4, 1),
-    };
+    });
   }
   return out;
 }
@@ -65,4 +98,12 @@ export function itemMatrix(home: Home, pose: Pose | undefined, out = new THREE.M
     .multiply(m.makeRotationY(pose.rotationY - (home.rotationY ?? 0)))
     .multiply(m.makeScale(pose.scale, pose.scale, pose.scale))
     .multiply(m.makeTranslation(-home.position[0], -home.position[1], -home.position[2]));
+}
+
+// Where an item-local point (modelled at home) is now: for things joining two items, like cables.
+const tmpM = new THREE.Matrix4();
+export function placePoint(id: string, p: Vec3, items: Layout, out = new THREE.Vector3()) {
+  const home = HOMES[id];
+  out.set(...p);
+  return home ? out.applyMatrix4(itemMatrix(home, items[id], tmpM)) : out;
 }

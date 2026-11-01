@@ -6,6 +6,8 @@ import { useGame } from "@/lib/store";
 import { CYAN, PRESETS } from "@/lib/lighting";
 import { rng } from "@/lib/paint";
 import { Metal, Neon } from "./Lighting";
+import { RoomItem } from "./RoomItem";
+import { HOMES } from "@/lib/room";
 
 // The view out of the window is real geometry, so it has depth and parallax: a sky dome, then three skyline
 // layers at street, district and horizon distance, hazier the farther they are. The room is on a high floor:
@@ -154,12 +156,14 @@ export function CityWindow() {
   return (
     <>
       <Outside />
+      <RoomItem id="window" home={HOMES.window}>
       <Metal position={[x0 - 0.025, cy, z]} size={[0.05, hgt + 0.1, 0.03]} />
       <Metal position={[x1 + 0.025, cy, z]} size={[0.05, hgt + 0.1, 0.03]} />
       <Metal position={[cx, y1 + 0.025, z]} size={[wdt, 0.05, 0.03]} />
       <Metal position={[cx, y0 - 0.025, z]} size={[wdt, 0.05, 0.03]} />
       <Metal position={[cx, cy, -2.05]} size={[0.03, hgt, 0.04]} />
       <Neon position={[cx, 1, -1.97]} size={[1.5, 0.02, 0.05]} color={CYAN} />
+      </RoomItem>
     </>
   );
 }

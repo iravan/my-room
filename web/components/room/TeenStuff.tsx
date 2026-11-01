@@ -11,7 +11,7 @@ import { bedSurfaceY } from "./Bed";
 import { Desk, T } from "./Desk";
 import { Chair } from "./Chair";
 import { RoomItem } from "./RoomItem";
-import { HOMES } from "@/lib/room";
+import { HOMES, placePoint, useLayout } from "@/lib/room";
 import { PbrCapsule, PbrMaterial, Slab, unityEuler, type TextureSet } from "./Surface";
 
 // A teenager lives here: gaming desk and PC, chair, closet, and the mess, which lands somewhere new every visit.
@@ -162,9 +162,11 @@ function Blob({ p, size }: { p: U3; size: [number, number] }) {
 }
 
 // A cable through Unity world points, Catmull-Rom smoothed (6 steps per span, as in Unity), never below the floor.
-function Cable({ c, width, pts }: { c: THREE.Color; width: number; pts: U3[] }) {
+function Cable({ c, width, pts, owners }: { c: THREE.Color; width: number; pts: U3[]; owners?: string[] }) {
+  const items = useLayout((s) => s.items);
+  const key = owners?.map((o) => JSON.stringify(items[o] ?? null)).join("|") ?? "";
   const geometry = useMemo(() => {
-    const P = pts.map((q) => new THREE.Vector3(...flip(q))), out: THREE.Vector3[] = [];
+    const P = pts.map((q, i) => (owners ? placePoint(owners[i], flip(q), items) : new THREE.Vector3(...flip(q)))), out: THREE.Vector3[] = [];
     for (let i = 0; i < P.length - 1; i++) {
       const a = P[Math.max(i - 1, 0)], b = P[i], d = P[i + 1], e = P[Math.min(i + 2, P.length - 1)];
       for (let k = 0; k < 6; k++) {
@@ -178,7 +180,8 @@ function Cable({ c, width, pts }: { c: THREE.Color; width: number; pts: U3[] }) 
     }
     out.push(P[P.length - 1]);
     return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(out), out.length * 3, width / 2, 6);
-  }, [pts, width]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` captures the owners' poses
+  }, [pts, width, key]);
   return (
     <mesh geometry={geometry} receiveShadow>
       <meshStandardMaterial color={c} roughness={0.5} />
@@ -254,27 +257,27 @@ function Dust() {
 function RoomBasics() {
   const paintC = C(0.5, 0.48, 0.56), steel = C(0.7, 0.7, 0.75), white = C(0.8, 0.8, 0.78);
   const skirting: [U3, U3][] = [[[0, 0.04, 1.9925], [4, 0.08, 0.015]], [[0, 0.04, -1.9925], [4, 0.08, 0.015]], [[-1.9925, 0.04, 0], [0.015, 0.08, 4]], [[1.9925, 0.04, 0], [0.015, 0.08, 4]]];
-  const sockets: [U3, number][] = [[[-2, 0.3, -1.2], -90], [[0.25, 0.3, 2], 0], [[2, 0.3, -1.4], 90]];
+  const sockets: [U3, number, string][] = [[[-2, 0.3, -1.2], -90, "socket-desk"], [[0.25, 0.3, 2], 0, "socket-window"], [[2, 0.3, -1.4], 90, "socket-right"]];
   return (
     <>
       {skirting.map(([p, s], i) => <Plastic key={i} p={p} s={s} c={paintC} />)}
       {/* Door on the front wall beside the closet; handle on the switch side */}
-      <G p={[1.4, 0, -2]} yaw={180}>
+      <RoomItem id="door" home={HOMES.door}><G p={[1.4, 0, -2]} yaw={180}>
         <Walnut p={[0, 1.025, -0.02]} s={[0.8, 2.05, 0.04]} c={[0.55, 0.5, 0.5]} />
         {[-1, 1].map((s) => <Plastic key={s} p={[s * 0.43, 1.055, -0.01]} s={[0.06, 2.11, 0.02]} c={paintC} />)}
         <Plastic p={[0, 2.08, -0.01]} s={[0.92, 0.06, 0.02]} c={paintC} />
         <Plastic t="cylinder" p={[-0.3, 1, -0.045]} s={[0.05, 0.01, 0.05]} e={[90, 0, 0]} c={steel} />
         <Plastic p={[-0.26, 1, -0.065]} s={[0.12, 0.018, 0.02]} c={steel} />
-      </G>
-      <G p={[2, 1.1, -1.75]} yaw={90}>
+      </G></RoomItem>
+      <RoomItem id="switch" home={HOMES.switch}><G p={[2, 1.1, -1.75]} yaw={90}>
         <Plastic p={[0, 0, -0.004]} s={[0.08, 0.08, 0.008]} c={white} />
         <Plastic p={[0, 0, -0.01]} s={[0.025, 0.04, 0.006]} e={[8, 0, 0]} c={C(0.8, 0.8, 0.78, 0.9)} />
-      </G>
-      {sockets.map(([p, yaw], i) => (
-        <G key={i} p={p} yaw={yaw}>
+      </G></RoomItem>
+      {sockets.map(([p, yaw, id]) => (
+        <RoomItem key={id} id={id} home={HOMES[id]}><G p={p} yaw={yaw}>
           <Plastic p={[0, 0, -0.004]} s={[0.08, 0.08, 0.008]} c={white} />
           {[-0.012, 0.012].map((x) => <Prim key={x} p={[x, 0, -0.0085]} s={[0.006, 0.016, 0.002]} c={C(0.05, 0.05, 0.05)} />)}
-        </G>
+        </G></RoomItem>
       ))}
       {/* Ceiling: flush light, off at night (faint white dish); smoke detector with its red LED */}
       <Plastic t="cylinder" p={[0, 2.685, 0.2]} s={[0.36, 0.015, 0.36]} c={C(0.75, 0.75, 0.78)} emissive={C(0.06, 0.055, 0.07)} />
@@ -409,9 +412,9 @@ function Teen() {
           })}
 
         </G>
-        <Cable c={cableBlack} width={0.007} pts={[[-1.92, 0.35, -0.95], [-1.95, 0.012, -1], [-1.975, 0.012, -1.18], [-1.99, 0.3, -1.2]]} />
-        <Cable c={cableBlack} width={0.006} pts={[[-1.88, 0.95, -1.35], [-1.965, 0.76, -1.33], [-1.97, 0.012, -1.27], [-1.99, 0.29, -1.21]]} />
         </RoomItem>
+        <Cable c={cableBlack} width={0.007} pts={[[-1.92, 0.35, -0.95], [-1.95, 0.012, -1], [-1.975, 0.012, -1.18], [-1.99, 0.3, -1.2]]} owners={["desk", "desk", "socket-desk", "socket-desk"]} />
+        <Cable c={cableBlack} width={0.006} pts={[[-1.88, 0.95, -1.35], [-1.965, 0.76, -1.33], [-1.97, 0.012, -1.27], [-1.99, 0.29, -1.21]]} owners={["desk", "desk", "socket-desk", "socket-desk"]} />
 
         {/* Wall shelf above the desk (books, the one leaning over, a plant) and the poster over it: wall items of their own, modelled in the desk's frame */}
         <RoomItem id="wall-shelf" home={{ position: [-1.87, 1.5, 1.35] }}>
@@ -495,14 +498,13 @@ function Teen() {
         <RoomItem id="bed" home={HOMES.bed}>
         <BedGadgets laptop={laptop} phone={phone} pad={pad} />
 
-        {/* Phone charger: over the bed edge, across the floor to the window socket (moves with the bed until cables re-route) */}
-        <Cable c={C(0.85, 0.85, 0.82)} width={0.006} pts={[plug, [-0.93, onBed(-0.93, plug[2] + 0.1, 0.006), plug[2] + 0.1], [-0.8, 0.2, plug[2] + 0.2], [-0.75, 0.012, 1.6], [0.1, 0.012, 1.96], [0.25, 0.29, 1.99]]} />
         </RoomItem>
 
         {/* Cables to the sockets (behind the desk at (-2, .3, -1.2), under the window at (.25, .3, 2)): PC + monitor in the desk item; the lamp's goes with the nightstand */}
-        <RoomItem id="nightstand" home={HOMES.nightstand}>
-        <Cable c={cableBlack} width={0.005} pts={[[-1.75, 0.55, -0.45], [-1.95, 0.5, -0.5], [-1.975, 0.012, -0.6], [-1.98, 0.012, -1.1], [-1.99, 0.31, -1.19]]} />
-        </RoomItem>
+        {/* Cables run from their device to their socket: each point follows the item it belongs to. */}
+        <Cable c={cableBlack} width={0.005} pts={[[-1.75, 0.55, -0.45], [-1.95, 0.5, -0.5], [-1.975, 0.012, -0.6], [-1.98, 0.012, -1.1], [-1.99, 0.31, -1.19]]} owners={["nightstand", "nightstand", "nightstand", "socket-desk", "socket-desk"]} />
+        {/* Phone charger: over the bed edge, across the floor to the window socket */}
+        <Cable c={C(0.85, 0.85, 0.82)} width={0.006} pts={[plug, [-0.93, onBed(-0.93, plug[2] + 0.1, 0.006), plug[2] + 0.1], [-0.8, 0.2, plug[2] + 0.2], [-0.75, 0.012, 1.6], [0.1, 0.012, 1.96], [0.25, 0.29, 1.99]]} owners={["bed", "bed", "bed", "socket-window", "socket-window", "socket-window"]} />
 
         {/* Basketball; skateboard against the right wall with two posters above it */}
         <RoomItem id="basketball" home={at(ball)}>
