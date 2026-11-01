@@ -9,7 +9,7 @@ import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { Metal, Neon } from "./Lighting";
 import { Clickable } from "./Clickable";
 import { Part, Slab, unityEuler } from "./Surface";
-import { Bed } from "./Bed";
+import { BedItem } from "@/items/bed";
 import { RoomItem } from "./RoomItem";
 import { Core } from "./Shell";
 import { HOMES } from "@/lib/room";
@@ -140,7 +140,7 @@ function BlindsAndGlass() {
 export function Furniture() {
   return (
     <>
-      <RoomItem id="bed" home={HOMES.bed}><Bed /></RoomItem>
+      <BedItem />
       <RoomItem id="cabinet" home={HOMES.cabinet}>
         <Cabinet />
         <Core lift>

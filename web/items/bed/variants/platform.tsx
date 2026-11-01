@@ -8,16 +8,17 @@ import { useLayout, useStyle } from "@/lib/room";
 import { BED_HOME } from "@/lib/layout";
 import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { perlin, rng } from "@/lib/paint";
-import { Neon } from "./Lighting";
-import { Clickable } from "./Clickable";
-import { PbrMaterial, projectUVs, rounded, type TextureSet } from "./Surface";
+import { Neon } from "@/components/room/Lighting";
+import { Clickable } from "@/components/room/Clickable";
+import { PbrMaterial, projectUVs, rounded, type TextureSet } from "@/components/room/Surface";
+import { defineVariant } from "../../types";
 
 // A real bed, not a stack of boxes: walnut frame on legs with an upholstered headboard, a mattress with rounded
 // edges in a fitted sheet, two plump pillows, a duvet that is actual cloth (wraps the mattress edge, hangs in folds,
 // droops at the corners, turned down at the head) and a knitted throw across the foot.
 // Local frame: head at −z (against the back wall), foot at +z. Click = next duvet colour.
 
-export const BED_POS: Vec3 = BED_HOME;
+const BED_POS: Vec3 = BED_HOME;
 const W1 = 1.02, L = 1.94, MT = 0.48, MB = 0.24; // single mattress width, length, top, bottom
 const WIDTH: Record<string, number> = { single: W1, double: 1.42 };
 const HEAD = -0.97, FOOT = HEAD + L;
@@ -149,7 +150,7 @@ const PILLOWS = [
 // Height of whatever is on the bed at world (x, z): duvet, throw, pillows, mattress. For things lying on it.
 const ray = new THREE.Raycaster(), down = new THREE.Vector3(0, -1, 0), from = new THREE.Vector3();
 let probes: THREE.Object3D | null = null;
-export function bedSurfaceY(x: number, z: number) {
+function surfaceY(x: number, z: number) {
   if (!probes) {
     const g = geometries(), m = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
     probes = new THREE.Group();
@@ -210,9 +211,9 @@ function Frame({ W }: { W: number }) {
 }
 
 // Bed size option: a double grows into the room (away from the wall), so its wall side stays put.
-export const bedWidth = (size?: string) => WIDTH[size ?? "single"] ?? W1;
+const bedWidth = (size?: string) => WIDTH[size ?? "single"] ?? W1;
 
-export function Bed() {
+function PlatformBed() {
   const covers = useStyle().covers, cover = covers[useGame((s) => s.blanket) % covers.length];
   const W = bedWidth(useLayout((s) => s.options.bed?.size)), g = geometries(W);
   // Clicking the bed cycles the duvet colours; a duvet colour picked in edit mode gives way to it.
@@ -231,3 +232,9 @@ export function Bed() {
     </Clickable>
   );
 }
+
+// Today's bed: walnut platform frame, tufted headboard, single or double.
+export default defineVariant({
+  item: "bed", id: "platform", name: "Walnut platform",
+  Component: PlatformBed, surfaceY, footprint: (size) => [bedWidth(size), 1.94],
+});

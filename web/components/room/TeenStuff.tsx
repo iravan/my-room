@@ -7,7 +7,8 @@ import { useGame, type Vec3 } from "@/lib/store";
 import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { drawText, hsv, lerp, paint, rng, type RGBA } from "@/lib/paint";
 import { Neon } from "./Lighting";
-import { bedSurfaceY, bedWidth } from "./Bed";
+import { bedSurfaceY } from "@/items/bed";
+import { ContactShadow } from "@/items/_shared/ContactShadow";
 import { Desk, T } from "./Desk";
 import { Chair } from "./Chair";
 import { Core } from "./Shell";
@@ -147,20 +148,8 @@ function Monitor({ T }: { T: number }) {
 
 // ---------- realism ----------
 
-const smooth = (x: number) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
-let blobTex: THREE.Texture | undefined;
-const blobTexture = () => (blobTex ??= paint(64, 64, (u, v) =>
-  [0, 0, 0, 0.8 * smooth(Math.min(u, 1 - u) / 0.45) * smooth(Math.min(v, 1 - v) / 0.45)])); // soft rounded rect, stretches to any footprint
-
-// Soft contact shadow on the floor under p (parent space), 1.35× the footprint so it spills like real occlusion.
-// Sits just above the rug (top at .01); costs no shadow caster.
-function Blob({ p, size }: { p: U3; size: [number, number] }) {
-  return (
-    <mesh userData={{ core: true }} geometry={GEO.quad} position={flip([p[0], 0.012, p[2]])} rotation={[-Math.PI / 2, 0, 0]} scale={[size[0] * 1.35, size[1] * 1.35, 1]}>
-      <meshBasicMaterial color="black" map={blobTexture()} transparent depthWrite={false} polygonOffset polygonOffsetFactor={-1} />
-    </mesh>
-  );
-}
+// Contact shadow under p (Unity coords, parent space).
+const Blob = ({ p, size }: { p: U3; size: [number, number] }) => { const [x, , z] = flip(p); return <ContactShadow x={x} z={z} size={size} />; };
 
 // A cable through Unity world points, Catmull-Rom smoothed (6 steps per span, as in Unity), never below the floor.
 function Cable({ c, width, pts, owners }: { c: THREE.Color; width: number; pts: U3[]; owners?: string[] }) {
@@ -257,10 +246,6 @@ function Dust() {
 // ---------- the room ----------
 
 // What every real bedroom has: skirting, a door, sockets, a light switch, a ceiling light, a smoke detector.
-function BedBlob() {
-  const w = bedWidth(useLayout((s) => s.options.bed?.size));
-  return <Blob p={[-1.45 + (w - 1.02) / 2, 0, 0.9]} size={[w + 0.28, 2.25]} />;
-}
 
 function RoomBasics() {
   const paintC = C(0.5, 0.48, 0.56), steel = C(0.7, 0.7, 0.75), white = C(0.8, 0.8, 0.78);
@@ -297,7 +282,6 @@ function RoomBasics() {
         <Prim t="sphere" p={[0.93, h - 0.122, -0.6]} s={[0.008, 0.008, 0.008]} glow={C(2, 0.1, 0.1)} />
       </RoomItem>
       {/* Contact shadows under the core furniture: bed, nightstand, cabinet, crate */}
-      <RoomItem id="bed" home={HOMES.bed}><BedBlob /></RoomItem>
       <RoomItem id="nightstand" home={HOMES.nightstand}><Blob p={[-1.7, 0, -0.45]} size={[0.6, 0.55]} /></RoomItem>
       <RoomItem id="cabinet" home={HOMES.cabinet}><Blob p={[1.26, 0, 1.8]} size={[1.6, 0.55]} /></RoomItem>
       <RoomItem id="crate" home={HOMES.crate}><Blob p={[1.45, 0, 0.35]} size={[0.55, 0.8]} /></RoomItem>

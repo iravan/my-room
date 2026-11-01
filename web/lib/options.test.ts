@@ -26,4 +26,8 @@ describe("options", () => {
     expect(m.color.getHex()).toBe(before);
     expect(m.metalness).toBe(0.3);
   });
+
+  it("accepts a look only if the item has it", () => {
+    expect(normalizeOptions({ bed: { look: "platform" }, desk: { look: "platform" }, chair: { look: "<x>" } })).toEqual({ bed: { look: "platform" } });
+  });
 });

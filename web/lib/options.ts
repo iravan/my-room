@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { srgb } from "./lighting";
+import { ITEMS } from "@/items/registry";
 
 // Per-item options. Finishes are generic: every textured material says what it is (`wood`, `fabric`, `leather`,
 // `metal`, optionally a named part like `fabric:Duvet`), and an item's options panel offers a choice per part it
@@ -65,6 +66,7 @@ export function normalizeOptions(raw: unknown): Options {
     const clean: Record<string, string> = {};
     for (const [k, v] of Object.entries(o as Record<string, unknown>)) {
       if (typeof v !== "string") continue;
+      if (k === "look") { if (ITEMS[id]?.variants.includes(v)) clean[k] = v; continue; }
       const variant = VARIANTS[id]?.[k];
       if (variant ? v in variant.choices : /^[a-z]+(:[A-Za-z ]{1,24})?$/.test(k) && v in (FINISHES[finishType(k)] ?? {})) clean[k] = v;
     }

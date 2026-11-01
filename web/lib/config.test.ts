@@ -17,7 +17,7 @@ describe("items + config", () => {
       'default style "nope" isn\'t defined',
       'style "coastal" has no entry',
       'cyber: unknown item "bedd"',
-      'cyber.bed: unknown variant "canopy" (has default)',
+      'cyber.bed: unknown variant "canopy" (has platform)',
       'cyber.bed.wood: unknown choice "oak"',
       'cyber.bed: unknown part "glitter:Duvet"',
     ]);

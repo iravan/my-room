@@ -28,6 +28,10 @@ export type VariantDef = {
   name: string;
   anchors?: Record<string, number | Vec3>;
   Component: ComponentType;
+  // Height of the top surface at world (x, z), for things resting on it (items with a "surface" anchor).
+  surfaceY?: (x: number, z: number) => number;
+  // Floor footprint [width, depth] in metres, given the item's size option; sizes its contact shadow.
+  footprint?: (size?: string) => [number, number];
 };
 
 export const defineItem = (d: ItemDef) => d;
