@@ -6,4 +6,5 @@ cd "$(dirname "$0")/.."
 DOCKER="docker"; docker info >/dev/null 2>&1 || DOCKER="colima ssh -- docker"
 $DOCKER run --rm -e POSTGRES_PASSWORD=x -v "$PWD:/sb:ro" postgres:17-alpine sh -c '
   docker-entrypoint.sh postgres >/dev/null 2>&1 & until pg_isready -q -U postgres; do sleep 0.3; done; sleep 1
-  psql -q -v ON_ERROR_STOP=1 -U postgres -c "create extension if not exists pgcrypto" -f /sb/tests/stubs.sql -f /sb/migrations/*.sql -f /sb/tests/rls.sql'
+  set -- ; for m in /sb/migrations/*.sql; do set -- "$@" -f "$m"; done
+  psql -q -v ON_ERROR_STOP=1 -U postgres -c "create extension if not exists pgcrypto" -f /sb/tests/stubs.sql "$@" -f /sb/tests/rls.sql'

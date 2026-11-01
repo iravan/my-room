@@ -61,4 +61,32 @@ do $$ begin
   assert (select album->>'title' from albums) = 'Mine', 'nobody but the owner edits albums';
   assert (select count(*) from storage.objects) = 1, 'nobody but the owner deletes covers';
 end $$;
+-- Room layouts and uploaded models follow the same rules
+select as_user('00000000-0000-0000-0000-00000000000a');
+insert into room_layouts (room_id, layout) select id, '{"items": {}}' from rooms;
+insert into storage.objects (bucket_id, name) values ('models', '00000000-0000-0000-0000-00000000000a/1234abcd.glb');
+select expect_denied($q$insert into storage.objects (bucket_id, name) values ('models', '00000000-0000-0000-0000-00000000000a/../x.glb')$q$);
+select expect_denied($q$insert into storage.objects (bucket_id, name) values ('models', '00000000-0000-0000-0000-00000000000b/1234abcd.glb')$q$);
+select expect_denied($q$insert into room_layouts (room_id, layout) select id, '[1]' from rooms$q$);
+update rooms set is_public = false;
+reset role;
+select as_user('00000000-0000-0000-0000-00000000000b');
+do $$ begin
+  assert (select count(*) from room_layouts) = 0, 'private layout hidden';
+  assert (select count(*) from storage.objects where bucket_id = 'models') = 0, 'private models hidden';
+end $$;
+select expect_denied(format($q$insert into room_layouts (room_id) values (%L)$q$, :'a_room'));
+update room_layouts set layout = '{"hacked": true}';
+reset role;
+do $$ begin assert (select layout ? 'items' from room_layouts), 'B could not change A''s layout'; end $$;
+select as_user('00000000-0000-0000-0000-00000000000a');
+update rooms set is_public = true;
+reset role;
+select as_user(null);
+do $$ begin
+  assert (select count(*) from room_layouts) = 1, 'published layout readable';
+  assert (select count(*) from storage.objects where bucket_id = 'models') = 1, 'published models readable';
+end $$;
+reset role;
+
 select 'RLS checks passed' as result;
