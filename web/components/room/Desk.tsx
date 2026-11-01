@@ -28,6 +28,7 @@ function build() {
   };
 }
 const steel = new THREE.MeshStandardMaterial({ color: srgb(0.09, 0.09, 0.11), metalness: 0.5, roughness: 0.42 });
+steel.userData.finish = "metal";
 const stitch = new THREE.MeshStandardMaterial({ color: STITCH, roughness: 0.9 });
 
 function Steel({ g, p, cast = true }: { g: THREE.BufferGeometry; p: [number, number, number]; cast?: boolean }) {

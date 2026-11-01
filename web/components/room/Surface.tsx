@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { Vec3 } from "@/lib/store";
+import { defaultFinish } from "@/lib/options";
 
 export type TextureSet =
   | "black_walnut_veneer_01" | "coated_pine" | "cotton_jersey" | "dark_wooden_planks"
@@ -93,7 +94,8 @@ function capsuleGeometry([sx, sy, sz]: Vec3, tile?: number) {
 // aoMap (R), roughnessMap (G) and metalnessMap (B), so one texture feeds all three. Textures are cached
 // per set; each mesh gets its own material so its colour can change in place.
 // `grainOnly`: keep the photo's relief and roughness but not its colour (e.g. dyed leather in any colour).
-export function PbrMaterial({ set, color, metal = 1, side, vertexColors, grainOnly }: { set: TextureSet; color: THREE.Color; metal?: number; side?: THREE.Side; vertexColors?: boolean; grainOnly?: boolean }) {
+// `finish`: which customisable part this is (default from the photo set: wood, fabric, leather, metal; or e.g. "fabric:Duvet").
+export function PbrMaterial({ set, color, metal = 1, side, vertexColors, grainOnly, finish }: { set: TextureSet; color: THREE.Color; metal?: number; side?: THREE.Side; vertexColors?: boolean; grainOnly?: boolean; finish?: string }) {
   const [map, normalMap, arm] = useTexture(
     [`/textures/${set}_diff.jpg`, `/textures/${set}_nor.jpg`, `/textures/${set}_arm.jpg`],
     (ts) => {
@@ -104,7 +106,7 @@ export function PbrMaterial({ set, color, metal = 1, side, vertexColors, grainOn
       ts[0].colorSpace = THREE.SRGBColorSpace;
     },
   );
-  return <meshStandardMaterial map={grainOnly ? null : map} normalMap={normalMap} aoMap={arm} roughnessMap={arm} metalnessMap={arm} metalness={metal} color={color} side={side} vertexColors={vertexColors} />;
+  return <meshStandardMaterial map={grainOnly ? null : map} normalMap={normalMap} aoMap={arm} roughnessMap={arm} metalnessMap={arm} metalness={metal} color={color} side={side} vertexColors={vertexColors} userData={{ finish: finish ?? defaultFinish(set) }} />;
 }
 
 function useEuler(r?: Vec3) {

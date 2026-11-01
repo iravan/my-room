@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
-import { useThree, type ThreeEvent } from "@react-three/fiber";
+import { useEffect, useRef, type ReactNode } from "react";
+import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { homePose, liveHomes, ON_WALL, useLayout, type Home } from "@/lib/room";
+import { applyFinish } from "@/lib/options";
 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3();
 
@@ -47,8 +48,20 @@ export function RoomItem({ id, home, children }: { id: string; home: Home; child
   const { camera, gl } = useThree();
   const yaw = home.rotationY ?? 0;
   useEffect(() => { liveHomes.set(id, home); }, [id, home]);
+  // Finishes: put each customisable material into the chosen option (or back), only while the item has or had options.
+  const ref = useRef<THREE.Group>(null), touched = useRef(false);
+  useFrame(() => {
+    const opts = useLayout.getState().options[id];
+    if (!opts && !touched.current) return;
+    touched.current = !!opts;
+    ref.current?.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
+      if (m?.userData?.finish) applyFinish(m, opts?.[m.userData.finish]);
+    });
+  });
   return (
     <group
+      ref={ref}
       position={pose?.position ?? home.position}
       rotation={[0, (pose?.rotationY ?? yaw) - yaw, 0]}
       scale={pose?.scale ?? 1}

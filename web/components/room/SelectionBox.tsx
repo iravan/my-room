@@ -13,10 +13,18 @@ function fit(helper: THREE.Box3Helper, scene: THREE.Object3D) {
   helper.visible = false;
   if (!id) return;
   box.makeEmpty();
+  const slots = new Set<string>();
   scene.traverse((o) => {
     if (o.userData.roomItem !== id) return;
-    o.traverse((m) => { if ((m as THREE.Mesh).isMesh) box.union(part.setFromObject(m)); });
+    o.traverse((m) => {
+      if (!(m as THREE.Mesh).isMesh) return;
+      box.union(part.setFromObject(m));
+      const f = ((m as THREE.Mesh).material as THREE.Material).userData?.finish;
+      if (f) slots.add(f);
+    });
   });
+  const list = [...slots].sort(), prev = useLayout.getState().slots;
+  if (list.join() !== prev.join()) useLayout.setState({ slots: list });
   if (box.isEmpty()) return;
   helper.box.copy(box).expandByScalar(0.01);
   helper.visible = true;

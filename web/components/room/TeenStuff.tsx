@@ -7,7 +7,7 @@ import { useGame, type Vec3 } from "@/lib/store";
 import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { drawText, hsv, lerp, paint, rng, type RGBA } from "@/lib/paint";
 import { Neon } from "./Lighting";
-import { bedSurfaceY } from "./Bed";
+import { bedSurfaceY, bedWidth } from "./Bed";
 import { Desk, T } from "./Desk";
 import { Chair } from "./Chair";
 import { RoomItem } from "./RoomItem";
@@ -245,7 +245,7 @@ function Dust() {
   useFrame(({ clock }, dt) => { if (on) dust.step(Math.min(dt, 0.1), clock.elapsedTime); });
   if (!on) return null;
   return (
-    <points geometry={dust.geometry}>
+    <points geometry={dust.geometry} raycast={() => null}>
       <pointsMaterial map={dust.map} size={0.012} sizeAttenuation vertexColors transparent depthWrite={false} blending={THREE.AdditiveBlending} />
     </points>
   );
@@ -254,6 +254,11 @@ function Dust() {
 // ---------- the room ----------
 
 // What every real bedroom has: skirting, a door, sockets, a light switch, a ceiling light, a smoke detector.
+function BedBlob() {
+  const w = bedWidth(useLayout((s) => s.options.bed?.size));
+  return <Blob p={[-1.45 + (w - 1.02) / 2, 0, 0.9]} size={[w + 0.28, 2.25]} />;
+}
+
 function RoomBasics() {
   const paintC = C(0.5, 0.48, 0.56), steel = C(0.7, 0.7, 0.75), white = C(0.8, 0.8, 0.78);
   const skirting: [U3, U3][] = [[[0, 0.04, 1.9925], [4, 0.08, 0.015]], [[0, 0.04, -1.9925], [4, 0.08, 0.015]], [[-1.9925, 0.04, 0], [0.015, 0.08, 4]], [[1.9925, 0.04, 0], [0.015, 0.08, 4]]];
@@ -284,7 +289,7 @@ function RoomBasics() {
       <Plastic t="cylinder" p={[0.9, 2.69, -0.6]} s={[0.11, 0.01, 0.11]} c={white} />
       <Prim t="sphere" p={[0.93, 2.678, -0.6]} s={[0.008, 0.008, 0.008]} glow={C(2, 0.1, 0.1)} />
       {/* Contact shadows under the core furniture: bed, nightstand, cabinet, crate */}
-      <RoomItem id="bed" home={HOMES.bed}><Blob p={[-1.45, 0, 0.9]} size={[1.3, 2.25]} /></RoomItem>
+      <RoomItem id="bed" home={HOMES.bed}><BedBlob /></RoomItem>
       <RoomItem id="nightstand" home={HOMES.nightstand}><Blob p={[-1.7, 0, -0.45]} size={[0.6, 0.55]} /></RoomItem>
       <RoomItem id="cabinet" home={HOMES.cabinet}><Blob p={[1.26, 0, 1.8]} size={[1.6, 0.55]} /></RoomItem>
       <RoomItem id="crate" home={HOMES.crate}><Blob p={[1.45, 0, 0.35]} size={[0.55, 0.8]} /></RoomItem>

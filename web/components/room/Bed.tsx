@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useGame, type Vec3 } from "@/lib/store";
+import { useLayout } from "@/lib/room";
 import { BED_HOME } from "@/lib/layout";
 import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { perlin, rng } from "@/lib/paint";
@@ -17,7 +18,8 @@ import { PbrMaterial, projectUVs, rounded, type TextureSet } from "./Surface";
 // Local frame: head at −z (against the back wall), foot at +z. Click = next duvet colour.
 
 export const BED_POS: Vec3 = BED_HOME;
-const W = 1.02, L = 1.94, MT = 0.48, MB = 0.24; // mattress width, length, top, bottom
+const W1 = 1.02, L = 1.94, MT = 0.48, MB = 0.24; // single mattress width, length, top, bottom
+const WIDTH: Record<string, number> = { single: W1, double: 1.42 };
 const HEAD = -0.97, FOOT = HEAD + L;
 
 // Duvet cover colours (cotton), cycled by clicking the bed.
@@ -123,9 +125,9 @@ function drapeGeometry(o: Drape) {
   return g;
 }
 
-// Everything soft is built once per load, shared by the bed and by bedSurfaceY (gadgets resting on it).
-let built: ReturnType<typeof build> | null = null;
-function build() {
+// Everything soft is built once per load and width, shared by the bed and by bedSurfaceY (gadgets resting on it).
+const built = new Map<number, ReturnType<typeof build>>();
+function build(W: number) {
   const duvet = drapeGeometry({ a: W / 2 - 0.04, z0: -0.45, z1: FOOT - 0.04, top: MT + 0.03, r: 0.07, hangSide: 0.13, hangFoot: 0.14,
     fold: { rho: 0.035, len: 0.26 }, lumps: 0.012, tile: 0.35, seed: SEED });
   const throwG = drapeGeometry({ a: W / 2 - 0.04, z0: 0.5, z1: FOOT - 0.04, top: MT + 0.085, r: 0.12, hangSide: 0.2, hangFoot: 0.1,
@@ -137,7 +139,7 @@ function build() {
     pillowBack: pillowGeometry([0.6, 0.14, 0.4], 0, (SEED % 89) + 5),
   };
 }
-const geometries = () => (built ??= build());
+const geometries = (W = W1) => { if (!built.has(W)) built.set(W, build(W)); return built.get(W)!; };
 
 // Pillow placements (local): one lying with a head dent, one leaning on the headboard behind it.
 const PILLOWS = [
@@ -167,24 +169,25 @@ export function bedSurfaceY(x: number, z: number) {
   return hit ? hit.point.y : MT;
 }
 
-function Soft({ geometry, set, color, position, rotation, double }: {
-  geometry: THREE.BufferGeometry; set: TextureSet; color: THREE.Color; position?: Vec3; rotation?: Vec3; double?: boolean;
+function Soft({ geometry, set, color, position, rotation, double, finish }: {
+  geometry: THREE.BufferGeometry; set: TextureSet; color: THREE.Color; position?: Vec3; rotation?: Vec3; double?: boolean; finish: string;
 }) {
   return (
     <mesh geometry={geometry} position={position} rotation={rotation} castShadow receiveShadow>
-      <PbrMaterial set={set} color={color} metal={0} side={double ? THREE.DoubleSide : THREE.FrontSide} />
+      <PbrMaterial set={set} color={color} metal={0} side={double ? THREE.DoubleSide : THREE.FrontSide} finish={finish} />
     </mesh>
   );
 }
 
-function Frame() {
+function Frame({ W }: { W: number }) {
   const g = useMemo(() => ({
     rail: rounded(0.035, 0.11, L + 0.07, 0.012, 1),
     end: rounded(W + 0.07, 0.11, 0.035, 0.012, 1),
     leg: projectUVs(new THREE.CylinderGeometry(0.024, 0.018, 0.13, 16), 1),
     head: rounded(W + 0.1, 0.9, 0.06, 0.02, 1),
     channel: rounded(0.205, 0.56, 0.07, 0.03, 0.4),
-  }), []);
+  }), [W]);
+  const channels = Math.round(W / 0.205);
   const wood = <PbrMaterial set="black_walnut_veneer_01" color={WOOD} metal={0} />;
   const legs: Vec3[] = [[-W / 2 - 0.01, 0.065, HEAD + 0.03], [W / 2 + 0.01, 0.065, HEAD + 0.03], [-W / 2 - 0.01, 0.065, FOOT - 0.03], [W / 2 + 0.01, 0.065, FOOT - 0.03]];
   return (
@@ -192,11 +195,11 @@ function Frame() {
       {[-1, 1].map((sx) => <mesh key={sx} geometry={g.rail} position={[sx * (W / 2 + 0.0175), 0.235, (HEAD + FOOT) / 2]} castShadow receiveShadow>{wood}</mesh>)}
       <mesh geometry={g.end} position={[0, 0.235, FOOT + 0.0175]} castShadow receiveShadow>{wood}</mesh>
       {legs.map((p, i) => <mesh key={i} geometry={g.leg} position={p} castShadow>{wood}</mesh>)}
-      {/* Headboard: walnut back with five padded channels */}
+      {/* Headboard: walnut back with padded channels (five on a single) */}
       <mesh geometry={g.head} position={[0, 0.6, HEAD - 0.06]} castShadow receiveShadow>{wood}</mesh>
-      {[-2, -1, 0, 1, 2].map((i) => (
+      {Array.from({ length: channels }, (_, i) => i - (channels - 1) / 2).map((i) => (
         <mesh key={i} geometry={g.channel} position={[i * 0.205, 0.72, HEAD - 0.02]} castShadow receiveShadow>
-          <PbrMaterial set="cotton_jersey" color={UPHOLSTERY} metal={0} />
+          <PbrMaterial set="cotton_jersey" color={UPHOLSTERY} metal={0} finish="fabric:Headboard" />
         </mesh>
       ))}
       {/* LED strips: under the side rails and the foot (floor glow), and a wall wash behind the headboard */}
@@ -207,16 +210,25 @@ function Frame() {
   );
 }
 
+// Bed size option: a double grows into the room (away from the wall), so its wall side stays put.
+export const bedWidth = (size?: string) => WIDTH[size ?? "single"] ?? W1;
+
 export function Bed() {
-  const cover = useGame((s) => COVERS[s.blanket % COVERS.length]), nextBlanket = useGame((s) => s.nextBlanket);
-  const g = geometries();
+  const cover = useGame((s) => COVERS[s.blanket % COVERS.length]);
+  const W = bedWidth(useLayout((s) => s.options.bed?.size)), g = geometries(W);
+  // Clicking the bed cycles the duvet colours; a duvet colour picked in edit mode gives way to it.
+  const nextBlanket = () => {
+    useGame.getState().nextBlanket();
+    const o = useLayout.getState().options.bed;
+    if (o?.["fabric:Duvet"]) { const rest = { ...o }; delete rest["fabric:Duvet"]; useLayout.setState((s) => ({ options: { ...s.options, bed: rest } })); }
+  };
   return (
-    <Clickable onTap={nextBlanket} position={BED_POS}>
-      <Frame />
-      <Soft geometry={g.mattress} set="cotton_jersey" color={SHEET} position={[0, (MT + MB) / 2, HEAD + L / 2]} />
-      {PILLOWS.map((p) => <Soft key={p.key} geometry={g[p.key]} set="cotton_jersey" color={CASE} position={p.position} rotation={p.rotation} />)}
-      <Soft geometry={g.duvet} set="cotton_jersey" color={cover} double />
-      <Soft geometry={g.throwG} set="knitted_fleece" color={THROW} double />
+    <Clickable onTap={nextBlanket} position={[BED_POS[0] + (W - W1) / 2, BED_POS[1], BED_POS[2]]}>
+      <Frame W={W} />
+      <Soft geometry={g.mattress} set="cotton_jersey" color={SHEET} position={[0, (MT + MB) / 2, HEAD + L / 2]} finish="fabric:Sheets" />
+      {PILLOWS.map((p) => <Soft key={p.key} geometry={g[p.key]} set="cotton_jersey" color={CASE} position={p.position} rotation={p.rotation} finish="fabric:Sheets" />)}
+      <Soft geometry={g.duvet} set="cotton_jersey" color={cover} double finish="fabric:Duvet" />
+      <Soft geometry={g.throwG} set="knitted_fleece" color={THROW} double finish="fabric:Throw" />
     </Clickable>
   );
 }

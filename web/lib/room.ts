@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import * as THREE from "three";
 import type { Vec3 } from "./store";
 import { BED_HOME, CABINET, CRATE, NIGHTSTAND, DESK } from "./layout";
+import { normalizeOptions, type Options } from "./options";
 
 // The room as data. Every item renders through <RoomItem id home>: its children are modelled in place at `home`
 // (the default room), and a saved pose moves the whole item rigidly about that home point. Only moved items are
@@ -81,11 +82,15 @@ export const homePose = (home: Home): Pose => ({ position: [...home.position], r
 
 type State = {
   items: Layout;
+  options: Options; // per item: finish slot or variant → choice
   // Edit mode (not saved): which item is selected, whether it's being dragged, and undo history.
   editing: boolean;
   selected: string | null;
   dragging: boolean;
-  past: Layout[];
+  past: { items: Layout; options: Options }[];
+  // In edit mode: the finish slots the selected item has (found by SelectionBox).
+  slots: string[];
+  setOption: (id: string, key: string, value: string) => void;
   move: (id: string, pose: Pose) => void;
   reset: (id: string) => void;
   snapshot: () => void; // call before a change that should be undoable
@@ -95,18 +100,27 @@ export const useLayout = create<State>()(
   persist(
     (set, get) => ({
       items: {},
+      options: {},
+      slots: [],
       editing: false,
       selected: null,
       dragging: false,
       past: [],
       move: (id, pose) => set((s) => ({ items: { ...s.items, ...normalizeLayout({ [id]: pose }) } })),
       reset: (id) => { get().snapshot(); set((s) => { const items = { ...s.items }; delete items[id]; return { items }; }); },
-      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), s.items] })),
-      undo: () => set((s) => (s.past.length ? { items: s.past[s.past.length - 1], past: s.past.slice(0, -1) } : {})),
+      setOption: (id, key, value) => {
+        get().snapshot();
+        set((s) => ({ options: { ...s.options, ...normalizeOptions({ [id]: { ...s.options[id], [key]: value } }) } }));
+      },
+      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), { items: s.items, options: s.options }] })),
+      undo: () => set((s) => (s.past.length ? { ...s.past[s.past.length - 1], past: s.past.slice(0, -1) } : {})),
     }),
     {
-      name: "my-room-layout", version: 1, partialize: ({ items }) => ({ items }),
-      merge: (saved, cur) => ({ ...cur, items: normalizeLayout((saved as { items?: unknown })?.items) }),
+      name: "my-room-layout", version: 1, partialize: ({ items, options }) => ({ items, options }),
+      merge: (saved, cur) => {
+        const s = saved as { items?: unknown; options?: unknown } | undefined;
+        return { ...cur, items: normalizeLayout(s?.items), options: normalizeOptions(s?.options) };
+      },
     },
   ),
 );

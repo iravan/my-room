@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { homePose, liveHomes, ON_WALL, useLayout } from "@/lib/room";
 import { useGame } from "@/lib/store";
 import { Panel } from "./Panel";
+import * as THREE from "three";
+import { FINISHES, finishLabel, finishType, VARIANTS } from "@/lib/options";
 
 const NAMES: Record<string, string> = {
   "socket-desk": "Socket (desk)", "socket-window": "Socket (window)", "socket-right": "Socket (right wall)", switch: "Light switch",
@@ -43,10 +45,46 @@ function useEditKeys() {
   }, []);
 }
 
+// Colour/material per part the item has, and its variants (e.g. bed size).
+function Options({ id }: { id: string }) {
+  const slots = useLayout((s) => s.slots), opts = useLayout((s) => s.options[id]) ?? {};
+  const variants = VARIANTS[id] ?? {};
+  const set = (k: string, v: string) => useLayout.getState().setOption(id, k, v);
+  return (
+    <div className="space-y-2">
+      {Object.entries(variants).map(([k, v]) => (
+        <div key={k}>
+          <p className="text-xs text-zinc-400">{v.label}</p>
+          <div className="grid grid-cols-2 gap-1">
+            {Object.entries(v.choices).map(([c, label]) => (
+              <Button key={c} size="xs" variant={(opts[k] ?? Object.keys(v.choices)[0]) === c ? "default" : "outline"} onClick={() => set(k, c)}>{label}</Button>
+            ))}
+          </div>
+        </div>
+      ))}
+      {slots.map((slot) => {
+        const choices = FINISHES[finishType(slot)] ?? {}, current = opts[slot] ?? "original";
+        return (
+          <div key={slot}>
+            <p className="text-xs text-zinc-400">{finishLabel(slot)}: <span className="text-zinc-200">{choices[current]?.label}</span></p>
+            <div className="flex flex-wrap gap-1">
+              {Object.entries(choices).map(([c, ch]) => (
+                <button key={c} title={ch.label} aria-label={`${finishLabel(slot)} ${ch.label}`} onClick={() => set(slot, c)}
+                  className={`size-6 rounded-full border ${current === c ? "border-2 border-cyan-300" : "border-white/30"}`}
+                  style={{ background: ch.color ? `#${ch.color.getHexString(THREE.SRGBColorSpace)}` : "conic-gradient(#a77,#7a7,#77a,#a77)" }} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function EditPanel() {
   useEditKeys();
   const editing = useLayout((s) => s.editing), selected = useLayout((s) => s.selected), canUndo = useLayout((s) => s.past.length > 0);
-  const moved = useLayout((s) => !!(s.selected && s.items[s.selected])), anyMoved = useLayout((s) => Object.keys(s.items).length > 0);
+  const moved = useLayout((s) => !!(s.selected && s.items[s.selected])), anyMoved = useLayout((s) => Object.keys(s.items).length + Object.keys(s.options).length > 0);
   if (!editing) return null;
   const onWall = !!(selected && ON_WALL[selected]);
   return (
@@ -68,11 +106,12 @@ export function EditPanel() {
             <Button size="sm" variant="secondary" onClick={() => resize(1.1)}>Bigger [+]</Button>
           </div>
           <Button size="sm" variant="outline" disabled={!moved} onClick={() => useLayout.getState().reset(selected)}>Put back where it was</Button>
+          <Options id={selected} />
         </>
       )}
       <div className="grid grid-cols-2 gap-1">
         <Button size="sm" variant="outline" disabled={!canUndo} onClick={() => useLayout.getState().undo()}>Undo [⌘Z]</Button>
-        <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {} }); }}>Reset room</Button>
+        <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {}, options: {} }); }}>Reset room</Button>
       </div>
       <Button size="sm" onClick={exitEdit}>Done [Esc]</Button>
     </Panel>
