@@ -4,7 +4,8 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { addModelFile, importModelFile } from "@/lib/models";
 import { Button } from "@/components/ui/button";
-import { homePose, liveHomes, ON_WALL, useLayout } from "@/lib/room";
+import { DEFAULT_SIZE, liveHomes, ON_WALL, poseOf, SIZE_RANGE, useLayout, type Pose, type RoomSize } from "@/lib/room";
+import { Slider } from "@/components/ui/slider";
 import { typing, useGame } from "@/lib/store";
 import { Panel } from "./Panel";
 import { ROOM_BUDGET, useBudget } from "@/lib/budget";
@@ -22,11 +23,11 @@ export const enterEdit = () => { useGame.getState().setView("room"); useLayout.s
 const exitEdit = () => useLayout.setState({ editing: false, selected: null, dragging: false });
 
 // Change the selected item's pose (one undo step each).
-function adjust(f: (p: ReturnType<typeof homePose>) => ReturnType<typeof homePose>) {
+function adjust(f: (p: Pose) => Pose) {
   const L = useLayout.getState(), id = L.selected, home = id && liveHomes.get(id);
   if (!id || !home) return;
   L.snapshot();
-  L.move(id, f(L.items[id] ?? homePose(home)));
+  L.move(id, f(poseOf(id, home)));
 }
 const rotate = (d: number) => adjust((p) => ({ ...p, rotationY: Math.round((p.rotationY + d) / STEP) * STEP }));
 const resize = (k: number) => adjust((p) => ({ ...p, scale: Math.round(p.scale * k * 100) / 100 }));
@@ -104,10 +105,31 @@ function BudgetMeter() {
   );
 }
 
+// Room size: width, depth, height. Furniture against a wall goes with it; one undo step per drag.
+function RoomSizeControls() {
+  const size = useLayout((s) => s.size);
+  const rows: [keyof RoomSize, string][] = [["w", "Width"], ["d", "Depth"], ["h", "Height"]];
+  return (
+    <div className="space-y-2" onPointerDownCapture={() => useLayout.getState().snapshot()}>
+      <p className="text-xs font-bold text-cyan-300">Room size</p>
+      {rows.map(([k, label]) => (
+        <label key={k} className="grid gap-1 text-xs text-zinc-400">
+          <span className="flex justify-between"><span>{label}</span><span className="text-zinc-200">{size[k].toFixed(2)} m</span></span>
+          <Slider aria-label={`Room ${label.toLowerCase()}`} min={SIZE_RANGE[k][0]} max={SIZE_RANGE[k][1]} step={0.05} value={[size[k]]}
+            onValueChange={(v) => useLayout.getState().setSize({ [k]: (Array.isArray(v) ? v[0] : v) as number })} />
+        </label>
+      ))}
+      {(size.w !== DEFAULT_SIZE.w || size.d !== DEFAULT_SIZE.d || size.h !== DEFAULT_SIZE.h) && (
+        <Button size="xs" variant="outline" onClick={() => useLayout.getState().setSize(DEFAULT_SIZE)}>Back to 4 × 4 × 2.8 m</Button>
+      )}
+    </div>
+  );
+}
+
 export function EditPanel() {
   useEditKeys();
   const editing = useLayout((s) => s.editing), selected = useLayout((s) => s.selected), canUndo = useLayout((s) => s.past.length > 0);
-  const moved = useLayout((s) => !!(s.selected && s.items[s.selected])), anyMoved = useLayout((s) => Object.keys(s.items).length + Object.keys(s.options).length > 0);
+  const moved = useLayout((s) => !!(s.selected && s.items[s.selected])), anyMoved = useLayout((s) => Object.keys(s.items).length + Object.keys(s.options).length > 0 || (Object.keys(DEFAULT_SIZE) as (keyof RoomSize)[]).some((k) => s.size[k] !== DEFAULT_SIZE[k]));
   const file = useRef<HTMLInputElement>(null), lookFile = useRef<HTMLInputElement>(null);
   const shell = useLayout((s) => (s.selected ? s.shells[s.selected] : undefined));
   if (!editing) return null;
@@ -173,12 +195,13 @@ export function EditPanel() {
             onChange={(e) => { replaceLook(e.target.files?.[0]); e.target.value = ""; }} />
         </>
       )}
+      {!selected && <RoomSizeControls />}
       <Button size="sm" variant="secondary" onClick={() => file.current?.click()}>+ Add a 3D model (.glb)</Button>
       <input ref={file} type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" className="hidden"
         onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ""; }} />
       <div className="grid grid-cols-2 gap-1">
         <Button size="sm" variant="outline" disabled={!canUndo} onClick={() => useLayout.getState().undo()}>Undo [⌘Z]</Button>
-        <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {}, options: {} }); }}>Reset room</Button>
+        <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {}, options: {}, size: DEFAULT_SIZE }); }}>Reset room</Button>
       </div>
       <BudgetMeter />
       <Button size="sm" onClick={exitEdit}>Done [Esc]</Button>

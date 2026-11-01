@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { HOMES, itemMatrix, liveHomes, useLayout } from "@/lib/room";
+import { HOMES, itemMatrix, liveHomes, poseOf, useLayout } from "@/lib/room";
 import { loadModel } from "@/lib/models";
 import { RoomItem } from "./RoomItem";
 
@@ -23,9 +23,9 @@ const isCore = (o: THREE.Object3D | null, stop: THREE.Object3D): boolean => !!o 
 
 // The built-in shell's bounding box in the item's home frame (independent of where the item now is).
 function shellBox(scene: THREE.Scene, id: string) {
-  const box = new THREE.Box3(), items = useLayout.getState().items, home = liveHomes.get(id) ?? HOMES[id];
+  const box = new THREE.Box3(), home = liveHomes.get(id) ?? HOMES[id];
   if (!home) return box;
-  inv.copy(itemMatrix(home, items[id])).invert();
+  inv.copy(itemMatrix(home, poseOf(id, home))).invert();
   scene.traverse((root) => {
     if (root.userData.roomItem !== id || root.userData.shellModel) return;
     root.traverse((o) => {

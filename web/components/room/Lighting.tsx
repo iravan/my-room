@@ -11,7 +11,7 @@ import { Clickable } from "./Clickable";
 import { Nightstand } from "./Nightstand";
 import { Core } from "./Shell";
 import { RoomItem } from "./RoomItem";
-import { HOMES } from "@/lib/room";
+import { HOMES, useLayout } from "@/lib/room";
 
 const METAL = srgb(0.55, 0.55, 0.7);
 const LAMP: Vec3 = [-1.7, 0.54, 0.45];
@@ -102,7 +102,7 @@ function Reflections() {
 }
 
 export function Lighting() {
-  const preset = useGame((s) => s.preset);
+  const preset = useGame((s) => s.preset), size = useLayout((s) => s.size);
   const p = PRESETS[preset];
   // Trilight-style ambient: up-facing surfaces catch the ceiling's neon cove, undersides only see the dark floor.
   const [sky, ground] = useMemo(() => [
@@ -127,10 +127,10 @@ export function Lighting() {
       </RoomItem>
 
       {/* Neon cove along the ceiling: magenta left/back, cyan right/front. */}
-      <Neon position={[0, 2.68, -1.97]} size={[3.9, 0.03, 0.03]} color={MAGENTA} />
-      <Neon position={[-1.97, 2.68, 0]} size={[0.03, 0.03, 3.9]} color={MAGENTA} />
-      <Neon position={[0, 2.68, 1.97]} size={[3.9, 0.03, 0.03]} color={CYAN} />
-      <Neon position={[1.97, 2.68, 0]} size={[0.03, 0.03, 3.9]} color={CYAN} />
+      <Neon position={[0, size.h - 0.12, -size.d / 2 + 0.03]} size={[size.w - 0.1, 0.03, 0.03]} color={MAGENTA} />
+      <Neon position={[-size.w / 2 + 0.03, size.h - 0.12, 0]} size={[0.03, 0.03, size.d - 0.1]} color={MAGENTA} />
+      <Neon position={[0, size.h - 0.12, size.d / 2 - 0.03]} size={[size.w - 0.1, 0.03, 0.03]} color={CYAN} />
+      <Neon position={[size.w / 2 - 0.03, size.h - 0.12, 0]} size={[0.03, 0.03, size.d - 0.1]} color={CYAN} />
       {/* Synthwave rug */}
       <mesh position={[0, 0.005, -0.2]}>
         <boxGeometry args={[1.8, 0.01, 1.3]} />

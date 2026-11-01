@@ -164,10 +164,10 @@ function Blob({ p, size }: { p: U3; size: [number, number] }) {
 
 // A cable through Unity world points, Catmull-Rom smoothed (6 steps per span, as in Unity), never below the floor.
 function Cable({ c, width, pts, owners }: { c: THREE.Color; width: number; pts: U3[]; owners?: string[] }) {
-  const items = useLayout((s) => s.items);
-  const key = owners?.map((o) => JSON.stringify(items[o] ?? null)).join("|") ?? "";
+  const items = useLayout((s) => s.items), size = useLayout((s) => s.size);
+  const key = (owners?.map((o) => JSON.stringify(items[o] ?? null)).join("|") ?? "") + JSON.stringify(size);
   const geometry = useMemo(() => {
-    const P = pts.map((q, i) => (owners ? placePoint(owners[i], flip(q), items) : new THREE.Vector3(...flip(q)))), out: THREE.Vector3[] = [];
+    const P = pts.map((q, i) => (owners ? placePoint(owners[i], flip(q), items, undefined, size) : new THREE.Vector3(...flip(q)))), out: THREE.Vector3[] = [];
     for (let i = 0; i < P.length - 1; i++) {
       const a = P[Math.max(i - 1, 0)], b = P[i], d = P[i + 1], e = P[Math.min(i + 2, P.length - 1)];
       for (let k = 0; k < 6; k++) {
@@ -262,7 +262,8 @@ function BedBlob() {
 
 function RoomBasics() {
   const paintC = C(0.5, 0.48, 0.56), steel = C(0.7, 0.7, 0.75), white = C(0.8, 0.8, 0.78);
-  const skirting: [U3, U3][] = [[[0, 0.04, 1.9925], [4, 0.08, 0.015]], [[0, 0.04, -1.9925], [4, 0.08, 0.015]], [[-1.9925, 0.04, 0], [0.015, 0.08, 4]], [[1.9925, 0.04, 0], [0.015, 0.08, 4]]];
+  const { w, d, h } = useLayout((s) => s.size), hw = w / 2 - 0.0075, hd = d / 2 - 0.0075;
+  const skirting: [U3, U3][] = [[[0, 0.04, hd], [w, 0.08, 0.015]], [[0, 0.04, -hd], [w, 0.08, 0.015]], [[-hw, 0.04, 0], [0.015, 0.08, d]], [[hw, 0.04, 0], [0.015, 0.08, d]]];
   const sockets: [U3, number, string][] = [[[-2, 0.3, -1.2], -90, "socket-desk"], [[0.25, 0.3, 2], 0, "socket-window"], [[2, 0.3, -1.4], 90, "socket-right"]];
   return (
     <>
@@ -286,9 +287,9 @@ function RoomBasics() {
         </G></RoomItem>
       ))}
       {/* Ceiling: flush light, off at night (faint white dish); smoke detector with its red LED */}
-      <Plastic t="cylinder" p={[0, 2.685, 0.2]} s={[0.36, 0.015, 0.36]} c={C(0.75, 0.75, 0.78)} emissive={C(0.06, 0.055, 0.07)} />
-      <Plastic t="cylinder" p={[0.9, 2.69, -0.6]} s={[0.11, 0.01, 0.11]} c={white} />
-      <Prim t="sphere" p={[0.93, 2.678, -0.6]} s={[0.008, 0.008, 0.008]} glow={C(2, 0.1, 0.1)} />
+      <Plastic t="cylinder" p={[0, h - 0.115, 0.2]} s={[0.36, 0.015, 0.36]} c={C(0.75, 0.75, 0.78)} emissive={C(0.06, 0.055, 0.07)} />
+      <Plastic t="cylinder" p={[0.9, h - 0.11, -0.6]} s={[0.11, 0.01, 0.11]} c={white} />
+      <Prim t="sphere" p={[0.93, h - 0.122, -0.6]} s={[0.008, 0.008, 0.008]} glow={C(2, 0.1, 0.1)} />
       {/* Contact shadows under the core furniture: bed, nightstand, cabinet, crate */}
       <RoomItem id="bed" home={HOMES.bed}><BedBlob /></RoomItem>
       <RoomItem id="nightstand" home={HOMES.nightstand}><Blob p={[-1.7, 0, -0.45]} size={[0.6, 0.55]} /></RoomItem>

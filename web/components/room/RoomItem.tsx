@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import { homePose, liveHomes, ON_WALL, useLayout, type Home } from "@/lib/room";
+import { liveHomes, ON_WALL, poseOf, restPosition, useLayout, type Home } from "@/lib/room";
 import { applyFinish } from "@/lib/options";
 import { lifts } from "./Shell";
 
@@ -26,7 +26,7 @@ function surfaceUnder(scene: THREE.Scene, id: string): THREE.Vector3 | null {
 // fixtures — snapped to 5 cm (Shift: 1 cm). One undo step per drag.
 function startDrag(id: string, home: Home, e: ThreeEvent<PointerEvent>, camera: THREE.Camera, el: HTMLElement, scene: THREE.Scene) {
   e.stopPropagation();
-  const L = useLayout.getState(), start = L.items[id] ?? homePose(home), axis = ON_WALL[id];
+  const start = poseOf(id, home), axis = ON_WALL[id];
   useLayout.setState({ selected: id, dragging: true });
   const plane = axis
     ? new THREE.Plane(axis === "x" ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1), -start.position[axis === "x" ? 0 : 2])
@@ -67,7 +67,7 @@ function startDrag(id: string, home: Home, e: ThreeEvent<PointerEvent>, camera: 
 const noRaycast = () => {};
 
 export function RoomItem({ id, home, children, shellModel }: { id: string; home: Home; children: ReactNode; shellModel?: boolean }) {
-  const pose = useLayout((s) => s.items[id]), editing = useLayout((s) => s.editing);
+  const pose = useLayout((s) => s.items[id]), editing = useLayout((s) => s.editing), size = useLayout((s) => s.size);
   const { camera, gl, scene } = useThree();
   const yaw = home.rotationY ?? 0;
   useEffect(() => { if (!shellModel) liveHomes.set(id, home); }, [id, home, shellModel]);
@@ -101,7 +101,7 @@ export function RoomItem({ id, home, children, shellModel }: { id: string; home:
   return (
     <group
       ref={ref}
-      position={pose?.position ?? home.position}
+      position={pose?.position ?? restPosition(id, home, size)}
       rotation={[0, (pose?.rotationY ?? yaw) - yaw, 0]}
       scale={pose?.scale ?? 1}
       userData={{ roomItem: id, home, shellModel }}

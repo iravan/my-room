@@ -22,14 +22,14 @@ const toBase64 = async (b: Blob) => {
 const fromBase64 = (data: string) => new Blob([Uint8Array.from(atob(data), (c) => c.charCodeAt(0))]);
 
 export async function exportCollection() {
-  const { albums, spinningId } = useCollection.getState(), { items, options, models, shells } = useLayout.getState();
+  const { albums, spinningId } = useCollection.getState(), { size, items, options, models, shells } = useLayout.getState();
   const names = [...new Set([...albums.flatMap((a) => IMAGE_FIELDS.map((f) => a[f])), ...[...Object.values(models), ...Object.values(shells)].map((m) => m.asset)].filter(Boolean))];
   const images: ShareImage[] = [];
   for (const name of names) {
     const blob = await getImage(name);
     if (blob) images.push({ name, data: await toBase64(blob) });
   }
-  const json = JSON.stringify({ albums, images, spinningId, room: { items, options, models, shells } } satisfies ShareFile);
+  const json = JSON.stringify({ albums, images, spinningId, room: { size, items, options, models, shells } } satisfies ShareFile);
   if (json.length > MAX_SHARE_BYTES) throw new Error("Your room is over 100 MB with all its images and models; remove some to share it.");
   return json;
 }
@@ -80,7 +80,7 @@ export function visit(json: string) {
   leaveImages();
   for (const i of f.images) visitImages.set(i.name, fromBase64(i.data));
   const s = useCollection.getState(), L = useLayout.getState();
-  if (!s.visiting) own = { albums: s.albums, spinningId: s.spinningId, room: { items: L.items, options: L.options, models: L.models, shells: L.shells } };
+  if (!s.visiting) own = { albums: s.albums, spinningId: s.spinningId, room: { size: L.size, items: L.items, options: L.options, models: L.models, shells: L.shells } };
   freezeLayoutSaves(true);
   useLayout.setState({ ...f.room, editing: false, selected: null, past: [] });
   useCollection.setState({ albums: f.albums, spinningId: f.spinningId, visiting: true });

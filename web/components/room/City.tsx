@@ -7,7 +7,7 @@ import { CYAN, PRESETS } from "@/lib/lighting";
 import { rng } from "@/lib/paint";
 import { Metal, Neon } from "./Lighting";
 import { RoomItem } from "./RoomItem";
-import { HOMES } from "@/lib/room";
+import { HOMES, useLayout } from "@/lib/room";
 
 // The view out of the window is real geometry, so it has depth and parallax: a sky dome, then three skyline
 // layers at street, district and horizon distance, hazier the farther they are. The room is on a high floor:
@@ -131,11 +131,11 @@ function sky() {
 }
 
 function Outside() {
-  const preset = useGame((s) => s.preset);
+  const preset = useGame((s) => s.preset), shift = useLayout((s) => 2 - s.size.d / 2); // the city stays behind the back wall as the room's depth changes
   const tint = PRESETS[preset].window;
   const [skyMap, layers] = useMemo(() => [sky(), LAYERS.map((L, i) => ({ L, map: skyline(L, 11 + i) }))], []);
   return (
-    <>
+    <group position={[0, 0, shift]}>
       <mesh position={[-0.3, EYE, WALL]}>
         <sphereGeometry args={[SKY_R, 48, 24]} />
         <meshBasicMaterial map={skyMap} color={tint} side={THREE.BackSide} depthWrite={false} />
@@ -146,7 +146,7 @@ function Outside() {
           <meshBasicMaterial map={map} color={tint} transparent alphaTest={0.02} depthWrite={false} />
         </mesh>
       ))}
-    </>
+    </group>
   );
 }
 

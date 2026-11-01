@@ -7,7 +7,7 @@ import { typing, useGame } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { playAlbum, togglePlay, useCollection } from "@/lib/collection";
 import { SHOTS } from "@/lib/layout";
-import { HOMES, itemMatrix, useLayout } from "@/lib/room";
+import { HOMES, itemMatrix, poseOf, useLayout } from "@/lib/room";
 
 const SHOT_ITEM = { turntable: "cabinet", shelf: "cabinet", crate: "crate" } as const;
 const shotMat = new THREE.Matrix4(), shotAt = new THREE.Vector3();
@@ -107,14 +107,15 @@ export function CameraRig() {
         const dx = (h * Math.cos(y) - v * Math.sin(y)) * step;
         const dz = (-h * Math.sin(y) - v * Math.cos(y)) * step;
         const [x, py, z] = s.roomPos;
-        s.setRoomPos([Math.min(1.7, Math.max(-1.7, x + dx)), py, Math.min(1.7, Math.max(-1.7, z + dz))]);
+        const { w, d } = useLayout.getState().size, mx = w / 2 - 0.3, mz = d / 2 - 0.3;
+        s.setRoomPos([Math.min(mx, Math.max(-mx, x + dx)), py, Math.min(mz, Math.max(-mz, z + dz))]);
       }
       tmpPos.set(...s.roomPos);
       tmpQuat.setFromEuler(tmpEuler.set(-s.pitch * DEG, -s.yaw * DEG, 0));
     } else {
       // Fixed shots follow their item if it has been moved.
       const [eye, at] = SHOTS[s.view], item = s.view === "inspect" ? undefined : SHOT_ITEM[s.view];
-      itemMatrix(item ? HOMES[item] : { position: [0, 0, 0] }, item ? useLayout.getState().items[item] : undefined, shotMat);
+      itemMatrix(item ? HOMES[item] : { position: [0, 0, 0] }, item ? poseOf(item, HOMES[item]) : undefined, shotMat);
       tmpPos.set(...eye).applyMatrix4(shotMat);
       shotAt.set(...at).applyMatrix4(shotMat);
       tmpQuat.setFromRotationMatrix(tmpMat.lookAt(tmpPos, shotAt, UP));

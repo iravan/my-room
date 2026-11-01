@@ -1,7 +1,12 @@
 // Layout: untrusted poses are cleaned, and moving an item pivots about its own home, never the room's origin.
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { itemMatrix, normalizeLayout, normalizeRoom, placePoint } from "./room";
+import { itemMatrix, normalizeLayout, normalizeRoom, normalizeSize, placePoint, restPosition, useLayout, HOMES } from "./room";
+
+// The layout store saves to localStorage; tests get an in-memory one.
+const mem = new Map<string, string>();
+globalThis.localStorage ??= { getItem: (k: string) => mem.get(k) ?? null, setItem: (k: string, v: string) => void mem.set(k, v),
+  removeItem: (k: string) => void mem.delete(k), clear: () => mem.clear(), key: () => null, length: 0 } as Storage;
 
 describe("layout", () => {
   it("keeps good poses and clamps them inside the room", () => {
@@ -64,5 +69,27 @@ describe("layout", () => {
       chair: { asset: "abcd1234.glb", yaw: 7 },
     } }, "visit:");
     expect(r.shells).toEqual({ desk: { asset: "visit:1234abcd.glb", name: "My desk", yaw: 1 }, chair: { asset: "visit:abcd1234.glb", name: "Model", yaw: 0 } });
+  });
+
+  it("resizes the room: sizes clamped, furniture follows its walls, everything stays inside", () => {
+    expect(normalizeSize({ w: 99, d: "x", h: 1 })).toEqual({ w: 8, d: 4, h: 2.4 });
+    const big = { w: 6, d: 5, h: 3.2 };
+    expect(restPosition("bed", HOMES.bed, big)).toEqual([-2.45, 0, -1.4]); // left + back walls moved out by 1 and 0.5
+    expect(restPosition("closet", HOMES.closet, big)).toEqual([0.1, 0, 2.5]); // front wall only
+    useLayout.setState({ size: { w: 4, d: 4, h: 2.8 }, items: {
+      "poster-1": { position: [2, 1.65, 0.5], rotationY: 0, scale: 1 },  // on the right wall
+      "model-0000aaaa": { position: [0, 0, 0], rotationY: 0, scale: 1 },  // middle of the room
+      jeans: { position: [1.9, 0, -1.9], rotationY: 0, scale: 1 },        // in the back-right corner
+    } });
+    useLayout.getState().setSize(big);
+    const it = useLayout.getState().items;
+    expect(it["poster-1"].position).toEqual([2.995, 1.65, 0.5]); // stays 5 mm off the right wall, which moved out 1 m
+    expect(it["model-0000aaaa"].position).toEqual([0, 0, 0]);
+    expect(it.jeans.position).toEqual([2.9, 0, -2.4]);
+    useLayout.getState().setSize({ w: 3, d: 3, h: 2.4 }); // shrinking keeps them inside
+    const s = useLayout.getState().items;
+    expect(s["poster-1"].position[0]).toBeCloseTo(1.495);
+    expect(Math.abs(s.jeans.position[0]) <= 1.5 && Math.abs(s.jeans.position[2]) <= 1.5).toBe(true);
+    useLayout.setState({ size: { w: 4, d: 4, h: 2.8 }, items: {} });
   });
 });

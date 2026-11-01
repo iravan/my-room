@@ -84,9 +84,9 @@ export async function addModelFile(file: File) {
   const { asset, name, stats, optimized } = await importModelFile(file);
   // In front of the camera, on the floor, facing it.
   const { roomPos, yaw } = useGame.getState(), a = (yaw * Math.PI) / 180, fx = Math.sin(a), fz = -Math.cos(a);
-  const clamp = (v: number) => Math.min(1.7, Math.max(-1.7, v));
+  const { w, d } = useLayout.getState().size, clamp = (v: number, half: number) => Math.min(half - 0.3, Math.max(0.3 - half, v));
   useLayout.getState().addModel(asset, name, {
-    position: [clamp(roomPos[0] + fx * 1.2), 0, clamp(roomPos[2] + fz * 1.2)], rotationY: Math.atan2(-fx, -fz), scale: 1,
+    position: [clamp(roomPos[0] + fx * 1.2, w / 2), 0, clamp(roomPos[2] + fz * 1.2, d / 2)], rotationY: Math.atan2(-fx, -fz), scale: 1,
   });
   return { stats, optimized };
 }
