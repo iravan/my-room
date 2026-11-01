@@ -97,7 +97,7 @@ function capsuleGeometry([sx, sy, sz]: Vec3, tile?: number) {
 // `finish`: which customisable part this is (default from the photo set: wood, fabric, leather, metal; or e.g. "fabric:Duvet").
 export function PbrMaterial({ set, color, metal = 1, side, vertexColors, grainOnly, finish }: { set: TextureSet; color: THREE.Color; metal?: number; side?: THREE.Side; vertexColors?: boolean; grainOnly?: boolean; finish?: string }) {
   const [map, normalMap, arm] = useTexture(
-    [`/textures/${set}_diff.jpg`, `/textures/${set}_nor.jpg`, `/textures/${set}_arm.jpg`],
+    ["diff", "nor", "arm"].map((k) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/textures/${set}_${k}.jpg`),
     (ts) => {
       for (const t of ts) {
         t.wrapS = t.wrapT = THREE.RepeatWrapping;

@@ -80,7 +80,7 @@ const sets = new Map<string, THREE.Texture[]>();
 function textures(set: string) {
   if (!sets.has(set)) {
     const loader = new THREE.TextureLoader();
-    const ts = ["diff", "nor", "arm"].map((k) => loader.load(`/textures/${set}_${k}.jpg`));
+    const ts = ["diff", "nor", "arm"].map((k) => loader.load(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/textures/${set}_${k}.jpg`));
     for (const t of ts) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; }
     ts[0].colorSpace = THREE.SRGBColorSpace;
     sets.set(set, ts);
