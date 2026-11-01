@@ -102,7 +102,7 @@ export function EditPanel() {
   return (
     <Panel side="right">
       <p><b className="text-cyan-300">Edit room</b><br /><span className="text-zinc-400">
-        {selected ? (onWall ? "Drag to slide it along its wall." : "Drag to move it on the floor. Shift = fine steps.") : "Click an item to select it, then drag it. Drag empty space to look around."}
+        {selected ? (onWall ? "Drag to slide it along its wall." : isModel ? "Drag it onto the floor, the desk, a shelf or the bed." : "Drag to move it on the floor. Shift = fine steps.") : "Click an item to select it, then drag it. Drag empty space to look around."}
       </span></p>
       {selected && (
         <>

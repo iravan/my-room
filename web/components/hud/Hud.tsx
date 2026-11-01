@@ -55,7 +55,7 @@ function LeftPanel() {
         </div>
         <Button size="sm" variant="outline" onClick={takePhoto}>Photo [P]</Button>
         <Button size="sm" variant="outline" onClick={() => useGame.setState({ hideUI: true })}>Showcase mode [H]</Button>
-        <Button size="sm" variant="outline" onClick={enterEdit}>Edit room</Button>
+        {!visiting && <Button size="sm" variant="outline" onClick={enterEdit}>Edit room</Button>}
         <div className="grid grid-cols-2 gap-1">
           <Button size="sm" variant="outline" onClick={() => useGame.setState({ dialog: "settings" })}>Settings</Button>
           <Button size="sm" variant="outline" onClick={() => useGame.setState({ dialog: "controls" })}>Controls [?]</Button>

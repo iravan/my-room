@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import * as THREE from "three";
 import type { Vec3 } from "./store";
 import { BED_HOME, CABINET, CRATE, NIGHTSTAND, DESK } from "./layout";
@@ -93,6 +93,24 @@ export function normalizeModels(raw: unknown): Models {
   return out;
 }
 
+// While visiting a friend's room their layout is shown in this store; nothing may be written to your save.
+let frozen = false;
+export const freezeLayoutSaves = (on: boolean) => { frozen = on; };
+const storage = createJSONStorage(() => ({
+  getItem: (k: string) => localStorage.getItem(k),
+  setItem: (k: string, v: string) => { if (!frozen) localStorage.setItem(k, v); },
+  removeItem: (k: string) => { if (!frozen) localStorage.removeItem(k); },
+}));
+
+export type RoomData = { items: Layout; options: Options; models: Models };
+// Untrusted room layout (a share file): every part cleaned; model files optionally renamed (visit: prefix).
+export function normalizeRoom(raw: unknown, assetPrefix = ""): RoomData {
+  const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const models = normalizeModels(r.models);
+  for (const m of Object.values(models)) m.asset = assetPrefix + m.asset.replace(/^visit:/, "");
+  return { items: normalizeLayout(r.items), options: normalizeOptions(r.options), models };
+}
+
 type State = {
   items: Layout;
   models: Models;
@@ -147,7 +165,7 @@ export const useLayout = create<State>()(
       undo: () => set((s) => (s.past.length ? { ...s.past[s.past.length - 1], past: s.past.slice(0, -1) } : {})),
     }),
     {
-      name: "my-room-layout", version: 1, partialize: ({ items, options, models }) => ({ items, options, models }),
+      name: "my-room-layout", version: 1, storage, partialize: ({ items, options, models }) => ({ items, options, models }),
       merge: (saved, cur) => {
         const s = saved as { items?: unknown; options?: unknown; models?: unknown } | undefined;
         return { ...cur, items: normalizeLayout(s?.items), options: normalizeOptions(s?.options), models: normalizeModels(s?.models) };

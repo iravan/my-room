@@ -6,11 +6,24 @@ import * as THREE from "three";
 import { homePose, liveHomes, ON_WALL, useLayout, type Home } from "@/lib/room";
 import { applyFinish } from "@/lib/options";
 
-const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3();
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3(), normal = new THREE.Vector3();
+
+const inItem = (o: THREE.Object3D | null, id: string): boolean => !!o && (o.userData.roomItem === id || inItem(o.parent, id));
+
+// Uploaded models go wherever the pointer is on any upward-facing surface (floor, desk, shelf, bed), not just the floor.
+function surfaceUnder(scene: THREE.Scene, id: string): THREE.Vector3 | null {
+  for (const h of ray.intersectObject(scene, true)) {
+    const m = h.object as THREE.Mesh;
+    if (!m.isMesh || !m.visible || inItem(m, id) || (m.material as THREE.Material).transparent || !h.face) continue;
+    if (normal.copy(h.face.normal).transformDirection(m.matrixWorld).y < 0.5) return null; // a wall or a side: stay put
+    return hit.copy(h.point);
+  }
+  return null;
+}
 
 // Edit mode: press on an item to select it, drag to move it — along the floor, or along its wall for wall
 // fixtures — snapped to 5 cm (Shift: 1 cm). One undo step per drag.
-function startDrag(id: string, home: Home, e: ThreeEvent<PointerEvent>, camera: THREE.Camera, el: HTMLElement) {
+function startDrag(id: string, home: Home, e: ThreeEvent<PointerEvent>, camera: THREE.Camera, el: HTMLElement, scene: THREE.Scene) {
   e.stopPropagation();
   const L = useLayout.getState(), start = L.items[id] ?? homePose(home), axis = ON_WALL[id];
   useLayout.setState({ selected: id, dragging: true });
@@ -23,10 +36,17 @@ function startDrag(id: string, home: Home, e: ThreeEvent<PointerEvent>, camera: 
   const move = (ev: PointerEvent) => {
     const r = el.getBoundingClientRect();
     ray.setFromCamera(ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1), camera);
-    if (!ray.ray.intersectPlane(plane, hit)) return;
     const step = ev.shiftKey ? 0.01 : 0.05, snap = (v: number) => +(Math.round(v / step) * step).toFixed(3);
-    const p = hit.add(offset);
-    const position: [number, number, number] = axis ? [snap(p.x), snap(p.y), snap(p.z)] : [snap(p.x), start.position[1], snap(p.z)];
+    let position: [number, number, number];
+    if (id.startsWith("model-")) {
+      const s = surfaceUnder(scene, id);
+      if (!s) return;
+      position = [snap(s.x), +s.y.toFixed(3), snap(s.z)];
+    } else {
+      if (!ray.ray.intersectPlane(plane, hit)) return;
+      const p = hit.add(offset);
+      position = axis ? [snap(p.x), snap(p.y), snap(p.z)] : [snap(p.x), start.position[1], snap(p.z)];
+    }
     if (!moved) { useLayout.getState().snapshot(); moved = true; }
     useLayout.getState().move(id, { ...start, position });
   };
@@ -45,7 +65,7 @@ function startDrag(id: string, home: Home, e: ThreeEvent<PointerEvent>, camera: 
 // Several <RoomItem> with the same id (e.g. the cabinet, its spines and the turntable on it) move together.
 export function RoomItem({ id, home, children }: { id: string; home: Home; children: ReactNode }) {
   const pose = useLayout((s) => s.items[id]), editing = useLayout((s) => s.editing);
-  const { camera, gl } = useThree();
+  const { camera, gl, scene } = useThree();
   const yaw = home.rotationY ?? 0;
   useEffect(() => { liveHomes.set(id, home); }, [id, home]);
   // Finishes: put each customisable material into the chosen option (or back), only while the item has or had options.
@@ -66,7 +86,7 @@ export function RoomItem({ id, home, children }: { id: string; home: Home; child
       rotation={[0, (pose?.rotationY ?? yaw) - yaw, 0]}
       scale={pose?.scale ?? 1}
       userData={{ roomItem: id, home }}
-      onPointerDown={editing ? (e) => startDrag(id, home, e, camera, gl.domElement) : undefined}
+      onPointerDown={editing ? (e) => startDrag(id, home, e, camera, gl.domElement, scene) : undefined}
     >
       <group position={[-home.position[0], -home.position[1], -home.position[2]]}>{children}</group>
     </group>

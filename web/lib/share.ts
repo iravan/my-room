@@ -3,13 +3,15 @@ import { normalizeAlbum, useCollection, type Album } from "./collection";
 import { forgetImages } from "./covers";
 import { checkSize, getImage, putImage, VISIT, visitImages } from "./images";
 import { useGame } from "./store";
+import { freezeLayoutSaves, normalizeRoom, useLayout, type RoomData } from "./room";
+import { checkModel, LIMITS } from "./glb";
 
-// One shareable file: the albums, what's spinning, and every image they use, base64-embedded.
-// Same layout as Unity's ShareFile, so files move between the two builds.
+// One shareable file: the albums, what's spinning, the room (layout, options, uploaded models) and every image and
+// model file they use, base64-embedded. Unity's ShareFile fields are kept, so album-only files still load.
 type ShareImage = { name: string; data: string };
-type ShareFile = { albums: Album[]; images: ShareImage[]; spinningId: string };
+type ShareFile = { albums: Album[]; images: ShareImage[]; spinningId: string; room: RoomData };
 const IMAGE_FIELDS = ["frontCover", "backCover", "gatefold", "centerLabel"] as const;
-const MAX_SHARE_BYTES = 200 * 1024 * 1024;
+const MAX_SHARE_BYTES = 100 * 1024 * 1024 * (4 / 3); // 100 MB of files, base64-encoded
 
 const toBase64 = async (b: Blob) => {
   const bytes = new Uint8Array(await b.arrayBuffer());
@@ -20,14 +22,16 @@ const toBase64 = async (b: Blob) => {
 const fromBase64 = (data: string) => new Blob([Uint8Array.from(atob(data), (c) => c.charCodeAt(0))]);
 
 export async function exportCollection() {
-  const { albums, spinningId } = useCollection.getState();
-  const names = [...new Set(albums.flatMap((a) => IMAGE_FIELDS.map((f) => a[f])).filter(Boolean))];
+  const { albums, spinningId } = useCollection.getState(), { items, options, models } = useLayout.getState();
+  const names = [...new Set([...albums.flatMap((a) => IMAGE_FIELDS.map((f) => a[f])), ...Object.values(models).map((m) => m.asset)].filter(Boolean))];
   const images: ShareImage[] = [];
   for (const name of names) {
     const blob = await getImage(name);
     if (blob) images.push({ name, data: await toBase64(blob) });
   }
-  return JSON.stringify({ albums, images, spinningId } satisfies ShareFile);
+  const json = JSON.stringify({ albums, images, spinningId, room: { items, options, models } } satisfies ShareFile);
+  if (json.length > MAX_SHARE_BYTES) throw new Error("Your room is over 100 MB with all its images and models; remove some to share it.");
+  return json;
 }
 
 // A shared file comes from someone else: untrusted. Images may only use plain names and must pass the size
@@ -40,15 +44,23 @@ export function parseShare(json: string, prefix = ""): ShareFile {
   const images = (Array.isArray(f.images) ? f.images : []).filter(
     (i): i is ShareImage => !!i && typeof i.name === "string" && /^[^/\\]+$/.test(i.name) && i.name !== "." && i.name !== ".." && typeof i.data === "string",
   );
-  for (const i of images) checkSize((i.data.length * 3) / 4);
+  for (const i of images) {
+    if (!i.name.endsWith(".glb")) { checkSize((i.data.length * 3) / 4); continue; }
+    if ((i.data.length * 3) / 4 > LIMITS.bytes) throw new Error("a model in it is over 20 MB");
+    try { checkModel(Uint8Array.from(atob(i.data), (c) => c.charCodeAt(0))); } catch (e) { throw new Error(`a model in it isn't allowed: ${(e as Error).message}`); }
+  }
   const albums = f.albums.map(normalizeAlbum).map((a) => {
     for (const k of IMAGE_FIELDS) if (a[k]) a[k] = prefix + a[k];
     return a;
   });
-  return { albums, images: images.map((i) => ({ name: prefix + i.name, data: i.data })), spinningId: typeof f.spinningId === "string" ? f.spinningId : "" };
+  return {
+    albums, images: images.map((i) => ({ name: prefix + i.name, data: i.data })),
+    spinningId: typeof f.spinningId === "string" ? f.spinningId : "", room: normalizeRoom(f.room, prefix),
+  };
 }
 
-// Merge a shared file into your collection (same album id = replaced).
+// Merge a shared file's albums into your collection (same album id = replaced). Your room layout stays yours:
+// to see someone's room as they arranged it, visit it.
 export async function importShare(json: string) {
   if (useCollection.getState().visiting) throw new Error("leave the visit first");
   const f = parseShare(json);
@@ -62,13 +74,15 @@ export async function importShare(json: string) {
 }
 
 // Visitor mode: someone else's room in memory only; your collection is untouched until you leave.
-let own: { albums: Album[]; spinningId: string } | null = null;
+let own: { albums: Album[]; spinningId: string; room: RoomData } | null = null;
 export function visit(json: string) {
   const f = parseShare(json, VISIT);
   leaveImages();
   for (const i of f.images) visitImages.set(i.name, fromBase64(i.data));
-  const s = useCollection.getState();
-  if (!s.visiting) own = { albums: s.albums, spinningId: s.spinningId };
+  const s = useCollection.getState(), L = useLayout.getState();
+  if (!s.visiting) own = { albums: s.albums, spinningId: s.spinningId, room: { items: L.items, options: L.options, models: L.models } };
+  freezeLayoutSaves(true);
+  useLayout.setState({ ...f.room, editing: false, selected: null, past: [] });
   useCollection.setState({ albums: f.albums, spinningId: f.spinningId, visiting: true });
   useGame.setState({ selected: 0, playing: false, draft: null });
   return f.albums.length;
@@ -82,7 +96,9 @@ function leaveImages() {
 export function leaveVisit() {
   if (!useCollection.getState().visiting || !own) return;
   leaveImages();
-  useCollection.setState({ ...own, visiting: false });
+  useLayout.setState({ ...own.room, editing: false, selected: null, past: [] });
+  freezeLayoutSaves(false);
+  useCollection.setState({ albums: own.albums, spinningId: own.spinningId, visiting: false });
   own = null;
   useGame.setState({ selected: 0, playing: false });
 }

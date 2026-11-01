@@ -22,11 +22,15 @@ globalThis.localStorage = {
 const { loadCollection, normalizeAlbum, useCollection, SAVE_KEY } = await import("./collection");
 const { checkSize, MAX_IMAGE_BYTES } = await import("./images");
 const { exportCollection, importShare, parseShare, visit, leaveVisit } = await import("./share");
+const { useLayout } = await import("./room");
+const { glb } = await import("./glb.fixture");
+const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
 
 beforeEach(() => {
+  leaveVisit();
   mem.clear();
   stored.clear();
-  leaveVisit();
+  useLayout.setState({ items: {}, options: {}, models: {}, past: [] });
   useCollection.setState({ albums: [], spinningId: "", visiting: false });
 });
 const load = () => useCollection.getState().load();
@@ -110,5 +114,32 @@ describe("sharing", () => {
     expect(useCollection.getState().visiting).toBe(false);
     expect(albums()).toHaveLength(3);
     expect(albums()[0].title).toBe("Midnight Static");
+  });
+
+  it("shares the room too: layout, options and uploaded models, and a visit shows it without saving anything", async () => {
+    load();
+    stored.set("abcd1234.glb", new Blob([glb()]));
+    useLayout.setState({ items: { bed: { position: [0, 0, 0.5], rotationY: 0, scale: 1 }, "model-0000aaaa": { position: [1, 0.75, 1], rotationY: 0, scale: 1 } },
+      options: { bed: { size: "double" } }, models: { "model-0000aaaa": { asset: "abcd1234.glb", name: "Lamp" } } });
+    const json = await exportCollection(), f = JSON.parse(json);
+    expect(f.room.options.bed.size).toBe("double");
+    expect(f.images.map((i: { name: string }) => i.name)).toContain("abcd1234.glb");
+    // a friend's copy: visiting shows their room, prefixed model files, and writes nothing to your save
+    useLayout.setState({ items: {}, options: {}, models: {} });
+    const ownSave = mem.get("my-room-layout");
+    visit(json);
+    expect(useLayout.getState().models["model-0000aaaa"].asset).toBe("visit:abcd1234.glb");
+    expect(useLayout.getState().items.bed.position).toEqual([0, 0, 0.5]);
+    useLayout.getState().move("bed", { position: [1, 0, 1], rotationY: 0, scale: 1 }); // even a change during a visit
+    expect(mem.get("my-room-layout")).toBe(ownSave);
+    leaveVisit();
+    expect(useLayout.getState().items).toEqual({});
+  });
+
+  it("refuses share files with a disallowed model", () => {
+    const bad = (extra: Record<string, unknown>) => JSON.stringify({ albums: [{ id: "a" }], images: [{ name: "x1234567.glb", data: b64(glb(extra)) }] });
+    expect(() => parseShare(bad({ buffers: [{ byteLength: 36, uri: "http://evil.example/x.bin" }] }))).toThrow(/model in it isn't allowed: .*outside files/);
+    expect(() => parseShare(bad({ materials: Array.from({ length: 40 }, () => ({})) }))).toThrow(/40 materials/);
+    expect(parseShare(bad({})).images).toHaveLength(1); // a clean model passes
   });
 });
