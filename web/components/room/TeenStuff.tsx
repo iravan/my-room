@@ -1,61 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import type { Vec3 } from "@/lib/store";
-import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { drawText, hsv, lerp, paint, rng, type RGBA } from "@/lib/paint";
-import { Neon } from "./Lighting";
 import { bedSurfaceY } from "@/items/bed";
-import { ContactShadow } from "@/items/_shared/ContactShadow";
-import { Desk, T } from "./Desk";
+import { Blob, C, Ck, flip, G, GEO, LOAD_SEED, Plastic, Prim, type U3 } from "@/items/_shared/prims";
 import { Chair } from "./Chair";
 import { Core } from "./Shell";
 import { RoomItem } from "./RoomItem";
-import { HOMES, placePoint, useLayout } from "@/lib/room";
+import { HOMES, hiddenOf, placePoint, useLayout } from "@/lib/room";
+import { ITEMS } from "@/items/registry";
 import { PbrCapsule, PbrMaterial, Slab, unityEuler, type TextureSet } from "./Surface";
 
 // A teenager lives here: gaming desk and PC, chair, closet, and the mess, which lands somewhere new every visit.
 // Straight port of the Unity build's VinylRoomStuff.cs (git tag unity-final): everything below is written in Unity coordinates (p, s, e) and flipped here,
 // so it can be checked line by line against the C#. A yaw-ed group's local −z faces into the room.
-
-type U3 = [number, number, number];
-const flip = ([x, y, z]: U3): Vec3 => [x, y, -z];
-const C = (r: number, g: number, b: number, k = 1) => srgb(r, g, b, k);
-const Ck = ([r, g, b]: number[], k = 1) => srgb(r, g, b, k);
-const VIOLET = srgb(0.55, 0.25, 1);
-const glowOf = (c: THREE.Color, k: number) => c.clone().multiplyScalar(k);
-// The mess is rolled once per page load from this seed (deterministic within a load).
-const LOAD_SEED = Math.floor(Math.random() * 2 ** 31);
-
-const GEO = {
-  cube: new THREE.BoxGeometry(1, 1, 1),
-  sphere: new THREE.SphereGeometry(0.5, 24, 16),
-  cylinder: new THREE.CylinderGeometry(0.5, 0.5, 2, 24),
-  capsule: new THREE.CapsuleGeometry(0.5, 1, 6, 16),
-  quad: new THREE.PlaneGeometry(1, 1),
-};
-
-function G({ p, yaw = 0, e, children }: { p: U3; yaw?: number; e?: U3; children: ReactNode }) {
-  return <group position={flip(p)} rotation={unityEuler(e ?? [0, yaw, 0])}>{children}</group>;
-}
-
-// Unity primitive with a plain Standard material (gloss .25; Plastic = .6), or unlit glow; quads are 1×1 facing −z.
-function Prim({ t = "cube", p, s, e, c = C(1, 1, 1), gloss = 0.25, map, glow, emissive, cast = false, transparent }: {
-  t?: keyof typeof GEO; p: U3; s: U3 | [number, number]; e?: U3; c?: THREE.Color; gloss?: number;
-  map?: THREE.Texture; glow?: THREE.Color; emissive?: THREE.Color; cast?: boolean; transparent?: boolean;
-}) {
-  const scale: Vec3 = s.length === 2 ? [s[0], s[1], 1] : s;
-  return (
-    <mesh geometry={GEO[t]} position={flip(p)} rotation={unityEuler(e ?? [0, 0, 0])} scale={scale} castShadow={cast} receiveShadow={!glow}>
-      {glow
-        ? <meshBasicMaterial color={glow} map={map} transparent={transparent} />
-        : <meshStandardMaterial color={c} roughness={1 - gloss} map={map} emissive={emissive ?? "black"} />}
-    </mesh>
-  );
-}
-const Plastic = (props: Parameters<typeof Prim>[0]) => <Prim gloss={0.6} {...props} />;
 
 function PbrSphere({ set, tile, p, s, e, c }: { set: TextureSet; tile: number; p: U3; s: U3; e?: U3; c: THREE.Color }) {
   const geometry = useMemo(() => {
@@ -78,25 +37,6 @@ const Walnut = ({ p, s, c, cast }: { p: U3; s: U3; c: U3; cast?: boolean }) =>
   <Slab set="black_walnut_veneer_01" tile={1} position={flip(p)} size={s} color={C(...c)} cast={!!cast} />;
 
 // ---------- generated textures ----------
-
-const canTexture = () => paint(32, 32, (u, v) =>
-  v > 0.9 || v < 0.08 ? [0.75, 0.75, 0.78] : Math.abs(((u * 4) % 1) - 0.5) < 0.12 ? [0.4, 1, 0.2] : [0.05, 0.05, 0.06]);
-
-// Third-person game, world layer: sky and hills, seamless across u so it can scroll forever.
-const gameWorld = () => paint(192, 108, (u, v) => {
-  const hill = 0.35 + 0.07 * Math.sin(u * Math.PI * 4) + 0.04 * Math.sin(u * Math.PI * 10 + 1);
-  if (v < hill) return lerp([0.04, 0.1, 0.06], [0.15, 0.32, 0.15], v / hill) as RGBA;
-  return lerp([1, 0.55, 0.35], [0.15, 0.25, 0.6], (v - hill) / (1 - hill)) as RGBA;
-}, { repeat: true });
-
-// HUD over it (transparent elsewhere): health bar, minimap, crosshair, and the sun, which shouldn't scroll.
-const gameHud = () => paint(192, 108, (u, v) => {
-  if (v > 0.88 && v < 0.92 && u > 0.03 && u < 0.25) return u < 0.19 ? [0.9, 0.2, 0.2] : [0.25, 0.05, 0.05];
-  if (u > 0.85 && u < 0.97 && v > 0.7 && v < 0.94) return Math.abs(u - 0.91) < 0.006 && Math.abs(v - 0.82) < 0.01 ? [1, 0.92, 0.016] : [0.12, 0.22, 0.16];
-  if ((Math.abs(u - 0.5) < 0.012 && Math.abs(v - 0.5) < 0.003) || (Math.abs(v - 0.5) < 0.02 && Math.abs(u - 0.5) < 0.002)) return [1, 1, 1];
-  if (Math.hypot(u * 1.78 - 1.15, v - 0.55) < 0.09) return [1, 0.9, 0.65];
-  return [0, 0, 0, 0];
-});
 
 // Group chat: channel sidebar, bubbles left and right; the clock goes in the top bar.
 const chatScreen = () => paint(128, 80, (u, v) => {
@@ -133,29 +73,13 @@ function Poster({ p, e, size, seed }: { p: U3; e: U3; size: [number, number]; se
   return <Prim t="quad" p={p} e={e} s={size} map={map} gloss={0.1} />;
 }
 
-// The game world pans under its HUD.
-const scroll = (t: THREE.Texture, seconds: number) => { t.offset.x = (seconds * 0.02) % 1; };
-function Monitor({ T }: { T: number }) {
-  const [world, hud] = useMemo(() => [gameWorld(), gameHud()], []);
-  useFrame(({ clock }) => scroll(world, clock.elapsedTime));
-  return (
-    <>
-      <Prim t="quad" p={[0, T + 0.32, 0.104]} s={[0.61, 0.345]} map={world} glow={C(1, 1, 1)} />
-      <Prim t="quad" p={[0, T + 0.32, 0.1035]} s={[0.61, 0.345]} map={hud} glow={C(1, 1, 1)} transparent />
-    </>
-  );
-}
-
 // ---------- realism ----------
-
-// Contact shadow under p (Unity coords, parent space).
-const Blob = ({ p, size }: { p: U3; size: [number, number] }) => { const [x, , z] = flip(p); return <ContactShadow x={x} z={z} size={size} />; };
 
 // A cable through Unity world points, Catmull-Rom smoothed (6 steps per span, as in Unity), never below the floor.
 function Cable({ c, width, pts, owners }: { c: THREE.Color; width: number; pts: U3[]; owners?: string[] }) {
   const items = useLayout((s) => s.items), size = useLayout((s) => s.size);
-  const gone = useLayout((s) => !!owners && s.hidden.includes(owners[0])); // the device it belongs to is hidden
-  const key = (owners?.map((o) => JSON.stringify(items[o] ?? null)).join("|") ?? "") + JSON.stringify(size);
+  const gone = useLayout((s) => !!owners && hiddenOf(owners[0], s)); // the device it belongs to is hidden
+  const key = (owners?.map((o) => JSON.stringify([items[o], items[ITEMS[o]?.on ?? ""]])).join("|") ?? "") + JSON.stringify(size);
   const geometry = useMemo(() => {
     const P = pts.map((q, i) => (owners ? placePoint(owners[i], flip(q), items, undefined, size) : new THREE.Vector3(...flip(q)))), out: THREE.Vector3[] = [];
     for (let i = 0; i < P.length - 1; i++) {
@@ -260,20 +184,7 @@ function Teen() {
     const chance = (p: number) => rnd() < p;
     const int = (n: number) => Math.floor(rnd() * n);
     const hue = (s: number, v: number) => hsv(R(0, 1), s, v);
-    const black = C(0.035, 0.035, 0.04), steel = C(0.2, 0.2, 0.25);
-    const can = canTexture();
-
-    const notes = Array.from({ length: int(3) }, (_, i) =>
-      <Prim key={i} p={[R(-0.3, 0.3) > 0 ? 0.3 : -0.3, T + R(0.16, 0.45), 0.103]} s={[0.05, 0.05, 0.002]} e={[0, 0, R(-8, 8)]} c={C(1, 0.9, 0.3)} />);
-
-    const band = 0.085, top = 0.19;
-    const drinks = ([[0.42, -0.22], [0.52, -0.02], [0.26, 0.06], [-0.3, 0.05]] as const).map(([x, z], i) => {
-      if (!chance(0.55)) return null;
-      return chance(0.25)
-        ? <Plastic key={i} t="cylinder" p={[x, T + 0.05, z]} s={[0.08, 0.05, 0.08]} c={C(0.85, 0.85, 0.82)} />
-        : <Prim key={i} t="cylinder" p={[x, T + 0.061, z]} s={[0.066, 0.061, 0.066]} e={[0, R(0, 360), 0]} map={can} gloss={0.75} />;
-    });
-
+    const steel = C(0.2, 0.2, 0.25);
     const books: ReactNode[] = [];
     let bx = -0.42;
     while (bx < 0.18) {
@@ -312,72 +223,8 @@ function Teen() {
 
     return (
       <>
-        {/* Desk against the left wall. Local frame: −z faces the room, +z the wall, +x towards the bed. */}
-        <RoomItem id="desk" home={HOMES.desk}>
-        <G p={[-1.68, 0, -1.35]} yaw={-90}>
-          <Desk />
-          <Blob p={[0, 0, 0]} size={[1.35, 0.75]} />
-          <Blob p={[0.4, 0, 0.02]} size={[0.32, 0.55]} />
-          <Blob p={[-0.45, 0, -0.05]} size={[0.32, 0.32]} />
-
-          <Core lift>
-          {/* Monitor with a game running, webcam, a sticky note or two, and its soft blue spill */}
-          <Plastic p={[0, T + 0.006, 0.15]} s={[0.24, 0.012, 0.18]} c={black} />
-          <Plastic p={[0, T + 0.11, 0.16]} s={[0.05, 0.2, 0.03]} c={black} />
-          <Plastic p={[0, T + 0.32, 0.12]} s={[0.64, 0.38, 0.03]} c={black} />
-          <Monitor T={T} />
-          <Plastic p={[0, T + 0.52, 0.115]} s={[0.08, 0.025, 0.03]} c={black} />
-          {notes}
-          <pointLight position={flip([0, T + 0.3, -0.3])} color={C(0.5, 0.6, 1)} intensity={1.2} distance={1.8} />
-
-          {/* RGB keyboard, mouse, speakers */}
-          <Plastic p={[-0.05, T + 0.016, -0.1]} s={[0.44, 0.022, 0.14]} c={black} />
-          <Neon position={flip([-0.05, T + 0.004, -0.1])} size={[0.45, 0.004, 0.15]} color={chance(0.5) ? CYAN : MAGENTA} />
-          <Plastic t="sphere" p={[0.27, T + 0.018, -0.1]} s={[0.065, 0.035, 0.11]} c={black} />
-          {[-0.48, 0.48].map((x) => (
-            <group key={x}>
-              <Plastic p={[x, T + 0.08, 0.14]} s={[0.09, 0.16, 0.1]} c={black} />
-              <Prim t="cylinder" p={[x, T + 0.07, 0.089]} s={[0.06, 0.002, 0.06]} e={[90, 0, 0]} c={C(0.12, 0.12, 0.14)} />
-            </group>
-          ))}
-
-          {/* Gaming headset on its stand */}
-          <G p={[-0.42, T, -0.14]} yaw={R(-40, 40)}>
-            <Plastic t="cylinder" p={[0, 0.004, 0]} s={[0.1, 0.004, 0.1]} c={black} />
-            <Plastic t="cylinder" p={[0, 0.13, 0]} s={[0.015, 0.13, 0.015]} c={black} />
-            {Array.from({ length: 9 }, (_, i) => {
-              const a = (i * 180) / 8, r = (a * Math.PI) / 180;
-              return <Plastic key={i} p={[Math.cos(r) * band, top + Math.sin(r) * band, 0]} s={[0.036, 0.012, 0.03]} e={[0, 0, a + 90]} c={black} />;
-            })}
-            {[-1, 1].map((s) => (
-              <group key={s}>
-                <Plastic t="cylinder" p={[s * (band + 0.005), top - 0.035, 0]} s={[0.085, 0.02, 0.085]} e={[0, 0, 90]} c={black} />
-                <Prim t="cylinder" p={[s * (band + 0.026), top - 0.035, 0]} s={[0.05, 0.002, 0.05]} e={[0, 0, 90]} glow={glowOf(CYAN, 1.5)} />
-              </group>
-            ))}
-          </G>
-
-          {drinks}
-          </Core>
-
-          <Core>
-          {/* Gaming PC under the desk, glass front, RGB fans */}
-          <Plastic p={[0.4, 0.25, 0.02]} s={[0.22, 0.48, 0.44]} c={black} cast />
-          {[CYAN, VIOLET, MAGENTA].map((c, i) =>
-            <Prim key={i} t="cylinder" p={[0.4, 0.1 + i * 0.14, -0.201]} s={[0.12, 0.002, 0.12]} e={[90, 0, 0]} glow={glowOf(c, 1.5)} />)}
-
-          {/* Bin under the other end, with the shots that missed */}
-          <Plastic t="cylinder" p={[-0.45, 0.15, -0.05]} s={[0.22, 0.15, 0.22]} c={C(0.15, 0.15, 0.17)} />
-          {Array.from({ length: 1 + int(3) }, (_, i) => {
-            const d = R(0.05, 0.07);
-            return <Prim key={i} t="sphere" p={[R(-0.65, -0.2), 0.03, R(-0.5, -0.2)]} s={[d, d, d]} e={[R(0, 360), R(0, 360), 0]} c={C(0.85, 0.85, 0.8)} />;
-          })}
-          </Core>
-
-        </G>
-        </RoomItem>
-        <Cable c={cableBlack} width={0.007} pts={[[-1.92, 0.35, -0.95], [-1.95, 0.012, -1], [-1.975, 0.012, -1.18], [-1.99, 0.3, -1.2]]} owners={["desk", "desk", "socket-desk", "socket-desk"]} />
-        <Cable c={cableBlack} width={0.006} pts={[[-1.88, 0.95, -1.35], [-1.965, 0.76, -1.33], [-1.97, 0.012, -1.27], [-1.99, 0.29, -1.21]]} owners={["desk", "desk", "socket-desk", "socket-desk"]} />
+        <Cable c={cableBlack} width={0.007} pts={[[-1.92, 0.35, -0.95], [-1.95, 0.012, -1], [-1.975, 0.012, -1.18], [-1.99, 0.3, -1.2]]} owners={["pc", "pc", "socket-desk", "socket-desk"]} />
+        <Cable c={cableBlack} width={0.006} pts={[[-1.88, 0.95, -1.35], [-1.965, 0.76, -1.33], [-1.97, 0.012, -1.27], [-1.99, 0.29, -1.21]]} owners={["monitor", "monitor", "socket-desk", "socket-desk"]} />
 
         {/* Wall shelf above the desk (books, the one leaning over, a plant) and the poster over it: wall items of their own, modelled in the desk's frame */}
         <RoomItem id="wall-shelf" home={{ position: [-1.87, 1.5, 1.35] }}>
@@ -463,7 +310,7 @@ function Teen() {
 
         </RoomItem>
 
-        {/* Cables to the sockets (behind the desk at (-2, .3, -1.2), under the window at (.25, .3, 2)): PC + monitor in the desk item; the lamp's goes with the nightstand */}
+        {/* Cables to the sockets (behind the desk at (-2, .3, -1.2), under the window at (.25, .3, 2)): each follows its device */}
         {/* Cables run from their device to their socket: each point follows the item it belongs to. */}
         <Cable c={cableBlack} width={0.005} pts={[[-1.75, 0.55, -0.45], [-1.95, 0.5, -0.5], [-1.975, 0.012, -0.6], [-1.98, 0.012, -1.1], [-1.99, 0.31, -1.19]]} owners={["lamp", "nightstand", "nightstand", "socket-desk", "socket-desk"]} />
         {/* Phone charger: over the bed edge, across the floor to the window socket */}

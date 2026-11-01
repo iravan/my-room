@@ -2,7 +2,9 @@
 
 import * as THREE from "three";
 import { srgb } from "@/lib/lighting";
-import { PbrMaterial, projectUVs, rounded } from "./Surface";
+import { PbrMaterial, projectUVs, rounded } from "@/components/room/Surface";
+import { Blob, DeskFrame } from "../../_shared/prims";
+import { defineVariant } from "../../types";
 
 // Gaming desk, built like the real thing: a walnut top with rounded, banded edges on a black powder-coated steel
 // frame (two T-legs with levelling feet, a beam between them, top brackets), a cable tray hung under the back edge,
@@ -35,7 +37,7 @@ function Steel({ g, p, cast = true }: { g: THREE.BufferGeometry; p: [number, num
   return <mesh geometry={g} material={steel} position={p} castShadow={cast} receiveShadow />;
 }
 
-export function Desk() {
+function Desk() {
   const g = (geo ??= build());
   const footY = 0.012 + 0.0175, uprightY = footY + 0.0175 + (T - TOP.h - 0.055) / 2;
   const mat = { x: 0.05, z: 0.08, w: 0.95, d: 0.42, y: T + 0.0015 };
@@ -70,3 +72,17 @@ export function Desk() {
     </>
   );
 }
+
+function Gaming() {
+  return (
+    <DeskFrame>
+      <Desk />
+      <Blob p={[0, 0, 0]} size={[1.35, 0.75]} />
+    </DeskFrame>
+  );
+}
+
+export default defineVariant({
+  item: "desk", id: "gaming", name: "Walnut gaming desk", Component: Gaming,
+  surfaceY: () => T, footprint: () => [TOP.w, TOP.d],
+});

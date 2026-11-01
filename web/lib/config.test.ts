@@ -29,6 +29,6 @@ describe("items + config", () => {
       expect(d.variants[0]).toBeTruthy();
       if (d.onWall) expect(d.home).not.toBeNull();
     }
-    expect(Object.keys(ITEMS).length).toBe(29); // jeans only appear on 70% of loads, so the in-game list may show 27
+    expect(Object.keys(ITEMS).length).toBe(36); // jeans only appear on 70% of loads, so the in-game list may show 27
   });
 });

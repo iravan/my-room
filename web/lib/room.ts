@@ -243,6 +243,12 @@ export const useLayout = create<State>()(
   ),
 );
 
+// Hidden itself, or standing on a hidden item it hasn't been moved off.
+export function hiddenOf(id: string, s: { items: Layout; hidden: string[] }): boolean {
+  const on = ITEMS[id]?.on;
+  return s.hidden.includes(id) || (!!on && !s.items[id] && hiddenOf(on, s));
+}
+
 // An item's pose now: where it was moved to, or its rest position in the current room.
 export function poseOf(id: string, home: Home, s: { items: Layout; size: RoomSize } = useLayout.getState()): Pose {
   if (s.items[id]) return s.items[id];

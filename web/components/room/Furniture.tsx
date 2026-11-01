@@ -12,6 +12,7 @@ import { Part, Slab, unityEuler } from "./Surface";
 import { BedItem } from "@/items/bed";
 import { NightstandItem } from "@/items/nightstand";
 import { LampItem } from "@/items/lamp";
+import { ItemView } from "@/items/_shared/ItemView";
 import { RoomItem } from "./RoomItem";
 import { Core } from "./Shell";
 import { HOMES } from "@/lib/room";
@@ -145,6 +146,7 @@ export function Furniture() {
       <BedItem />
       <NightstandItem />
       <LampItem />
+      {["desk", "monitor", "keyboard", "speakers", "headset", "drinks", "pc", "bin"].map((id) => <ItemView key={id} id={id} />)}
       <RoomItem id="cabinet" home={HOMES.cabinet}>
         <Cabinet />
         <Core lift>

@@ -1,7 +1,7 @@
 // Layout: untrusted poses are cleaned, and moving an item pivots about its own home, never the room's origin.
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { itemMatrix, normalizeLayout, normalizeRoom, normalizeSize, placePoint, poseOf, restPosition, useLayout, HOMES } from "./room";
+import { hiddenOf, itemMatrix, normalizeLayout, normalizeRoom, normalizeSize, placePoint, poseOf, restPosition, useLayout, HOMES } from "./room";
 
 // The layout store saves to localStorage; tests get an in-memory one.
 const mem = new Map<string, string>();
@@ -122,5 +122,9 @@ describe("layout", () => {
     // moved itself: stays put
     const own = { position: [0, 0.75, 1] as [number, number, number], rotationY: 0, scale: 1 };
     expect(poseOf("lamp", HOMES.lamp, { items: { ...items, lamp: own }, size })).toBe(own);
+    // hides with it, unless moved off it
+    expect(hiddenOf("monitor", { items: {}, hidden: ["desk"] })).toBe(true);
+    expect(hiddenOf("monitor", { items: { monitor: own }, hidden: ["desk"] })).toBe(false);
+    expect(hiddenOf("pc", { items: {}, hidden: ["desk"] })).toBe(false);
   });
 });

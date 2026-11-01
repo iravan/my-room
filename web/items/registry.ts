@@ -4,6 +4,13 @@ import bed from "./bed/item";
 import nightstand from "./nightstand/item";
 import lamp from "./lamp/item";
 import desk from "./desk/item";
+import monitor from "./monitor/item";
+import keyboard from "./keyboard/item";
+import speakers from "./speakers/item";
+import headset from "./headset/item";
+import drinks from "./drinks/item";
+import pc from "./pc/item";
+import bin from "./bin/item";
 import chair from "./chair/item";
 import cabinet from "./cabinet/item";
 import crate from "./crate/item";
@@ -32,6 +39,13 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
     nightstand,
     lamp,
     desk,
+    monitor,
+    keyboard,
+    speakers,
+    headset,
+    drinks,
+    pc,
+    bin,
     chair,
     cabinet,
     crate,

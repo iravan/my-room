@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import { liveHomes, ON_WALL, poseOf, restPosition, useLayout, type Home } from "@/lib/room";
+import { hiddenOf, liveHomes, ON_WALL, poseOf, restPosition, useLayout, type Home } from "@/lib/room";
 import { ITEMS } from "@/items/registry";
 import { applyFinish, finishType } from "@/lib/options";
 import { styleOf } from "@/lib/styles";
@@ -73,7 +73,7 @@ export function RoomItem({ id, home, children, shellModel }: { id: string; home:
   // Standing on another item: subscribe to its pose so this one follows (plain values only, no new objects per read).
   const on = ITEMS[id]?.on, parentPose = useLayout((s) => (on ? s.items[on] : undefined));
   const pose = own ?? (on ? poseOf(id, home, { items: parentPose ? { [on]: parentPose } : {}, size }) : undefined);
-  const hidden = useLayout((s) => s.hidden.includes(id) || (!!on && !own && s.hidden.includes(on)));
+  const hidden = useLayout((s) => hiddenOf(id, s));
   const { camera, gl, scene } = useThree();
   const yaw = home.rotationY ?? 0;
   useEffect(() => { if (!shellModel) liveHomes.set(id, home); }, [id, home, shellModel]);
