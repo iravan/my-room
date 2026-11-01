@@ -143,10 +143,30 @@ variant geometry. A JSON schema generated from the registry gives editor autocom
 
 Rough size: 1–2 passes for step 1, ~1 pass per 2–3 items for step 2, 1 each for steps 3–4, then ~1 pass per new variant.
 
-## Things to decide
-1. **Config format**: JSON for the mapping as recommended, or everything in TypeScript?
-2. **Grouping**: is "desk + PC + monitor + keyboard" one item (today) or separate items you can move/hide/restyle
-   independently? (Recommended: separate — the desk becomes a surface they rest on, like the bed.)
-3. **Who adds variants**: only you in the codebase, or should the app also let users save their own variant
-   (an uploaded model + finishes) into a personal library?
-4. **Scope of step 5**: which items need new variants first, and roughly how many per style?
+## Decisions (owner, 2026-11-01): all yes
+1. **JSON** for the style → variant → finish mapping (`config/room-styles.json`); item definitions and geometry in TypeScript.
+2. **Separate desk items**: desk, monitor, PC, keyboard + mouse, headset, speakers, drinks, bin become their own items;
+   the desk is a surface they rest on (like the bed).
+3. **Both**: variants in the codebase, and users can save their own (uploaded model + finishes) into a personal library.
+4. **First new variants** (the recommended set): bed, chair, lamp, rug, desk, nightstand, window covering
+   (blinds / curtains), posters — one look per room style where the style needs it.
+
+## Checklist
+### Step 1: framework (no visible change)
+- [ ] `defineItem` / `defineVariant`, `items/registry.ts`, `config/room-styles.json` loaded + validated by a Vitest check; `HOMES`, `ANCHOR`, `ON_WALL`, `NAMES` read from the registry.
+### Step 2: items into folders (today's look = variant #1)
+- [ ] bed
+- [ ] nightstand + lamp (lamp its own item)
+- [ ] desk split: desk, monitor, PC, keyboard + mouse, headset, speakers, drinks, bin (each its own item; monitor/keyboard/headset/drinks rest on the desk)
+- [ ] chair
+- [ ] cabinet, turntable (own item resting on the cabinet), crate
+- [ ] window (+ blinds as its own variant slot), door, closet, sockets, switch, ceiling fixtures
+- [ ] clutter: hoodie, jeans, sneakers, backpack, basketball, skateboard; posters; wall shelf; rug; neon cove
+- [ ] `TeenStuff.tsx`, `Furniture.tsx` and the lamp part of `Lighting.tsx` reduced to engine code or removed
+### Step 3: styles to config
+- [ ] `lib/styles.ts` → `config/room-styles.json` (surfaces, light, view, items mapping); finishes move into `items`
+### Step 4: variants in edit mode + library
+- [ ] "Look" row for the selected item (variant thumbnails), saved/undoable/shared; uploaded models become a variant kind
+- [ ] Personal library: save the selected item's look (model + finishes) and reuse it on the same item type
+### Step 5: new variants
+- [ ] bed · [ ] chair · [ ] lamp · [ ] rug · [ ] desk · [ ] nightstand · [ ] window covering · [ ] posters
