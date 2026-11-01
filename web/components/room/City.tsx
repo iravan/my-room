@@ -3,11 +3,12 @@
 import { useMemo } from "react";
 import * as THREE from "three";
 import { useGame } from "@/lib/store";
-import { CYAN, PRESETS } from "@/lib/lighting";
+import { CYAN } from "@/lib/lighting";
 import { rng } from "@/lib/paint";
 import { Metal, Neon } from "./Lighting";
 import { RoomItem } from "./RoomItem";
-import { HOMES, useLayout } from "@/lib/room";
+import { HOMES, useLayout, useStyle } from "@/lib/room";
+import { countryLayer, daySky, GROUND, groundTexture, seaLayer } from "./Landscape";
 
 // The view out of the window is real geometry, so it has depth and parallax: a sky dome, then three skyline
 // layers at street, district and horizon distance, hazier the farther they are. The room is on a high floor:
@@ -130,16 +131,37 @@ function sky() {
   return texture(c);
 }
 
+const viewCache = new Map<string, { skyMap: THREE.Texture; layers: { L: Layer; map: THREE.Texture }[]; ground?: THREE.Texture }>();
+function views(kind: "city" | "country" | "sea", pines: boolean) {
+  const key = kind + pines;
+  if (!viewCache.has(key))
+    viewCache.set(key, kind === "city"
+      ? { skyMap: sky(), layers: LAYERS.map((L, i) => ({ L, map: skyline(L, 11 + i) })) }
+      : {
+          skyMap: daySky(kind === "country" && !pines), ground: groundTexture(kind),
+          layers: LAYERS.map((L, i) => ({ L, map: kind === "sea" ? seaLayer(L, i) : countryLayer(L, i, pines) })),
+        });
+  return viewCache.get(key)!;
+}
+
 function Outside() {
   const preset = useGame((s) => s.preset), shift = useLayout((s) => 2 - s.size.d / 2); // the city stays behind the back wall as the room's depth changes
-  const tint = PRESETS[preset].window;
-  const [skyMap, layers] = useMemo(() => [sky(), LAYERS.map((L, i) => ({ L, map: skyline(L, 11 + i) }))], []);
+  const style = useStyle(), tint = style.presets[preset % 3].window;
+  const kind = style.outside, pines = style.name === "Scandinavian";
+  // Views are painted once per kind and kept: switching styles back and forth costs nothing the second time.
+  const { skyMap, layers, ground } = useMemo(() => views(kind, pines), [kind, pines]);
   return (
     <group position={[0, 0, shift]}>
       <mesh position={[-0.3, EYE, WALL]}>
         <sphereGeometry args={[SKY_R, 48, 24]} />
         <meshBasicMaterial map={skyMap} color={tint} side={THREE.BackSide} depthWrite={false} />
       </mesh>
+      {ground && (
+        <mesh position={[-0.3, EYE - GROUND, WALL - 1000]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[3000, 2000]} />
+          <meshBasicMaterial map={ground} color={tint} />
+        </mesh>
+      )}
       {layers.map(({ L, map }) => (
         <mesh key={L.depth} position={[-0.3, EYE + (L.above - L.below) / 2, WALL - L.depth]}>
           <planeGeometry args={[L.halfWidth * 2, L.above + L.below]} />

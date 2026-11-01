@@ -4,14 +4,14 @@ import { useEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useGame, type Vec3 } from "@/lib/store";
-import { CYAN, MAGENTA, PRESETS, srgb } from "@/lib/lighting";
+import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { paint } from "@/lib/paint";
 import { Slab } from "./Surface";
 import { Clickable } from "./Clickable";
 import { Nightstand } from "./Nightstand";
 import { Core } from "./Shell";
 import { RoomItem } from "./RoomItem";
-import { HOMES, useLayout } from "@/lib/room";
+import { HOMES, useLayout, useStyle } from "@/lib/room";
 
 const METAL = srgb(0.55, 0.55, 0.7);
 const LAMP: Vec3 = [-1.7, 0.54, 0.45];
@@ -23,28 +23,44 @@ export function Metal({ position, size, shade = 1 }: { position: Vec3; size: Vec
   return <Slab set="metal_plate_02" tile={1.5} metal={0.3} size={size} position={position} color={color} />;
 }
 
-// Emissive strip, bright enough for bloom; never casts shadows.
+// Emissive strip, bright enough for bloom; never casts shadows. The style decides what the strips are: its own
+// accent colours (cyan → b, everything else → a), glowing, or plain matte trim in those colours.
 export function Neon({ position, size, color }: { position: Vec3; size: Vec3; color: THREE.Color }) {
-  const c = useMemo(() => color.clone().multiplyScalar(2), [color]);
+  const { neon } = useStyle();
+  const accent = color.equals(CYAN) ? neon.b : neon.a;
+  const c = useMemo(() => accent.clone().multiplyScalar(2), [accent]);
   return (
     <mesh position={position}>
       <boxGeometry args={size} />
-      <meshBasicMaterial color={c} toneMapped={false} />
+      {neon.glow ? <meshBasicMaterial color={c} toneMapped={false} /> : <meshStandardMaterial color={accent} roughness={0.7} />}
     </mesh>
   );
 }
 
-function gridTexture() {
+type RGB3 = [number, number, number];
+function gridTexture(a: RGB3, b: RGB3) {
   return paint(128, 128, (u, v) => {
     const x = Math.round(u * 127), y = Math.round(v * 127);
-    return x % 16 === 0 || y % 16 === 0 || x === 127 || y === 127 ? [1, 0.15, 0.75] : [0.02, 0, 0.05];
+    return x % 16 === 0 || y % 16 === 0 || x === 127 || y === 127 ? a : b;
+  });
+}
+
+// Woven rug in the style's two colours: a double border, a field of fine stripes, a medallion in the middle.
+function wovenTexture(a: RGB3, b: RGB3) {
+  return paint(256, 256, (u, v) => {
+    const edge = Math.min(u, 1 - u, v, 1 - v), weave = 0.93 + 0.07 * Math.sin(u * 256 * Math.PI) * Math.sin(v * 256 * Math.PI);
+    const d = Math.abs(u - 0.5) + Math.abs(v - 0.5) * 1.4; // diamond medallion
+    let c: number[] = b;
+    if (edge < 0.05 || (edge > 0.07 && edge < 0.085)) c = a;
+    else if (edge >= 0.085 && (Math.abs(d - 0.22) < 0.02 || d < 0.08 || (v * 18) % 1 < 0.07)) c = a.map((x, i) => x * 0.7 + b[i] * 0.3);
+    return [c[0] * weave, c[1] * weave, c[2] * weave];
   });
 }
 
 // Nightstand + neon lamp (click = lamp on/off). The shade glows magenta while it's on.
 function NightLamp() {
   const lamp = useGame((s) => s.lamp), toggleLamp = useGame((s) => s.toggleLamp), quality = useGame((s) => s.quality);
-  const shade = useMemo(() => MAGENTA.clone().multiplyScalar(2), []);
+  const style = useStyle(), shade = useMemo(() => style.lamp.shade.clone().multiplyScalar(2), [style]);
   return (
     <RoomItem id="nightstand" home={HOMES.nightstand}>
       <Nightstand />
@@ -66,8 +82,8 @@ function NightLamp() {
       <pointLight
         visible={lamp}
         position={[LAMP[0], LAMP[1] + 0.38, LAMP[2]]}
-        color={srgb(1, 0.3, 0.8)}
-        intensity={LIGHT_SCALE.lamp}
+        color={style.lamp.light}
+        intensity={LIGHT_SCALE.lamp * Math.max(0.25, style.exposure)}
         distance={5}
         decay={1.2}
         castShadow={quality > 0}
@@ -102,28 +118,29 @@ function Reflections() {
 }
 
 export function Lighting() {
-  const preset = useGame((s) => s.preset), size = useLayout((s) => s.size);
-  const p = PRESETS[preset];
-  // Trilight-style ambient: up-facing surfaces catch the ceiling's neon cove, undersides only see the dark floor.
+  const preset = useGame((s) => s.preset), size = useLayout((s) => s.size), style = useStyle();
+  const p = style.presets[preset % 3];
+  // Trilight-style ambient: up-facing surfaces catch the ceiling's cove (its neon tint when it glows), undersides
+  // only see the floor.
   const [sky, ground] = useMemo(() => [
-    p.ambient.clone().multiplyScalar(1.15).add(MAGENTA.clone().add(CYAN).multiplyScalar(0.045)),
+    p.ambient.clone().multiplyScalar(1.15).add(style.neon.glow ? style.neon.a.clone().add(style.neon.b).multiplyScalar(0.045) : new THREE.Color()),
     p.ambient.clone().multiplyScalar(0.4),
-  ], [p]);
+  ], [p, style]);
   const [sunTarget, cityTarget] = useMemo(() => [new THREE.Object3D(), new THREE.Object3D()], []);
-  const rug = useMemo(() => gridTexture(), []);
-  const city = useMemo(() => srgb(0.6, 0.45, 1).multiply(p.window), [p]);
+  const rug = useMemo(() => (style.rug.kind === "grid" ? gridTexture : wovenTexture)(style.rug.a, style.rug.b), [style]);
+  const city = useMemo(() => style.windowLight.clone().multiply(p.window), [p, style]);
 
   return (
     <>
-      <hemisphereLight args={[sky, ground, LIGHT_SCALE.hemi]} />
+      <hemisphereLight args={[sky, ground, LIGHT_SCALE.hemi * style.exposure]} />
       {/* Moon: Unity Euler(40, −45, 0), no shadows, just lights the faces you look at. */}
       <primitive object={sunTarget} position={[-0.542, -0.643, -0.542]} />
-      <directionalLight position={[0, 0, 0]} target={sunTarget} color={srgb(0.6, 0.5, 1)} intensity={p.sun * LIGHT_SCALE.sun} />
-      <pointLight position={[1.2, 1.7, -0.6]} color={CYAN} intensity={LIGHT_SCALE.fill} distance={3.5} />
+      <directionalLight position={[0, 0, 0]} target={sunTarget} color={style.sunColor} intensity={p.sun * LIGHT_SCALE.sun * style.exposure} />
+      <pointLight position={[1.2, 1.7, -0.6]} color={style.fill} intensity={LIGHT_SCALE.fill * style.exposure} distance={3.5} />
       {/* City glow through the window: wide, soft, aimed down into the room. */}
       <RoomItem id="window" home={HOMES.window}>
         <primitive object={cityTarget} position={[-0.3, 1.17, -1.1]} />
-        <spotLight position={[-0.3, 1.7, -1.95]} target={cityTarget} angle={(57.5 * Math.PI) / 180} penumbra={0.65} distance={5.5} color={city} intensity={LIGHT_SCALE.city} />
+        <spotLight position={[-0.3, 1.7, -1.95]} target={cityTarget} angle={(57.5 * Math.PI) / 180} penumbra={0.65} distance={5.5} color={city} intensity={LIGHT_SCALE.city * style.exposure} />
       </RoomItem>
 
       {/* Neon cove along the ceiling: magenta left/back, cyan right/front. */}
@@ -131,10 +148,12 @@ export function Lighting() {
       <Neon position={[-size.w / 2 + 0.03, size.h - 0.12, 0]} size={[0.03, 0.03, size.d - 0.1]} color={MAGENTA} />
       <Neon position={[0, size.h - 0.12, size.d / 2 - 0.03]} size={[size.w - 0.1, 0.03, 0.03]} color={CYAN} />
       <Neon position={[size.w / 2 - 0.03, size.h - 0.12, 0]} size={[0.03, 0.03, size.d - 0.1]} color={CYAN} />
-      {/* Synthwave rug */}
-      <mesh position={[0, 0.005, -0.2]}>
+      {/* Rug: glowing synthwave grid, or a woven rug */}
+      <mesh position={[0, 0.005, -0.2]} receiveShadow>
         <boxGeometry args={[1.8, 0.01, 1.3]} />
-        <meshBasicMaterial map={rug} color={[1.6, 1.6, 1.6]} toneMapped={false} />
+        {style.rug.kind === "grid"
+          ? <meshBasicMaterial map={rug} color={[1.6, 1.6, 1.6]} toneMapped={false} />
+          : <meshStandardMaterial map={rug} roughness={1} />}
       </mesh>
 
       <NightLamp />

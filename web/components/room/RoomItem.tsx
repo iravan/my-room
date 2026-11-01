@@ -4,7 +4,8 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { liveHomes, ON_WALL, poseOf, restPosition, useLayout, type Home } from "@/lib/room";
-import { applyFinish } from "@/lib/options";
+import { applyFinish, finishType } from "@/lib/options";
+import { styleOf } from "@/lib/styles";
 import { lifts } from "./Shell";
 
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hit = new THREE.Vector3(), normal = new THREE.Vector3();
@@ -75,7 +76,9 @@ export function RoomItem({ id, home, children, shellModel }: { id: string; home:
   // Shell replacement: hide the built-in look (and stop it taking clicks) except <Core> parts; lift resting cores.
   const ref = useRef<THREE.Group>(null), touched = useRef(false), shelled = useRef(false);
   useFrame(() => {
-    const L = useLayout.getState(), opts = L.options[id], shell = !shellModel && !!L.shells[id];
+    const L = useLayout.getState(), shell = !shellModel && !!L.shells[id];
+    const style = styleOf(L.style).finishes, own = L.options[id];
+    const styled = Object.keys(style).length > 0, opts = own || styled ? { ...style, ...own } : undefined;
     if (!opts && !touched.current && !shell && !shelled.current) return;
     touched.current = !!opts;
     const wasShelled = shelled.current;
@@ -87,7 +90,7 @@ export function RoomItem({ id, home, children, shellModel }: { id: string; home:
         if (o.userData.lift) o.position.y = lift;
       }
       const mesh = o as THREE.Mesh, m = mesh.material as THREE.MeshStandardMaterial | undefined;
-      if (m?.userData?.finish) applyFinish(m, opts?.[m.userData.finish]);
+      if (m?.userData?.finish) applyFinish(m, opts?.[m.userData.finish] ?? opts?.[finishType(m.userData.finish)]);
       if ((mesh.isMesh || (o as THREE.Points).isPoints) && !core && (shell || wasShelled)) {
         o.visible = !shell;
         o.userData.hiddenShell = shell;

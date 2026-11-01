@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Slider } from "@/components/ui/slider";
 import { typing, useGame, type View } from "@/lib/store";
 import { useCollection } from "@/lib/collection";
-import { PRESETS } from "@/lib/lighting";
+import { styleOf } from "@/lib/styles";
 import { downloadCollection, importFromFile, leaveVisit, visitFromFile } from "@/lib/share";
 import { takePhoto } from "@/lib/photo";
 import { editAlbum } from "./AlbumEditor";
@@ -38,7 +38,7 @@ function Title() {
 
 function LeftPanel() {
   const view = useGame((s) => s.view), preset = useGame((s) => s.preset), lamp = useGame((s) => s.lamp);
-  const muted = useGame((s) => s.muted), volume = useGame((s) => s.volume), visiting = useCollection((s) => s.visiting);
+  const muted = useGame((s) => s.muted), volume = useGame((s) => s.volume), visiting = useCollection((s) => s.visiting), style = useLayout((s) => s.style);
   const g = useGame.getState();
   return (
     <Panel side="left">
@@ -47,7 +47,7 @@ function LeftPanel() {
         {VIEWS.map(([v, label, k]) => <Button key={v} size="sm" variant={view === v ? "default" : "secondary"} onClick={() => g.setView(v)}>{label} [{k}]</Button>)}
       </div>
       <div className="grid gap-1">
-        <Button size="sm" variant="outline" onClick={g.cyclePreset}>Light: {PRESETS[preset].name} [L]</Button>
+        <Button size="sm" variant="outline" onClick={g.cyclePreset}>Light: {styleOf(style).presets[preset % 3].name} [L]</Button>
         <Button size="sm" variant="outline" onClick={g.toggleLamp}>Lamp: {lamp ? "on" : "off"}</Button>
         <div className="flex items-center gap-2">
           <Button size="sm" variant="outline" className="w-28" onClick={() => useGame.setState({ muted: !muted })}>Sound: {muted ? "off" : "on"} [M]</Button>

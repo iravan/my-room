@@ -6,6 +6,7 @@ import { addModelFile, importModelFile } from "@/lib/models";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_SIZE, liveHomes, ON_WALL, poseOf, SIZE_RANGE, useLayout, type Pose, type RoomSize } from "@/lib/room";
 import { Slider } from "@/components/ui/slider";
+import { STYLE_IDS, STYLES, styleOf } from "@/lib/styles";
 import { typing, useGame } from "@/lib/store";
 import { Panel } from "./Panel";
 import { ROOM_BUDGET, useBudget } from "@/lib/budget";
@@ -51,7 +52,7 @@ function useEditKeys() {
 
 // Colour/material per part the item has, and its variants (e.g. bed size).
 function Options({ id }: { id: string }) {
-  const slots = useLayout((s) => s.slots), opts = useLayout((s) => s.options[id]) ?? {};
+  const slots = useLayout((s) => s.slots), opts = useLayout((s) => s.options[id]) ?? {}, def = styleOf(useLayout((s) => s.style)).finishes;
   const variants = VARIANTS[id] ?? {};
   const set = (k: string, v: string) => useLayout.getState().setOption(id, k, v);
   return (
@@ -67,7 +68,7 @@ function Options({ id }: { id: string }) {
         </div>
       ))}
       {slots.map((slot) => {
-        const choices = FINISHES[finishType(slot)] ?? {}, current = opts[slot] ?? "original";
+        const choices = FINISHES[finishType(slot)] ?? {}, current = opts[slot] ?? def[slot] ?? def[finishType(slot)] ?? "original";
         return (
           <div key={slot}>
             <p className="text-xs text-zinc-400">{finishLabel(slot)}: <span className="text-zinc-200">{choices[current]?.label}</span></p>
@@ -101,6 +102,26 @@ function BudgetMeter() {
           <div className="h-1 rounded bg-white/10"><div className={`h-1 rounded ${v > max ? "bg-red-500" : v > max * 0.8 ? "bg-amber-400" : "bg-cyan-400"}`} style={{ width: `${Math.min(100, (v / max) * 100)}%` }} /></div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// The room's style: colours, lighting moods, neon or trim, rug, duvets, view and default finishes.
+function StylePicker() {
+  const current = useLayout((s) => s.style);
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-bold text-cyan-300">Style: <span className="text-zinc-200">{STYLES[current].name}</span></p>
+      <div className="grid grid-cols-2 gap-1">
+        {STYLE_IDS.map((id) => (
+          <button key={id} onClick={() => useLayout.getState().setStyle(id)} title={STYLES[id].blurb}
+            className={`flex items-center gap-1.5 rounded border px-1.5 py-1 text-left text-[11px] ${id === current ? "border-cyan-300 bg-white/10 text-white" : "border-white/15 text-zinc-300 hover:bg-white/5"}`}>
+            <span className="flex shrink-0">{STYLES[id].swatch.map((c) => <span key={c} className="-mr-1 size-3 rounded-full border border-black/40" style={{ background: c }} />)}</span>
+            <span className="ml-1 truncate">{STYLES[id].name}</span>
+          </button>
+        ))}
+      </div>
+      <p className="text-[11px] text-zinc-400">{STYLES[current].blurb}</p>
     </div>
   );
 }
@@ -195,13 +216,14 @@ export function EditPanel() {
             onChange={(e) => { replaceLook(e.target.files?.[0]); e.target.value = ""; }} />
         </>
       )}
+      {!selected && <StylePicker />}
       {!selected && <RoomSizeControls />}
       <Button size="sm" variant="secondary" onClick={() => file.current?.click()}>+ Add a 3D model (.glb)</Button>
       <input ref={file} type="file" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" className="hidden"
         onChange={(e) => { upload(e.target.files?.[0]); e.target.value = ""; }} />
       <div className="grid grid-cols-2 gap-1">
         <Button size="sm" variant="outline" disabled={!canUndo} onClick={() => useLayout.getState().undo()}>Undo [⌘Z]</Button>
-        <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {}, options: {}, size: DEFAULT_SIZE }); }}>Reset room</Button>
+        <Button size="sm" variant="outline" disabled={!anyMoved} onClick={() => { useLayout.getState().snapshot(); useLayout.setState({ items: {}, options: {}, size: DEFAULT_SIZE, style: "cyber" }); }}>Reset room</Button>
       </div>
       <BudgetMeter />
       <Button size="sm" onClick={exitEdit}>Done [Esc]</Button>

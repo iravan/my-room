@@ -21,6 +21,12 @@ export const FINISHES: Record<string, Record<string, Choice>> = {
     rose: { label: "Rose", color: srgb(0.78, 0.36, 0.46) },
     mustard: { label: "Mustard", color: srgb(0.78, 0.56, 0.16) },
     lilac: { label: "Lilac", color: srgb(0.58, 0.46, 0.82) },
+    sage: { label: "Sage", color: srgb(0.5, 0.6, 0.5) },
+    sand: { label: "Sand", color: srgb(0.82, 0.74, 0.6) },
+    rust: { label: "Rust", color: srgb(0.62, 0.3, 0.16) },
+    olive: { label: "Olive", color: srgb(0.42, 0.45, 0.2) },
+    ocean: { label: "Ocean", color: srgb(0.2, 0.42, 0.62) },
+    burgundy: { label: "Burgundy", color: srgb(0.4, 0.08, 0.12) },
   },
   leather: {
     original: { label: "Original" },

@@ -116,15 +116,15 @@ function useEuler(r?: Vec3) {
 
 type Placed = { position: Vec3; rotation?: Vec3; cast?: boolean };
 
-export function Slab({ set, tile, size, position, color, metal = 1, rotation, cast = true, offset }: Placed & {
-  set: TextureSet; tile: number; size: Vec3; color: THREE.Color; metal?: number; offset?: [number, number];
+export function Slab({ set, tile, size, position, color, metal = 1, rotation, cast = true, offset, grainOnly }: Placed & {
+  set: TextureSet; tile: number; size: Vec3; color: THREE.Color; metal?: number; offset?: [number, number]; grainOnly?: boolean;
 }) {
   const [sx, sy, sz] = size, [ou, ov] = offset ?? [NaN, NaN];
   const geometry = useMemo(() => boxGeometry([sx, sy, sz], tile, Number.isNaN(ou) ? undefined : [ou, ov]), [sx, sy, sz, tile, ou, ov]);
   const euler = useEuler(rotation);
   return (
     <mesh geometry={geometry} position={position} rotation={euler} castShadow={cast} receiveShadow>
-      <PbrMaterial set={set} color={color} metal={metal} />
+      <PbrMaterial set={set} color={color} metal={metal} grainOnly={grainOnly} />
     </mesh>
   );
 }

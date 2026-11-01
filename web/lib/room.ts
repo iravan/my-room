@@ -4,6 +4,7 @@ import * as THREE from "three";
 import type { Vec3 } from "./store";
 import { BED_HOME, CABINET, CRATE, NIGHTSTAND, DESK } from "./layout";
 import { normalizeOptions, type Options } from "./options";
+import { STYLES, styleOf, type Style, type StyleId } from "./styles";
 
 // The room as data. Every item renders through <RoomItem id home>: its children are modelled in place at `home`
 // (the default room), and a saved pose moves the whole item rigidly about that home point. Only moved items are
@@ -147,18 +148,20 @@ export function normalizeShells(raw: unknown): Shells {
   return out;
 }
 
-export type RoomData = { size: RoomSize; items: Layout; options: Options; models: Models; shells: Shells };
+export type RoomData = { style: StyleId; size: RoomSize; items: Layout; options: Options; models: Models; shells: Shells };
 // Untrusted room layout (a share file): every part cleaned; model files optionally renamed (visit: prefix).
 export function normalizeRoom(raw: unknown, assetPrefix = ""): RoomData {
   const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const models = normalizeModels(r.models);
   const shells = normalizeShells(r.shells);
   for (const m of [...Object.values(models), ...Object.values(shells)]) m.asset = assetPrefix + m.asset.replace(/^visit:/, "");
-  const size = normalizeSize(r.size);
-  return { size, items: normalizeLayout(r.items, size), options: normalizeOptions(r.options), models, shells };
+  const size = normalizeSize(r.size), style = (typeof r.style === "string" && r.style in STYLES ? r.style : "cyber") as StyleId;
+  return { style, size, items: normalizeLayout(r.items, size), options: normalizeOptions(r.options), models, shells };
 }
 
 type State = {
+  style: StyleId;
+  setStyle: (style: StyleId) => void;
   size: RoomSize;
   setSize: (size: Partial<RoomSize>) => void; // live while a slider moves: call snapshot() first
   items: Layout;
@@ -184,6 +187,8 @@ type State = {
 export const useLayout = create<State>()(
   persist(
     (set, get) => ({
+      style: "cyber",
+      setStyle: (style) => { get().snapshot(); set({ style }); },
       size: DEFAULT_SIZE,
       // Resize: moved items standing against a wall go with it; everything is then kept inside the new room.
       setSize: (patch) => set((s) => {
@@ -231,11 +236,11 @@ export const useLayout = create<State>()(
           return { models, items, options, selected: s.selected === id ? null : s.selected };
         });
       },
-      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), { size: s.size, items: s.items, options: s.options, models: s.models, shells: s.shells }] })),
+      snapshot: () => set((s) => ({ past: [...s.past.slice(-19), { style: s.style, size: s.size, items: s.items, options: s.options, models: s.models, shells: s.shells }] })),
       undo: () => set((s) => (s.past.length ? { ...s.past[s.past.length - 1], past: s.past.slice(0, -1) } : {})),
     }),
     {
-      name: "my-room-layout", version: 1, storage, partialize: ({ size, items, options, models, shells }) => ({ size, items, options, models, shells }),
+      name: "my-room-layout", version: 1, storage, partialize: ({ style, size, items, options, models, shells }) => ({ style, size, items, options, models, shells }),
       merge: (saved, cur) => ({ ...cur, ...normalizeRoom(saved) }),
     },
   ),
@@ -263,3 +268,6 @@ export function placePoint(id: string, p: Vec3, items: Layout, out = new THREE.V
   out.set(...p);
   return home ? out.applyMatrix4(itemMatrix(home, poseOf(id, home, { items, size }), tmpM)) : out;
 }
+
+// The room's current style (see styles.ts).
+export const useStyle = (): Style => useLayout((s) => styleOf(s.style));

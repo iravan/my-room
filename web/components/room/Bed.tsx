@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import * as THREE from "three";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { useGame, type Vec3 } from "@/lib/store";
-import { useLayout } from "@/lib/room";
+import { useLayout, useStyle } from "@/lib/room";
 import { BED_HOME } from "@/lib/layout";
 import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { perlin, rng } from "@/lib/paint";
@@ -23,7 +23,6 @@ const WIDTH: Record<string, number> = { single: W1, double: 1.42 };
 const HEAD = -0.97, FOOT = HEAD + L;
 
 // Duvet cover colours (cotton), cycled by clicking the bed.
-const COVERS = [srgb(0.38, 0.24, 0.62), srgb(0.16, 0.46, 0.56), srgb(0.6, 0.16, 0.44), srgb(0.26, 0.26, 0.32)];
 const SHEET = srgb(0.62, 0.6, 0.7), CASE = srgb(0.7, 0.68, 0.78), THROW = srgb(0.62, 0.5, 0.85);
 const WOOD = srgb(0.42, 0.34, 0.32), UPHOLSTERY = srgb(0.3, 0.27, 0.42);
 
@@ -214,7 +213,7 @@ function Frame({ W }: { W: number }) {
 export const bedWidth = (size?: string) => WIDTH[size ?? "single"] ?? W1;
 
 export function Bed() {
-  const cover = useGame((s) => COVERS[s.blanket % COVERS.length]);
+  const covers = useStyle().covers, cover = covers[useGame((s) => s.blanket) % covers.length];
   const W = bedWidth(useLayout((s) => s.options.bed?.size)), g = geometries(W);
   // Clicking the bed cycles the duvet colours; a duvet colour picked in edit mode gives way to it.
   const nextBlanket = () => {

@@ -1,18 +1,16 @@
 "use client";
 
-import { Slab, tint } from "./Surface";
+import { Slab } from "./Surface";
 import { OPENING } from "./City";
-import { HOMES, poseOf, useLayout } from "@/lib/room";
+import { HOMES, poseOf, useLayout, useStyle } from "@/lib/room";
 import type { Vec3 } from "@/lib/store";
 
-// Tints multiply the photo albedo (values from the Unity room).
-const FLOOR = tint(0.6, 0.55, 0.7);
-const WALL = tint(0.22, 0.2, 0.36);
-const CEILING = tint(0.22, 0.2, 0.36, 0.7);
+// Tints multiply the photo albedo; they come from the room's style (styles.ts).
 
 // Back wall in four pieces round the window opening; the plaster is pinned to wall coordinates (room-side face:
 // u = x, v = y) so the pieces join without seams, and the cut edges form the opening's reveal.
 function BackWall() {
+  const st = useStyle(), WALL = st.walls;
   const size = useLayout((s) => s.size), moved = useLayout((s) => s.items.window), home = HOMES.window.position;
   const win = moved ?? poseOf("window", HOMES.window, { items: {}, size }); // select plain values: a new object per read would re-render forever
   const k = win.scale, dx = win.position[0] - home[0], dy = win.position[1] - home[1];
@@ -24,7 +22,7 @@ function BackWall() {
     <>
       {pieces.map(([a, b, c, d]) => {
         const sz: Vec3 = [c - a, d - b, 0.1];
-        return <Slab key={`${a}${b}`} set="grey_plaster" tile={1} size={sz} position={[(a + c) / 2, (b + d) / 2, -size.d / 2 - 0.05]} offset={[a + 0.37, b + 0.61]} color={WALL} cast={false} />;
+        return <Slab key={`${a}${b}`} set="grey_plaster" tile={1} size={sz} position={[(a + c) / 2, (b + d) / 2, -size.d / 2 - 0.05]} offset={[a + 0.37, b + 0.61]} color={WALL} cast={false} grainOnly={st.paintedWalls} />;
       })}
     </>
   );
@@ -32,15 +30,15 @@ function BackWall() {
 
 // Shell: width × height × depth from the room size (default 4 × 2.8 × 4 m), walls 10 cm thick just outside it.
 export function RoomShell() {
-  const { w, d, h } = useLayout((s) => s.size);
+  const { w, d, h } = useLayout((s) => s.size), st = useStyle(), WALL = st.walls, CEILING = st.ceiling;
   return (
     <>
-      <Slab set="dark_wooden_planks" tile={2} size={[w, 0.1, d]} position={[0, -0.05, 0]} color={FLOOR} cast={false} />
-      <Slab set="grey_plaster" tile={1} size={[w, 0.1, d]} position={[0, h - 0.05, 0]} color={CEILING} cast={false} />
+      <Slab set={st.floor.set} tile={st.floor.tile} size={[w, 0.1, d]} position={[0, -0.05, 0]} color={st.floor.tint} cast={false} />
+      <Slab set="grey_plaster" tile={1} size={[w, 0.1, d]} position={[0, h - 0.05, 0]} color={CEILING} cast={false} grainOnly={st.paintedWalls} />
       <BackWall />
-      <Slab set="grey_plaster" tile={1} size={[w, h, 0.1]} position={[0, h / 2 - 0.05, d / 2 + 0.05]} color={WALL} cast={false} />
-      <Slab set="grey_plaster" tile={1} size={[0.1, h, d]} position={[-w / 2 - 0.05, h / 2 - 0.05, 0]} color={WALL} cast={false} />
-      <Slab set="grey_plaster" tile={1} size={[0.1, h, d]} position={[w / 2 + 0.05, h / 2 - 0.05, 0]} color={WALL} cast={false} />
+      <Slab set="grey_plaster" tile={1} size={[w, h, 0.1]} position={[0, h / 2 - 0.05, d / 2 + 0.05]} color={WALL} cast={false} grainOnly={st.paintedWalls} />
+      <Slab set="grey_plaster" tile={1} size={[0.1, h, d]} position={[-w / 2 - 0.05, h / 2 - 0.05, 0]} color={WALL} cast={false} grainOnly={st.paintedWalls} />
+      <Slab set="grey_plaster" tile={1} size={[0.1, h, d]} position={[w / 2 + 0.05, h / 2 - 0.05, 0]} color={WALL} cast={false} grainOnly={st.paintedWalls} />
     </>
   );
 }
