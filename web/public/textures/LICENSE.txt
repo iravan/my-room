@@ -1,0 +1,4 @@
+All textures in this folder are from Poly Haven (https://polyhaven.com), CC0 (public domain).
+Sets: black_walnut_veneer_01, coated_pine, cotton_jersey, dark_wooden_planks, fabric_leather_02,
+grey_plaster, knitted_fleece, metal_plate_02. 1k JPG: _diff (sRGB albedo), _nor (OpenGL normal), _arm (AO/rough/metal).
+Re-encoded for the web from the Unity build's copies (Assets/Resources/Textures at git tag unity-final): _diff 1k q75, _nor 1k q85, _arm 512 px q75 (15 MB → 5.5 MB).
