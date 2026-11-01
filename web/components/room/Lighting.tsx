@@ -7,14 +7,10 @@ import { useGame, type Vec3 } from "@/lib/store";
 import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { paint } from "@/lib/paint";
 import { Slab } from "./Surface";
-import { Clickable } from "./Clickable";
-import { Nightstand } from "./Nightstand";
-import { Core } from "./Shell";
 import { RoomItem } from "./RoomItem";
 import { HOMES, useLayout, useStyle } from "@/lib/room";
 
 const METAL = srgb(0.55, 0.55, 0.7);
-const LAMP: Vec3 = [-1.7, 0.54, 0.45];
 const LIGHT_SCALE = { hemi: 14, sun: 2, fill: 4, city: 8, lamp: 4 }; // tuned by eye against the Unity screenshots
 
 // Powder-coated metal: mostly paint, so it doesn't mirror the dark room as black.
@@ -57,44 +53,6 @@ function wovenTexture(a: RGB3, b: RGB3) {
   });
 }
 
-// Nightstand + neon lamp (click = lamp on/off). The shade glows magenta while it's on.
-function NightLamp() {
-  const lamp = useGame((s) => s.lamp), toggleLamp = useGame((s) => s.toggleLamp), quality = useGame((s) => s.quality);
-  const style = useStyle(), shade = useMemo(() => style.lamp.shade.clone().multiplyScalar(2), [style]);
-  return (
-    <RoomItem id="nightstand" home={HOMES.nightstand}>
-      <Nightstand />
-      <Core lift>
-      <Clickable onTap={toggleLamp} position={LAMP}>
-        <mesh position={[0, 0.01, 0]} castShadow>
-          <cylinderGeometry args={[0.07, 0.07, 0.02, 24]} />
-          <meshStandardMaterial color={METAL} metalness={0.3} roughness={0.5} />
-        </mesh>
-        <mesh position={[0, 0.17, 0]} castShadow>
-          <cylinderGeometry args={[0.01, 0.01, 0.3, 12]} />
-          <meshStandardMaterial color={METAL} metalness={0.3} roughness={0.5} />
-        </mesh>
-        <mesh position={[0, 0.38, 0]}>
-          <cylinderGeometry args={[0.13, 0.13, 0.2, 32]} />
-          <meshBasicMaterial color={lamp ? shade : "black"} toneMapped={false} />
-        </mesh>
-      </Clickable>
-      <pointLight
-        visible={lamp}
-        position={[LAMP[0], LAMP[1] + 0.38, LAMP[2]]}
-        color={style.lamp.light}
-        intensity={LIGHT_SCALE.lamp * Math.max(0.25, style.exposure)}
-        distance={5}
-        decay={1.2}
-        castShadow={quality > 0}
-        shadow-mapSize={[512, 512]}
-        shadow-bias={-0.002}
-        shadow-radius={quality === 2 ? 4 : 1} // three r18x dropped PCFSoftShadowMap: PCF softens by radius instead
-      />
-      </Core>
-    </RoomItem>
-  );
-}
 
 // Glossy surfaces reflect the room itself (neon in the floor), re-captured when the lighting changes.
 function Reflections() {
@@ -160,7 +118,6 @@ export function Lighting() {
       </mesh>
       </RoomItem>
 
-      <NightLamp />
       <Reflections />
     </>
   );

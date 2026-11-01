@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { liveHomes, ON_WALL, poseOf, restPosition, useLayout, type Home } from "@/lib/room";
+import { ITEMS } from "@/items/registry";
 import { applyFinish, finishType } from "@/lib/options";
 import { styleOf } from "@/lib/styles";
 import { lifts } from "./Shell";
@@ -68,8 +69,11 @@ function startDrag(id: string, home: Home, e: ThreeEvent<PointerEvent>, camera: 
 const noRaycast = () => {};
 
 export function RoomItem({ id, home, children, shellModel }: { id: string; home: Home; children: ReactNode; shellModel?: boolean }) {
-  const pose = useLayout((s) => s.items[id]), editing = useLayout((s) => s.editing), size = useLayout((s) => s.size);
-  const hidden = useLayout((s) => s.hidden.includes(id));
+  const own = useLayout((s) => s.items[id]), editing = useLayout((s) => s.editing), size = useLayout((s) => s.size);
+  // Standing on another item: subscribe to its pose so this one follows (plain values only, no new objects per read).
+  const on = ITEMS[id]?.on, parentPose = useLayout((s) => (on ? s.items[on] : undefined));
+  const pose = own ?? (on ? poseOf(id, home, { items: parentPose ? { [on]: parentPose } : {}, size }) : undefined);
+  const hidden = useLayout((s) => s.hidden.includes(id) || (!!on && !own && s.hidden.includes(on)));
   const { camera, gl, scene } = useThree();
   const yaw = home.rotationY ?? 0;
   useEffect(() => { if (!shellModel) liveHomes.set(id, home); }, [id, home, shellModel]);
@@ -78,6 +82,8 @@ export function RoomItem({ id, home, children, shellModel }: { id: string; home:
   const ref = useRef<THREE.Group>(null), touched = useRef(false), shelled = useRef(false);
   useFrame(() => {
     const L = useLayout.getState(), shell = !shellModel && !!L.shells[id];
+    // On a replaced parent: rise (or sink) onto the replacement's top.
+    if (on && !L.items[id] && ref.current?.children[0]) ref.current.children[0].position.y = -home.position[1] + (L.shells[on] ? lifts.get(on) ?? 0 : 0);
     const style = styleOf(L.style).finishes, own = L.options[id];
     const styled = Object.keys(style).length > 0, opts = own || styled ? { ...style, ...own } : undefined;
     if (!opts && !touched.current && !shell && !shelled.current) return;

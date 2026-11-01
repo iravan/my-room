@@ -10,6 +10,8 @@ import { Metal, Neon } from "./Lighting";
 import { Clickable } from "./Clickable";
 import { Part, Slab, unityEuler } from "./Surface";
 import { BedItem } from "@/items/bed";
+import { NightstandItem } from "@/items/nightstand";
+import { LampItem } from "@/items/lamp";
 import { RoomItem } from "./RoomItem";
 import { Core } from "./Shell";
 import { HOMES } from "@/lib/room";
@@ -141,6 +143,8 @@ export function Furniture() {
   return (
     <>
       <BedItem />
+      <NightstandItem />
+      <LampItem />
       <RoomItem id="cabinet" home={HOMES.cabinet}>
         <Cabinet />
         <Core lift>

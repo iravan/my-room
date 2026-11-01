@@ -245,7 +245,12 @@ export const useLayout = create<State>()(
 
 // An item's pose now: where it was moved to, or its rest position in the current room.
 export function poseOf(id: string, home: Home, s: { items: Layout; size: RoomSize } = useLayout.getState()): Pose {
-  return s.items[id] ?? restPose(id, home, s.size);
+  if (s.items[id]) return s.items[id];
+  const on = ITEMS[id]?.on, parentHome = on ? HOMES[on] : undefined;
+  if (!on || !parentHome) return restPose(id, home, s.size);
+  // Standing on its parent: carried by the parent's pose.
+  const parent = poseOf(on, parentHome, s), p = new THREE.Vector3(...home.position).applyMatrix4(itemMatrix(parentHome, parent));
+  return { position: [p.x, p.y, p.z], rotationY: (home.rotationY ?? 0) + parent.rotationY - (parentHome.rotationY ?? 0), scale: parent.scale };
 }
 
 // Item-local → world for a pose (identity when the item is at home): T(pose) · Ry(Δyaw) · S · T(−home).

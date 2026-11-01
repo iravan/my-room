@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { useGame, type Vec3 } from "@/lib/store";
+import type { Vec3 } from "@/lib/store";
 import { CYAN, MAGENTA, srgb } from "@/lib/lighting";
 import { drawText, hsv, lerp, paint, rng, type RGBA } from "@/lib/paint";
 import { Neon } from "./Lighting";
@@ -207,42 +207,6 @@ function useClockTexture(make: () => THREE.CanvasTexture, draw: (t: THREE.Canvas
   return tex;
 }
 
-// Dust in the lamp's glow. Real dust is brightest backlit, which a lit material gets backwards, so: unlit soft
-// additive motes drifting in a small box round the lamp, fading in and out, shown only while it's on (and not on Low).
-const DUST = { n: 90, life: 14, centre: [-1.45, 1.15, -0.45] as U3, box: [1.2, 1, 1.2] as U3 };
-function makeDust() {
-  const pos = new Float32Array(DUST.n * 3), col = new Float32Array(DUST.n * 3), age = new Float32Array(DUST.n), seed = new Float32Array(DUST.n * 3);
-  const c = flip(DUST.centre), rnd = rng(11);
-  const spawn = (i: number) => { for (let k = 0; k < 3; k++) { pos[i * 3 + k] = c[k] + (rnd() - 0.5) * DUST.box[k]; seed[i * 3 + k] = rnd() * 100; } };
-  for (let i = 0; i < DUST.n; i++) { spawn(i); age[i] = rnd() * DUST.life; } // prewarmed
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  geometry.setAttribute("color", new THREE.BufferAttribute(col, 3));
-  const map = paint(16, 16, (u, v) => { const a = 0.6 * Math.max(0, 1 - Math.hypot(u - 0.5, v - 0.5) * 2); return [a, a * 0.8, a * 0.93]; });
-  const step = (dt: number, time: number) => {
-    for (let i = 0; i < DUST.n; i++) {
-      age[i] += dt;
-      if (age[i] > DUST.life) { age[i] = 0; spawn(i); }
-      for (let k = 0; k < 3; k++) pos[i * 3 + k] += Math.sin(time * 0.25 + seed[i * 3 + k]) * 0.025 * dt;
-      const t = age[i] / DUST.life, fade = t < 0.2 ? t / 0.2 : t > 0.8 ? (1 - t) / 0.2 : 1;
-      col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = fade;
-    }
-    geometry.attributes.position.needsUpdate = geometry.attributes.color.needsUpdate = true;
-  };
-  return { geometry, map, step };
-}
-function Dust() {
-  const on = useGame((s) => s.lamp && s.quality > 0);
-  const dust = useMemo(() => makeDust(), []);
-  useFrame(({ clock }, dt) => { if (on) dust.step(Math.min(dt, 0.1), clock.elapsedTime); });
-  if (!on) return null;
-  return (
-    <points geometry={dust.geometry} raycast={() => null}>
-      <pointsMaterial map={dust.map} size={0.012} sizeAttenuation vertexColors transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-    </points>
-  );
-}
-
 // ---------- the room ----------
 
 // What every real bedroom has: skirting, a door, sockets, a light switch, a ceiling light, a smoke detector.
@@ -282,7 +246,6 @@ function RoomBasics() {
         <Prim t="sphere" p={[0.93, h - 0.122, -0.6]} s={[0.008, 0.008, 0.008]} glow={C(2, 0.1, 0.1)} />
       </RoomItem>
       {/* Contact shadows under the core furniture: bed, nightstand, cabinet, crate */}
-      <RoomItem id="nightstand" home={HOMES.nightstand}><Blob p={[-1.7, 0, -0.45]} size={[0.6, 0.55]} /></RoomItem>
       <RoomItem id="cabinet" home={HOMES.cabinet}><Blob p={[1.26, 0, 1.8]} size={[1.6, 0.55]} /></RoomItem>
       <RoomItem id="crate" home={HOMES.crate}><Blob p={[1.45, 0, 0.35]} size={[0.55, 0.8]} /></RoomItem>
     </>
@@ -502,7 +465,7 @@ function Teen() {
 
         {/* Cables to the sockets (behind the desk at (-2, .3, -1.2), under the window at (.25, .3, 2)): PC + monitor in the desk item; the lamp's goes with the nightstand */}
         {/* Cables run from their device to their socket: each point follows the item it belongs to. */}
-        <Cable c={cableBlack} width={0.005} pts={[[-1.75, 0.55, -0.45], [-1.95, 0.5, -0.5], [-1.975, 0.012, -0.6], [-1.98, 0.012, -1.1], [-1.99, 0.31, -1.19]]} owners={["nightstand", "nightstand", "nightstand", "socket-desk", "socket-desk"]} />
+        <Cable c={cableBlack} width={0.005} pts={[[-1.75, 0.55, -0.45], [-1.95, 0.5, -0.5], [-1.975, 0.012, -0.6], [-1.98, 0.012, -1.1], [-1.99, 0.31, -1.19]]} owners={["lamp", "nightstand", "nightstand", "socket-desk", "socket-desk"]} />
         {/* Phone charger: over the bed edge, across the floor to the window socket */}
         <Cable c={C(0.85, 0.85, 0.82)} width={0.006} pts={[plug, [-0.93, onBed(-0.93, plug[2] + 0.1, 0.006), plug[2] + 0.1], [-0.8, 0.2, plug[2] + 0.2], [-0.75, 0.012, 1.6], [0.1, 0.012, 1.96], [0.25, 0.29, 1.99]]} owners={["bed", "bed", "bed", "socket-window", "socket-window", "socket-window"]} />
 
@@ -563,7 +526,6 @@ export function TeenStuff() {
     <>
       <RoomBasics />
       <Teen />
-      <RoomItem id="nightstand" home={HOMES.nightstand}><Core lift><Dust /></Core></RoomItem>
     </>
   );
 }

@@ -2,8 +2,9 @@
 
 import * as THREE from "three";
 import { MAGENTA, srgb } from "@/lib/lighting";
-import { Neon } from "./Lighting";
-import { PbrMaterial, projectUVs, rounded } from "./Surface";
+import { Neon } from "@/components/room/Lighting";
+import { PbrMaterial, projectUVs, rounded } from "@/components/room/Surface";
+import { defineVariant } from "../../types";
 
 // Mid-century nightstand against the left wall: walnut carcass on splayed tapered legs, a top with a slight
 // overhang, two drawers with real gap lines and brass bar pulls facing into the room (+x), and a magenta LED
@@ -30,7 +31,7 @@ function build() {
   };
 }
 
-export function Nightstand() {
+function MidCentury() {
   const g = (geo ??= build());
   const wood = <PbrMaterial set="black_walnut_veneer_01" color={WOOD} metal={0} />;
   const caseY = LEG_H + CASE_H / 2;
@@ -58,3 +59,8 @@ export function Nightstand() {
     </group>
   );
 }
+
+export default defineVariant({
+  item: "nightstand", id: "midcentury", name: "Mid-century walnut", Component: MidCentury,
+  surfaceY: () => TOP_Y, footprint: () => [D, W],
+});

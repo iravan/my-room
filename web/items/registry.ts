@@ -2,6 +2,7 @@
 import type { ItemDef } from "./types";
 import bed from "./bed/item";
 import nightstand from "./nightstand/item";
+import lamp from "./lamp/item";
 import desk from "./desk/item";
 import chair from "./chair/item";
 import cabinet from "./cabinet/item";
@@ -29,6 +30,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
   ([] as ItemDef[]).concat(
     bed,
     nightstand,
+    lamp,
     desk,
     chair,
     cabinet,

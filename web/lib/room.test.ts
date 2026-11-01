@@ -1,7 +1,7 @@
 // Layout: untrusted poses are cleaned, and moving an item pivots about its own home, never the room's origin.
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
-import { itemMatrix, normalizeLayout, normalizeRoom, normalizeSize, placePoint, restPosition, useLayout, HOMES } from "./room";
+import { itemMatrix, normalizeLayout, normalizeRoom, normalizeSize, placePoint, poseOf, restPosition, useLayout, HOMES } from "./room";
 
 // The layout store saves to localStorage; tests get an in-memory one.
 const mem = new Map<string, string>();
@@ -109,5 +109,18 @@ describe("layout", () => {
     expect(useLayout.getState().hidden).toEqual(["bed"]);
     useLayout.getState().showAll();
     expect(useLayout.getState().hidden).toEqual([]);
+  });
+
+  it("an item standing on another follows it until moved itself", () => {
+    const size = { w: 4, d: 4, h: 2.8 };
+    expect(poseOf("lamp", HOMES.lamp, { items: {}, size }).position).toEqual([-1.7, 0.54, 0.45]);
+    // nightstand moved 1 m right and turned 90°: the lamp (at the nightstand's centre) goes with it
+    const items = { nightstand: { position: [-0.7, 0, 0.45] as [number, number, number], rotationY: Math.PI / 2, scale: 1 } };
+    const p = poseOf("lamp", HOMES.lamp, { items, size });
+    expect(p.position.map((v) => +v.toFixed(6))).toEqual([-0.7, 0.54, 0.45]);
+    expect(p.rotationY).toBeCloseTo(Math.PI / 2);
+    // moved itself: stays put
+    const own = { position: [0, 0.75, 1] as [number, number, number], rotationY: 0, scale: 1 };
+    expect(poseOf("lamp", HOMES.lamp, { items: { ...items, lamp: own }, size })).toBe(own);
   });
 });

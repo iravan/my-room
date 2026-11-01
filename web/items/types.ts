@@ -12,6 +12,9 @@ export type ItemDef = {
   // Walls it follows when the room is resized (−1 left/back, +1 right/front). Clutter without walls follows the
   // nearest wall if it lands within 0.5 m of one.
   walls?: { x?: -1 | 1; z?: -1 | 1 };
+  // Stands on another item (e.g. the lamp on the nightstand): until moved itself, it moves, turns, scales and hides
+  // with that item and rises onto a replacement look's top.
+  on?: string;
   // Mounted on a wall: slides along it only (the axis held fixed).
   onWall?: "x" | "z";
   // Named points its variants must provide, e.g. "surface" (top things rest on), "platter", "screen".
