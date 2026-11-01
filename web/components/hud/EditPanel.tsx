@@ -16,6 +16,7 @@ import * as THREE from "three";
 import { FINISHES, finishLabel, finishType, VARIANTS } from "@/lib/options";
 import { VARIANTS as LOOKS } from "@/items/variants";
 import { variantId } from "@/items/resolve";
+import { applyLook, kindOf, useLibrary } from "@/lib/library";
 
 const nameOf = (id: string) => useLayout.getState().models[id]?.name ?? ITEMS[id]?.name ?? id[0].toUpperCase() + id.slice(1);
 const STEP = Math.PI / 12; // 15°
@@ -100,6 +101,36 @@ function Look({ id, onModel }: { id: string; onModel: () => void }) {
         ))}
         <Button size="xs" variant={shell ? "default" : "outline"} onClick={onModel}>{shell ? "Other model…" : "Your model…"}</Button>
         {shell && <Button size="xs" variant="secondary" onClick={() => useLayout.getState().setShell(id, { ...shell, yaw: (shell.yaw + 1) % 4 })}>Turn model 90°</Button>}
+      </div>
+      <Library id={id} name={shell?.name ?? looks.find((v) => v.id === current)?.name ?? nameOf(id)} />
+    </div>
+  );
+}
+
+// Your library: save this look (model, colours, options) and put a saved look of the same kind on this item.
+function Library({ id, name }: { id: string; name: string }) {
+  const entries = useLibrary((s) => s.entries), custom = useLayout((s) => Object.keys(s.options[id] ?? {}).some((k) => k !== "look"));
+  const mine = entries.filter((e) => e.kind === kindOf(id));
+  const save = async () => {
+    const base = `${name}${custom ? " (own colours)" : ""}`, n = mine.filter((e) => e.name.startsWith(base)).length;
+    try {
+      const e = await useLibrary.getState().save(id, n ? `${base} ${n + 1}` : base);
+      toast.success(`Saved "${e.name}" to your library.`);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+  return (
+    <div className="mt-2">
+      <p className="text-xs text-zinc-400">Your library</p>
+      <div className="flex flex-wrap gap-1">
+        {mine.map((e) => (
+          <span key={e.id} className="inline-flex">
+            <Button size="xs" variant="outline" title="Use this look" onClick={() => applyLook(e, id)}>{e.name}</Button>
+            <Button size="xs" variant="ghost" aria-label={`Delete ${e.name} from your library`} onClick={() => useLibrary.getState().remove(e.id)}>×</Button>
+          </span>
+        ))}
+        <Button size="xs" variant="secondary" onClick={save}>Save this look</Button>
       </div>
     </div>
   );

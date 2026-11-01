@@ -171,6 +171,7 @@ type State = {
   slots: string[];
   setOption: (id: string, key: string, value: string) => void;
   setLook: (id: string, look: string) => void;
+  applyLook: (id: string, options: Record<string, string>, shell: Shells[string] | null) => void;
   move: (id: string, pose: Pose) => void;
   reset: (id: string) => void;
   snapshot: () => void; // call before a change that should be undoable
@@ -227,6 +228,17 @@ export const useLayout = create<State>()(
           const shells = { ...s.shells };
           delete shells[id];
           return { shells, options: { ...s.options, ...normalizeOptions({ [id]: { ...s.options[id], look } }) } };
+        });
+      },
+      // A whole look at once (from your library): options replaced, model in or out; one undo step.
+      applyLook: (id, opts, shell) => {
+        get().snapshot();
+        set((s) => {
+          const shells = { ...s.shells }, options = { ...s.options };
+          delete shells[id];
+          delete options[id];
+          if (shell) Object.assign(shells, normalizeShells({ [id]: shell }));
+          return { shells, options: { ...options, ...normalizeOptions({ [id]: opts }) } };
         });
       },
       addModel: (asset, name, pose) => {

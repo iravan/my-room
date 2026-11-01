@@ -21,6 +21,8 @@ export type ItemDef = {
   anchors?: string[];
   // Customisable parts (finish slots), e.g. "wood", "fabric:Duvet".
   parts?: string[];
+  // Items of one kind share saved looks from your library (the three posters); defaults to the id.
+  kind?: string;
   // Variant ids, first = the item's own default. Filled in as looks are added.
   variants: string[];
 };
