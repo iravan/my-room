@@ -213,6 +213,7 @@
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "sand", "fabric:Sheets": "cream", "leather": "black", "metal": "black" },
       "items": {
+        "nightstand": { "variant": "round-table" },
         "desk": { "variant": "scandi" },
         "lamp": { "variant": "lantern" },
         "chair": { "variant": "windsor" }
@@ -251,6 +252,7 @@
       ],
       "finishes": { "wood": "white", "fabric:Headboard": "navy", "fabric:Sheets": "cream", "fabric:Throw": "sand", "leather": "white", "metal": "white" },
       "items": {
+        "nightstand": { "variant": "round-table" },
         "desk": { "variant": "scandi" }
       }
     },
