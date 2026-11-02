@@ -172,7 +172,7 @@ Rough size: 1–2 passes for step 1, ~1 pass per 2–3 items for step 2, 1 each 
 - [x] bed — `bed/variants/spindle-pine.tsx`: farmhouse pine spindle bed (turned corner posts with ball finials, tall headboard and lower footboard of rails + round spindles, plain side rails, no LEDs); countryside uses it by default (config). What every bed shares moved to `items/bed/bedding.tsx` (mattress, pillows, cloth duvet, throw, size option, click = next duvet, the surface probe for gadgets), so a bed look is just its frame. Chrome: countryside single and double, and picked in cyber; check 0 flagged, 60 fps.
 - [x] chair — `chair/variants/windsor.tsx`: wooden Windsor chair (saddle seat, four splayed legs with an H stretcher, reclined back of two posts, five spindles and a crest rail); countryside, Scandinavian and Japandi use it by default. New chair anchor `backTop`: each look says where the top of its back is, so the draped hoodie lands on the crest rail of any chair. Chrome: two countryside loads (hoodie on / off), and picked in cyber; check 0 flagged, 60 fps.
 - [x] lamp — `lamp/variants/lantern.tsx`: paper lantern (ribbed paper globe on a small wooden stand, glows in the style's lamp colour; same click on/off and key light with shadows, the light sitting inside the globe); Japandi uses it by default. Chrome: Japandi (warm white globe) and picked in cyber (magenta); check 0 flagged, 60 fps.
-- [ ] rug
+- [x] rug — `rug/variants/braided.tsx`: round braided rug, 1.5 m (14 flattened rope rings with a twist bump, in the style's two rug colours plus a blend); countryside uses it by default (the rug now has three looks: woven, neon grid, braided). Chrome: countryside overview and close-up; check 0 flagged, 60 fps.
 - [ ] desk
 - [ ] nightstand
 - [ ] window covering

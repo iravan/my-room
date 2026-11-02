@@ -35,6 +35,7 @@ import posterPrint from "./poster/variants/print";
 import wallShelfWalnut from "./wall-shelf/variants/walnut";
 import rugWoven from "./rug/variants/woven";
 import rugNeonGrid from "./rug/variants/neon-grid";
+import rugBraided from "./rug/variants/braided";
 import neonCoveStrips from "./neon-cove/variants/strips";
 import laptopChat from "./laptop/variants/chat";
 import phoneSlab from "./phone/variants/slab";
@@ -43,4 +44,4 @@ import controllerGamepad from "./controller/variants/gamepad";
 export const VARIANTS: Record<string, Record<string, VariantDef>> = {};
 for (const v of [bedPlatform, bedSpindlePine, nightstandMidcentury, lampDrum, lampLantern, deskGaming, monitorFlat24, keyboardRgb, speakersBookshelf, headsetStand, drinksCans, pcTower, binMesh, chairRacing, chairWindsor, cabinetCubbies, turntableClassic, cratePine,
   windowMetalFrame, windowCoveringVenetian, doorSlab, closetSliding, switchRocker, socketPlate, ceilingLightFlush, smokeDetectorRound,
-  hoodiePile, jeansDenim, sneakersCanvas, basketballClassic, skateboardStreet, posterPrint, wallShelfWalnut, rugWoven, rugNeonGrid, neonCoveStrips, laptopChat, phoneSlab, controllerGamepad]) for (const item of ([] as string[]).concat(v.item)) (VARIANTS[item] ??= {})[v.id] = v;
+  hoodiePile, jeansDenim, sneakersCanvas, basketballClassic, skateboardStreet, posterPrint, wallShelfWalnut, rugWoven, rugNeonGrid, rugBraided, neonCoveStrips, laptopChat, phoneSlab, controllerGamepad]) for (const item of ([] as string[]).concat(v.item)) (VARIANTS[item] ??= {})[v.id] = v;
