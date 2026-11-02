@@ -260,7 +260,10 @@ export function EditPanel() {
       </span></p>
       {selected && (
         <>
-          <p className="font-bold text-fuchsia-400">{nameOf(selected)}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="truncate font-bold text-fuchsia-400">{nameOf(selected)}</p>
+            <Button size="xs" variant="ghost" aria-label="Deselect" title="Deselect [Esc]" onClick={() => useLayout.setState({ selected: null })}>✕</Button>
+          </div>
           {!onWall && (
             <div className="grid grid-cols-2 gap-1">
               <Button size="sm" variant="secondary" onClick={() => rotate(STEP)}>⟲ Rotate [R]</Button>

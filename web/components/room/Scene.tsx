@@ -21,6 +21,7 @@ import { EditPanel } from "@/components/hud/EditPanel";
 import { AudioDriver } from "./AudioDriver";
 import { InspectPanel } from "@/components/hud/InspectPanel";
 import { TurntablePanel } from "@/components/hud/TurntablePanel";
+import { TouchControls } from "@/components/hud/TouchControls";
 import { CratePanel } from "@/components/hud/CratePanel";
 import { AlbumEditor } from "@/components/hud/AlbumEditor";
 import { Hud } from "@/components/hud/Hud";
@@ -52,6 +53,7 @@ export default function Scene() {
       <PostFX />
     </Canvas>
     <Hud />
+    <TouchControls />
     {!hideUI && !title && (
       <>
         <Tooltip />

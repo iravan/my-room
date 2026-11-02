@@ -4,6 +4,9 @@ import type { Album } from "./collection";
 import { sfx } from "./audio";
 
 export type View = "room" | "turntable" | "crate" | "shelf" | "inspect";
+
+// The on-screen move stick (touch screens): −1…1 sideways and forward, read every frame like held WASD keys.
+export const stick = { x: 0, y: 0 };
 export type Vec3 = [number, number, number];
 
 // A key belongs to a field only while typing in it. A focused slider (it keeps focus after a drag) only keeps its arrows,

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
-import { typing, useGame } from "@/lib/store";
+import { stick, typing, useGame } from "@/lib/store";
 import { sfx } from "@/lib/audio";
 import { playAlbum, togglePlay, useCollection } from "@/lib/collection";
 import { SHOTS } from "@/lib/layout";
@@ -99,8 +99,9 @@ export function CameraRig() {
     if (s.title) useGame.setState({ yaw: s.yaw + Math.min(dt, 0.1) * 4 }); // the room turns slowly behind the title
     if (s.view === "room") {
       const k = held.current;
-      const h = (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
-      const v = (k.has("w") || k.has("arrowup") ? 1 : 0) - (k.has("s") || k.has("arrowdown") ? 1 : 0);
+      const clamp = (n: number) => Math.max(-1, Math.min(1, n));
+      const h = clamp((k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0) + stick.x);
+      const v = clamp((k.has("w") || k.has("arrowup") ? 1 : 0) - (k.has("s") || k.has("arrowdown") ? 1 : 0) + stick.y);
       if (h || v) {
         const y = -s.yaw * DEG, step = 1.5 * Math.min(dt, 0.1);
         // forward is -z in three; rotate (h, -v) by the yaw

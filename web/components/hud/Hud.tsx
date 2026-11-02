@@ -16,7 +16,7 @@ import { useLayout } from "@/lib/room";
 
 const VIEWS: [View, string, string][] = [["room", "Room", "1"], ["turntable", "Turntable", "2"], ["crate", "Crate", "3"], ["shelf", "Cabinet", "4"]];
 const HELP: Record<View, string> = {
-  room: "Drag to look, WASD to move. Click the turntable, cabinet, crate, lamp, bed, window or framed records.",
+  room: "Drag to look; WASD or the stick (bottom right) to move. Click or tap the turntable, cabinet, crate, lamp, bed, window or framed records.",
   shelf: "Hover a spine to read it, click to pull it out.",
   crate: "A/D, arrows or scroll to flip. Enter = inspect, Space = put on turntable.",
   turntable: "Space or click the turntable to start/stop.",
@@ -31,7 +31,7 @@ function Title() {
       <h1 className="relative text-6xl font-black tracking-tight text-fuchsia-500 sm:text-8xl [text-shadow:4px_3px_0_#1ae6ff,0_0_32px_#ff40c0]">VINYL // ROOM</h1>
       <p className="text-lg text-cyan-100">a cyber-city bedroom for your record collection</p>
       <Button size="lg" className="mt-6 h-14 px-10 text-xl font-bold">ENTER ROOM</Button>
-      <p className="text-sm text-violet-300/70">press any key · ? for controls</p>
+      <p className="text-sm text-violet-300/70">tap or press any key · ? for controls</p>
     </div>
   );
 }
@@ -93,13 +93,13 @@ function RoomPanel() {
 }
 
 const CONTROLS: [string, string][] = [
-  ["Everywhere", "1 / 2 / 3 / 4 Room, Turntable, Crate, Cabinet · Esc / Backspace back · L lighting · M mute · P photo · H hide UI · ? this help"],
+  ["Everywhere", "1 / 2 / 3 / 4 Room, Turntable, Crate, Cabinet · Esc / Backspace or ◀ Back to go back · L lighting · M mute · P photo · H hide UI (Show controls brings it back) · ? this help"],
   ["Room", "Drag to look, WASD or arrows to move, click anything that lights up."],
   ["Cabinet", "Hover a spine to read it, click to pull the record out."],
   ["Crate", "A/D, arrows or scroll to flip. Enter inspects, Space plays."],
   ["Turntable", "Space or click the turntable to start/stop. Speed button: 33⅓ or 45."],
   ["Inspecting a record", "Drag to rotate. F flip, V slide the vinyl out, G gatefold, Space play. Language tabs on the right list your other records."],
-  ["Touch screens", "Tap = click, drag = look or rotate, pinch = zoom a record (scroll wheel on desktop)."],
+  ["Touch screens", "Tap = click, drag = look or rotate, the stick at the bottom right = walk, ◀ Back = back, pinch = zoom a record (scroll wheel on desktop). Every screen has a button to close it, no keyboard needed."],
   ["Sharing", "Export saves your whole room as one file. Send it to a friend: they open it with “Visit a friend's room”, read-only."],
 ];
 
@@ -114,6 +114,7 @@ function Dialogs() {
           <dl className="space-y-2 text-sm">
             {CONTROLS.map(([h, t]) => <div key={h}><dt className="font-bold text-cyan-300">{h}</dt><dd className="text-zinc-300">{t}</dd></div>)}
           </dl>
+          <Button onClick={close}>Close</Button>
         </DialogContent>
       </Dialog>
       <Dialog open={dialog === "settings"} onOpenChange={(o) => { if (!o) close(); }}>
@@ -133,6 +134,7 @@ function Dialogs() {
             </div>
             <p className="text-xs text-zinc-400">Low: no glow, no lamp shadows. High: glow, soft shadows, smoothing.</p>
           </div>
+          <Button onClick={close}>Close</Button>
         </DialogContent>
       </Dialog>
     </>
