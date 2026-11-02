@@ -1,8 +1,8 @@
 import { defineItem } from "../types";
 
-export const posterDesk = defineItem({ id: "poster-desk", name: "Poster (desk)", kind: "poster", category: "decor", home: { position: [-1.975, 2.1, 1.35] }, walls: { x: -1, z: 1 }, onWall: "x", variants: ["print"] });
-export const poster1 = defineItem({ id: "poster-1", name: "Poster", kind: "poster", category: "decor", home: { position: [1.995, 1.65, 1.05] }, walls: { x: 1 }, onWall: "x", variants: ["print"] });
-export const poster2 = defineItem({ id: "poster-2", name: "Poster (small)", kind: "poster", category: "decor", home: { position: [1.995, 1.55, 0.3] }, walls: { x: 1 }, onWall: "x", variants: ["print"] });
+export const posterDesk = defineItem({ id: "poster-desk", name: "Poster (desk)", kind: "poster", category: "decor", home: { position: [-1.975, 2.1, 1.35] }, walls: { x: -1, z: 1 }, onWall: "x", variants: ["print", "botanical"] });
+export const poster1 = defineItem({ id: "poster-1", name: "Poster", kind: "poster", category: "decor", home: { position: [1.995, 1.65, 1.05] }, walls: { x: 1 }, onWall: "x", variants: ["print", "botanical"] });
+export const poster2 = defineItem({ id: "poster-2", name: "Poster (small)", kind: "poster", category: "decor", home: { position: [1.995, 1.55, 0.3] }, walls: { x: 1 }, onWall: "x", variants: ["print", "botanical"] });
 
 const posters = [posterDesk, poster1, poster2];
 

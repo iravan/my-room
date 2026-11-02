@@ -70,6 +70,9 @@
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "cream", "fabric:Sheets": "cream", "fabric:Throw": "rose", "leather": "tan", "metal": "white" },
       "items": {
+        "poster-desk": { "variant": "botanical" },
+        "poster-1": { "variant": "botanical" },
+        "poster-2": { "variant": "botanical" },
         "window-covering": { "variant": "curtains" },
         "rug": { "variant": "braided" },
         "chair": { "variant": "windsor" },
@@ -109,6 +112,9 @@
       ],
       "finishes": { "fabric:Headboard": "mustard", "fabric:Throw": "rust", "leather": "tan", "metal": "brass" },
       "items": {
+        "poster-desk": { "variant": "botanical" },
+        "poster-1": { "variant": "botanical" },
+        "poster-2": { "variant": "botanical" },
         "window-covering": { "variant": "curtains" }
       }
     },
@@ -145,6 +151,9 @@
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "charcoal", "fabric:Sheets": "cream", "leather": "white", "metal": "black" },
       "items": {
+        "poster-desk": { "variant": "botanical" },
+        "poster-1": { "variant": "botanical" },
+        "poster-2": { "variant": "botanical" },
         "desk": { "variant": "scandi" },
         "chair": { "variant": "windsor" }
       }
@@ -216,6 +225,9 @@
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "sand", "fabric:Sheets": "cream", "leather": "black", "metal": "black" },
       "items": {
+        "poster-desk": { "variant": "botanical" },
+        "poster-1": { "variant": "botanical" },
+        "poster-2": { "variant": "botanical" },
         "nightstand": { "variant": "round-table" },
         "desk": { "variant": "scandi" },
         "lamp": { "variant": "lantern" },
@@ -255,6 +267,9 @@
       ],
       "finishes": { "wood": "white", "fabric:Headboard": "navy", "fabric:Sheets": "cream", "fabric:Throw": "sand", "leather": "white", "metal": "white" },
       "items": {
+        "poster-desk": { "variant": "botanical" },
+        "poster-1": { "variant": "botanical" },
+        "poster-2": { "variant": "botanical" },
         "nightstand": { "variant": "round-table" },
         "desk": { "variant": "scandi" }
       }
@@ -292,6 +307,9 @@
       ],
       "finishes": { "fabric:Headboard": "forest", "fabric:Throw": "burgundy", "leather": "red", "metal": "brass" },
       "items": {
+        "poster-desk": { "variant": "botanical" },
+        "poster-1": { "variant": "botanical" },
+        "poster-2": { "variant": "botanical" },
         "window-covering": { "variant": "curtains" }
       }
     }

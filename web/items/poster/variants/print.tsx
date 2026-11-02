@@ -20,7 +20,7 @@ export function posterTexture(seed: number) {
 }
 
 
-const SIZE: Record<string, [number, number]> = { "poster-desk": [0.45, 0.62], "poster-1": [0.5, 0.7], "poster-2": [0.4, 0.56] };
+export const SIZE: Record<string, [number, number]> = { "poster-desk": [0.45, 0.62], "poster-1": [0.5, 0.7], "poster-2": [0.4, 0.56] };
 
 // A printed gig poster, a new design every load, hung slightly crooked.
 function Print({ id }: { id: string }) {
