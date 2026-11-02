@@ -26,7 +26,7 @@ describe("items + config", () => {
       'cyber.neon.a: colour must be [r, g, b] or [r, g, b, k], 0–2',
       'cyber.finishes.metal: unknown choice "unobtainium"',
       'cyber: unknown item "bedd"',
-      'cyber.bed: unknown variant "canopy" (has platform)',
+      'cyber.bed: unknown variant "canopy" (has platform, spindle-pine)',
       'cyber.bed.wood: unknown choice "oak"',
       'cyber.bed: unknown part "glitter:Duvet"',
     ]);

@@ -69,7 +69,9 @@
         [0.78, 0.6, 0.25]
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "cream", "fabric:Sheets": "cream", "fabric:Throw": "rose", "leather": "tan", "metal": "white" },
-      "items": {}
+      "items": {
+        "bed": { "variant": "spindle-pine" }
+      }
     },
     "vintage": {
       "name": "Vintage 70s",
