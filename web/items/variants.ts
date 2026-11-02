@@ -22,6 +22,7 @@ import turntableClassic from "./turntable/variants/classic";
 import cratePine from "./crate/variants/pine";
 import windowMetalFrame from "./window/variants/metal-frame";
 import windowCoveringVenetian from "./window-covering/variants/venetian";
+import windowCoveringCurtains from "./window-covering/variants/curtains";
 import doorSlab from "./door/variants/slab";
 import closetSliding from "./closet/variants/sliding";
 import switchRocker from "./switch/variants/rocker";
@@ -45,5 +46,5 @@ import controllerGamepad from "./controller/variants/gamepad";
 
 export const VARIANTS: Record<string, Record<string, VariantDef>> = {};
 for (const v of [bedPlatform, bedSpindlePine, nightstandMidcentury, nightstandRoundTable, lampDrum, lampLantern, deskGaming, deskScandi, monitorFlat24, keyboardRgb, speakersBookshelf, headsetStand, drinksCans, pcTower, binMesh, chairRacing, chairWindsor, cabinetCubbies, turntableClassic, cratePine,
-  windowMetalFrame, windowCoveringVenetian, doorSlab, closetSliding, switchRocker, socketPlate, ceilingLightFlush, smokeDetectorRound,
+  windowMetalFrame, windowCoveringVenetian, windowCoveringCurtains, doorSlab, closetSliding, switchRocker, socketPlate, ceilingLightFlush, smokeDetectorRound,
   hoodiePile, jeansDenim, sneakersCanvas, basketballClassic, skateboardStreet, posterPrint, wallShelfWalnut, rugWoven, rugNeonGrid, rugBraided, neonCoveStrips, laptopChat, phoneSlab, controllerGamepad]) for (const item of ([] as string[]).concat(v.item)) (VARIANTS[item] ??= {})[v.id] = v;
