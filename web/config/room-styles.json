@@ -70,6 +70,7 @@
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "cream", "fabric:Sheets": "cream", "fabric:Throw": "rose", "leather": "tan", "metal": "white" },
       "items": {
+        "chair": { "variant": "windsor" },
         "bed": { "variant": "spindle-pine" }
       }
     },
@@ -139,7 +140,9 @@
         [0.7, 0.72, 0.76]
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "charcoal", "fabric:Sheets": "cream", "leather": "white", "metal": "black" },
-      "items": {}
+      "items": {
+        "chair": { "variant": "windsor" }
+      }
     },
     "industrial": {
       "name": "Industrial Loft",
@@ -207,7 +210,9 @@
         [0.86, 0.8, 0.68]
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "sand", "fabric:Sheets": "cream", "leather": "black", "metal": "black" },
-      "items": {}
+      "items": {
+        "chair": { "variant": "windsor" }
+      }
     },
     "coastal": {
       "name": "Coastal",

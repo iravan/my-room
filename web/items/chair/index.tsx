@@ -9,7 +9,7 @@ import { HOODIE } from "../hoodie/roll";
 import { useVariant } from "../resolve";
 
 // The chair item: pushed back from the desk at whatever angle it was left (rolled per load, in the desk's frame),
-// with the hoodie over its back on some loads. Its home is where it stands unrolled.
+// with the hoodie over its back on some loads (where the look says its back's top is: anchor `backTop`). Its home is where it stands unrolled.
 export function ChairItem() {
   const v = useVariant("chair");
   const roll = useMemo(() => {
@@ -24,7 +24,7 @@ export function ChairItem() {
         <G p={roll.at} yaw={roll.yaw}>
           <Blob p={[0, 0, 0]} size={[w + 0.05, d + 0.05]} />
           <v.Component id="chair" />
-          {HOODIE.at === 0 && <Core><Fabric p={[0, 1.36, -0.36]} s={[0.56, 0.06, 0.22]} c={HOODIE.color} e={[-10, 0, roll.tilt]} /></Core>}
+          {HOODIE.at === 0 && <Core><Fabric p={(v.anchors?.backTop as [number, number, number] | undefined) ?? [0, 1.36, -0.36]} s={[0.56, 0.06, 0.22]} c={HOODIE.color} e={[-10, 0, roll.tilt]} /></Core>}
         </G>
       </DeskFrame>
     </RoomItem>

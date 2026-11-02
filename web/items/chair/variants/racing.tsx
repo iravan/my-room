@@ -92,4 +92,6 @@ function Chair({ accent, hoodieOn }: { accent: RGB; hoodieOn: boolean }) {
 const ACCENT = (dice(7).chance(0.5) ? [0.9, 0.2, 0.6] : [0.2, 0.7, 0.9]).map((v) => v * 0.6);
 const Racing = () => <Chair accent={ACCENT} hoodieOn={HOODIE.at === 0} />;
 
-export default defineVariant({ item: "chair", id: "racing", name: "Racing chair", Component: Racing, footprint: () => [0.7, 0.7] });
+export default defineVariant({ item: "chair", id: "racing", name: "Racing chair", Component: Racing, footprint: () => [0.7, 0.7],
+  anchors: { backTop: [0, 1.36, -0.36] }, // Unity coords: where a hoodie hangs over the headrest
+});
