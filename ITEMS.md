@@ -173,7 +173,7 @@ Rough size: 1–2 passes for step 1, ~1 pass per 2–3 items for step 2, 1 each 
 - [x] chair — `chair/variants/windsor.tsx`: wooden Windsor chair (saddle seat, four splayed legs with an H stretcher, reclined back of two posts, five spindles and a crest rail); countryside, Scandinavian and Japandi use it by default. New chair anchor `backTop`: each look says where the top of its back is, so the draped hoodie lands on the crest rail of any chair. Chrome: two countryside loads (hoodie on / off), and picked in cyber; check 0 flagged, 60 fps.
 - [x] lamp — `lamp/variants/lantern.tsx`: paper lantern (ribbed paper globe on a small wooden stand, glows in the style's lamp colour; same click on/off and key light with shadows, the light sitting inside the globe); Japandi uses it by default. Chrome: Japandi (warm white globe) and picked in cyber (magenta); check 0 flagged, 60 fps.
 - [x] rug — `rug/variants/braided.tsx`: round braided rug, 1.5 m (14 flattened rope rings with a twist bump, in the style's two rug colours plus a blend); countryside uses it by default (the rug now has three looks: woven, neon grid, braided). Chrome: countryside overview and close-up; check 0 flagged, 60 fps.
-- [ ] desk
+- [x] desk — `desk/variants/scandi.tsx`: pale wood writing desk (four tapered, slightly splayed round legs, slim apron, shallow drawer on the left with a leather pull, clear of the PC on the right); same top height and size, so monitor, keyboard, speakers, headset and drinks stay put; takes the style's wood finish (pine, or white in coastal). Scandinavian, Japandi and coastal use it by default. Chrome: Scandinavian and coastal close-ups; check 0 flagged, 60 fps.
 - [ ] nightstand
 - [ ] window covering
 - [ ] posters

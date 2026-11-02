@@ -6,6 +6,7 @@ import nightstandMidcentury from "./nightstand/variants/midcentury";
 import lampDrum from "./lamp/variants/drum";
 import lampLantern from "./lamp/variants/lantern";
 import deskGaming from "./desk/variants/gaming";
+import deskScandi from "./desk/variants/scandi";
 import monitorFlat24 from "./monitor/variants/flat-24";
 import keyboardRgb from "./keyboard/variants/rgb";
 import speakersBookshelf from "./speakers/variants/bookshelf";
@@ -42,6 +43,6 @@ import phoneSlab from "./phone/variants/slab";
 import controllerGamepad from "./controller/variants/gamepad";
 
 export const VARIANTS: Record<string, Record<string, VariantDef>> = {};
-for (const v of [bedPlatform, bedSpindlePine, nightstandMidcentury, lampDrum, lampLantern, deskGaming, monitorFlat24, keyboardRgb, speakersBookshelf, headsetStand, drinksCans, pcTower, binMesh, chairRacing, chairWindsor, cabinetCubbies, turntableClassic, cratePine,
+for (const v of [bedPlatform, bedSpindlePine, nightstandMidcentury, lampDrum, lampLantern, deskGaming, deskScandi, monitorFlat24, keyboardRgb, speakersBookshelf, headsetStand, drinksCans, pcTower, binMesh, chairRacing, chairWindsor, cabinetCubbies, turntableClassic, cratePine,
   windowMetalFrame, windowCoveringVenetian, doorSlab, closetSliding, switchRocker, socketPlate, ceilingLightFlush, smokeDetectorRound,
   hoodiePile, jeansDenim, sneakersCanvas, basketballClassic, skateboardStreet, posterPrint, wallShelfWalnut, rugWoven, rugNeonGrid, rugBraided, neonCoveStrips, laptopChat, phoneSlab, controllerGamepad]) for (const item of ([] as string[]).concat(v.item)) (VARIANTS[item] ??= {})[v.id] = v;

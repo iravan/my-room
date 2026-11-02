@@ -142,6 +142,7 @@
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "charcoal", "fabric:Sheets": "cream", "leather": "white", "metal": "black" },
       "items": {
+        "desk": { "variant": "scandi" },
         "chair": { "variant": "windsor" }
       }
     },
@@ -212,6 +213,7 @@
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "sand", "fabric:Sheets": "cream", "leather": "black", "metal": "black" },
       "items": {
+        "desk": { "variant": "scandi" },
         "lamp": { "variant": "lantern" },
         "chair": { "variant": "windsor" }
       }
@@ -248,7 +250,9 @@
         [0.12, 0.16, 0.38]
       ],
       "finishes": { "wood": "white", "fabric:Headboard": "navy", "fabric:Sheets": "cream", "fabric:Throw": "sand", "leather": "white", "metal": "white" },
-      "items": {}
+      "items": {
+        "desk": { "variant": "scandi" }
+      }
     },
     "academia": {
       "name": "Dark Academia",
