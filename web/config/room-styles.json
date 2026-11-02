@@ -211,6 +211,7 @@
       ],
       "finishes": { "wood": "pine", "fabric:Headboard": "sand", "fabric:Sheets": "cream", "leather": "black", "metal": "black" },
       "items": {
+        "lamp": { "variant": "lantern" },
         "chair": { "variant": "windsor" }
       }
     },
