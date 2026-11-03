@@ -7,8 +7,8 @@ import { useLayout } from "@/lib/room";
 
 const R = 36; // stick travel, px
 
-// Walking on a touch screen: drag the knob like WASD (up = forward), bottom right. Only for touch (coarse) pointers,
-// and not in edit mode, where the edit panel takes that side.
+// Walking on a touch screen: drag the knob like WASD (up = forward), bottom left. Only for touch (coarse) pointers,
+// and not in edit mode.
 function MoveStick() {
   const [at, setAt] = useState<[number, number]>([0, 0]), origin = useRef<[number, number] | null>(null);
   const move = (x: number, y: number) => {
@@ -24,7 +24,7 @@ function MoveStick() {
   return (
     <div
       aria-label="Move"
-      className="fixed bottom-4 right-4 hidden size-24 touch-none select-none items-center justify-center rounded-full border border-cyan-400/50 bg-black/30 backdrop-blur [@media(pointer:coarse)]:flex"
+      className="fixed bottom-4 left-4 hidden size-24 touch-none select-none items-center justify-center rounded-full border border-cyan-400/50 bg-black/30 backdrop-blur [@media(pointer:coarse)]:flex"
       onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); const r = e.currentTarget.getBoundingClientRect(); origin.current = [r.left + r.width / 2, r.top + r.height / 2]; move(e.clientX, e.clientY); }}
       onPointerMove={(e) => move(e.clientX, e.clientY)}
       onPointerUp={stop}

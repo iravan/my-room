@@ -12,3 +12,4 @@
 - [x] Click the books on the wall shelf → book list like a spreadsheet: Title, Author, Rating (1–5 stars, default 3), Remark; add / delete rows, rate each book
 - [x] Click a memo on the monitor → memo grid (auto-aligned); faded memo with + adds one, ✕ removes; always at least one, max 20; the first 6 show on the monitor bezel
 - [x] Phones: left menu hidden by default; ☰ button in the top-right toggles it (drops down below the button)
+- [x] Removed the "Now spinning" info box; the touch move stick sits bottom-left

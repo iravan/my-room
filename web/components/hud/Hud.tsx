@@ -17,7 +17,7 @@ import { NotesDialogs } from "./Notes";
 
 const VIEWS: [View, string, string][] = [["room", "Room", "1"], ["turntable", "Turntable", "2"], ["crate", "Crate", "3"], ["shelf", "Cabinet", "4"]];
 const HELP: Record<View, string> = {
-  room: "Drag to look; WASD or the stick (bottom right) to move. Click or tap the turntable, cabinet, crate, lamp, bed, window, framed records, notebook, whiteboard, bookshelf or the memos on the monitor.",
+  room: "Drag to look; WASD or the stick (bottom left) to move. Click or tap the turntable, cabinet, crate, lamp, bed, window, framed records, notebook, whiteboard, bookshelf or the memos on the monitor.",
   shelf: "Hover a spine to read it, click to pull it out.",
   crate: "A/D, arrows or scroll to flip. Enter = inspect, Space = put on turntable.",
   turntable: "Space or click the turntable to start/stop.",
@@ -86,17 +86,11 @@ function LeftPanel() {
   );
 }
 
-// Room and cabinet views: what's spinning and how many records there are.
-function RoomPanel() {
+// Cabinet view: how many records there are.
+function CabinetPanel() {
   const view = useGame((s) => s.view), albums = useCollection((s) => s.albums), editing = useLayout((s) => s.editing);
-  const spinning = useCollection((s) => s.albums.find((a) => a.id === s.spinningId));
-  if ((view !== "room" && view !== "shelf") || editing) return null;
-  return (
-    <Panel side="right">
-      {view === "room" && <p>{spinning ? <>Now spinning:<br /><b className="text-fuchsia-400">{spinning.title}</b> — {spinning.artist}</> : "Nothing on the turntable."}</p>}
-      <p>{albums.length} records in the {view === "room" ? "crate" : "cabinet"}.</p>
-    </Panel>
-  );
+  if (view !== "shelf" || editing) return null;
+  return <Panel side="right"><p>{albums.length} records in the cabinet.</p></Panel>;
 }
 
 const CONTROLS: [string, string][] = [
@@ -106,7 +100,7 @@ const CONTROLS: [string, string][] = [
   ["Crate", "A/D, arrows or scroll to flip. Enter inspects, Space plays."],
   ["Turntable", "Space or click the turntable to start/stop. Speed button: 33⅓ or 45."],
   ["Inspecting a record", "Drag to rotate. F flip, V slide the vinyl out, G gatefold, Space play. Language tabs on the right list your other records."],
-  ["Touch screens", "Tap = click, drag = look or rotate, the stick at the bottom right = walk, ◀ Back = back, pinch = zoom a record (scroll wheel on desktop). Every screen has a button to close it, no keyboard needed."],
+  ["Touch screens", "Tap = click, drag = look or rotate, the stick at the bottom left = walk, ◀ Back = back, pinch = zoom a record (scroll wheel on desktop). Every screen has a button to close it, no keyboard needed."],
   ["Sharing", "Export saves your whole room as one file. Send it to a friend: they open it with “Visit a friend's room”, read-only."],
 ];
 
@@ -193,7 +187,7 @@ export function Hud() {
       {!hideUI && (
         <>
           <LeftPanel />
-          <RoomPanel />
+          <CabinetPanel />
           {visiting && <div className="fixed left-1/2 top-2.5 -translate-x-1/2 rounded border border-fuchsia-400/60 bg-black/70 px-4 py-1 text-xs font-bold tracking-widest text-fuchsia-300">VISITING A FRIEND&apos;S ROOM (read-only)</div>}
         </>
       )}
