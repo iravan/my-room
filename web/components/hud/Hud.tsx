@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
@@ -17,7 +17,7 @@ import { NotesDialogs } from "./Notes";
 
 const VIEWS: [View, string, string][] = [["room", "Room", "1"], ["turntable", "Turntable", "2"], ["crate", "Crate", "3"], ["shelf", "Cabinet", "4"]];
 const HELP: Record<View, string> = {
-  room: "Drag to look; WASD or the stick (bottom right) to move. Click or tap the turntable, cabinet, crate, lamp, bed, window, framed records, notebook, whiteboard or bookshelf.",
+  room: "Drag to look; WASD or the stick (bottom right) to move. Click or tap the turntable, cabinet, crate, lamp, bed, window, framed records, notebook, whiteboard, bookshelf or the memos on the monitor.",
   shelf: "Hover a spine to read it, click to pull it out.",
   crate: "A/D, arrows or scroll to flip. Enter = inspect, Space = put on turntable.",
   turntable: "Space or click the turntable to start/stop.",
@@ -37,12 +37,17 @@ function Title() {
   );
 }
 
+// The main menu. On touch screens (phones) it's hidden behind a ☰ button in the top right and drops down below it.
 function LeftPanel() {
+  const [open, setOpen] = useState(false);
   const view = useGame((s) => s.view), preset = useGame((s) => s.preset), lamp = useGame((s) => s.lamp);
   const muted = useGame((s) => s.muted), volume = useGame((s) => s.volume), visiting = useCollection((s) => s.visiting), style = useLayout((s) => s.style);
   const g = useGame.getState();
   return (
-    <Panel side="left">
+    <>
+    <Button size="icon" variant="outline" aria-label={open ? "Close menu" : "Menu"} aria-expanded={open} onClick={() => setOpen(!open)}
+      className="fixed right-2.5 top-2.5 z-40 hidden size-10 border-cyan-400/50 bg-black/70 text-lg text-cyan-200 [@media(pointer:coarse)]:flex">{open ? "✕" : "☰"}</Button>
+    <Panel side="left" className={`[@media(pointer:coarse)]:left-auto [@media(pointer:coarse)]:right-2.5 [@media(pointer:coarse)]:top-14 [@media(pointer:coarse)]:z-40 [@media(pointer:coarse)]:max-h-[calc(100dvh-4rem)] ${open ? "" : "[@media(pointer:coarse)]:hidden"}`}>
       <p><b className="capitalize text-cyan-300">{view === "shelf" ? "Cabinet" : view} view</b><br /><span className="text-zinc-400">{HELP[view]}</span></p>
       <div className="grid gap-1">
         {VIEWS.map(([v, label, k]) => <Button key={v} size="sm" variant={view === v ? "default" : "secondary"} onClick={() => g.setView(v)}>{label} [{k}]</Button>)}
@@ -77,6 +82,7 @@ function LeftPanel() {
         )}
       </div>
     </Panel>
+    </>
   );
 }
 

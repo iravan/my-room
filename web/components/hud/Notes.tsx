@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useGame } from "@/lib/store";
-import { useNotes, type Book } from "@/lib/notes";
+import { MAX_MEMOS, MEMO_COLORS, useNotes, type Book } from "@/lib/notes";
 
 const close = () => useGame.setState({ dialog: "" });
 const setPages = (pages: string[]) => useNotes.setState({ pages });
@@ -178,6 +178,51 @@ function BooksDialog() {
   );
 }
 
+const HAND = "var(--font-hand), var(--font-hand-zh), var(--font-hand-ko), cursive";
+const setMemos = (memos: string[]) => useNotes.setState({ memos });
+
+// The sticky memos from the monitor, in a grid that fills row by row; the faded memo with a + adds one (up to 20).
+// Removing the last memo leaves a blank one, so there's always one on the monitor.
+function MemosDialog() {
+  const open = useGame((s) => s.dialog === "memos"), memos = useNotes((s) => s.memos);
+  const grid = useRef<HTMLDivElement>(null);
+  const add = () => {
+    const now = useNotes.getState().memos;
+    if (now.length >= MAX_MEMOS) return;
+    setMemos([...now, ""]);
+    requestAnimationFrame(() => grid.current?.querySelector<HTMLTextAreaElement>(`[data-memo="${now.length}"]`)?.focus());
+  };
+  const remove = (i: number) => {
+    if (memos[i] && !confirm("Remove this memo?")) return;
+    setMemos(memos.length > 1 ? memos.filter((_, j) => j !== i) : [""]);
+  };
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) close(); }}>
+      <DialogContent className="sm:max-w-4xl">
+        <DialogHeader><DialogTitle>Memos <span className="font-normal text-zinc-500">{memos.length} / {MAX_MEMOS}</span></DialogTitle></DialogHeader>
+        <div ref={grid} className="grid max-h-[65dvh] grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3 overflow-y-auto p-1">
+          {memos.map((m, i) => (
+            <div key={i} className="relative aspect-square rounded-sm shadow-md shadow-black/40" style={{ background: MEMO_COLORS[i % MEMO_COLORS.length] }}>
+              <textarea data-memo={i} aria-label={`Memo ${i + 1}`} value={m} placeholder="Write a memo…"
+                onChange={(e) => setMemos(memos.with(i, e.target.value))}
+                className="size-full resize-none bg-transparent p-3 pr-6 text-2xl leading-7 text-zinc-800 outline-none placeholder:text-zinc-800/35"
+                style={{ fontFamily: HAND }} />
+              <button aria-label={`Remove memo ${i + 1}`} onClick={() => remove(i)}
+                className="absolute right-1 top-1 rounded px-1.5 text-zinc-700/60 hover:bg-black/10 hover:text-red-600">✕</button>
+            </div>
+          ))}
+          {memos.length < MAX_MEMOS && (
+            <button aria-label="Add memo" onClick={add}
+              className="flex aspect-square items-center justify-center rounded-sm border-2 border-dashed border-zinc-800/40 text-6xl font-light text-zinc-800/70 opacity-50 transition-opacity hover:opacity-80"
+              style={{ background: MEMO_COLORS[memos.length % MEMO_COLORS.length] }}>+</button>
+          )}
+        </div>
+        <Button size="sm" className="ml-auto" onClick={close}>Done</Button>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function NotesDialogs() {
-  return <><NotesDialog /><BoardDialog /><BooksDialog /></>;
+  return <><NotesDialog /><BoardDialog /><BooksDialog /><MemosDialog /></>;
 }
