@@ -36,6 +36,8 @@ import jeans from "./jeans/item";
 import sneakers from "./sneakers/item";
 import basketball from "./basketball/item";
 import skateboard from "./skateboard/item";
+import whiteboard from "./whiteboard/item";
+import notebook from "./notebook/item";
 
 export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
   ([] as ItemDef[]).concat(
@@ -75,5 +77,7 @@ export const ITEMS: Record<string, ItemDef> = Object.fromEntries(
     sneakers,
     basketball,
     skateboard,
+    whiteboard,
+    notebook,
   ).map((d) => [d.id, d]),
 );

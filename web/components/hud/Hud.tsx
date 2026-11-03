@@ -13,10 +13,11 @@ import { editAlbum } from "./AlbumEditor";
 import { Panel } from "./Panel";
 import { enterEdit } from "./EditPanel";
 import { useLayout } from "@/lib/room";
+import { NotesDialogs } from "./Notes";
 
 const VIEWS: [View, string, string][] = [["room", "Room", "1"], ["turntable", "Turntable", "2"], ["crate", "Crate", "3"], ["shelf", "Cabinet", "4"]];
 const HELP: Record<View, string> = {
-  room: "Drag to look; WASD or the stick (bottom right) to move. Click or tap the turntable, cabinet, crate, lamp, bed, window or framed records.",
+  room: "Drag to look; WASD or the stick (bottom right) to move. Click or tap the turntable, cabinet, crate, lamp, bed, window, framed records, notebook, whiteboard or bookshelf.",
   shelf: "Hover a spine to read it, click to pull it out.",
   crate: "A/D, arrows or scroll to flip. Enter = inspect, Space = put on turntable.",
   turntable: "Space or click the turntable to start/stop.",
@@ -182,6 +183,7 @@ export function Hud() {
     <>
       <TurnSideways />
       <Dialogs />
+      <NotesDialogs />
       {!hideUI && (
         <>
           <LeftPanel />

@@ -13,7 +13,7 @@ const canTexture = () => paint(32, 32, (u, v) =>
 function Cans() {
   const drinks = useMemo(() => {
     const { R, chance } = dice(4), can = canTexture();
-    return ([[0.42, -0.22], [0.52, -0.02], [0.26, 0.06], [-0.3, 0.05]] as const).map(([x, z], i) => {
+    return ([[0.45, 0.18], [0.52, -0.02], [0.26, 0.06], [-0.3, 0.05]] as const).map(([x, z], i) => {
       if (!chance(0.55)) return null;
       return chance(0.25)
         ? <Plastic key={i} t="cylinder" p={[x, T + 0.05, z]} s={[0.08, 0.05, 0.08]} c={C(0.85, 0.85, 0.82)} />
