@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useGame } from "@/lib/store";
+import { newAlbum, useCollection, type Album } from "@/lib/collection";
+import { editAlbum } from "./AlbumEditor";
 import { MAX_MEMOS, MEMO_COLORS, useNotes, type Book } from "@/lib/notes";
 
 const close = () => useGame.setState({ dialog: "" });
@@ -223,6 +225,68 @@ function MemosDialog() {
   );
 }
 
+// The record cabinet as a spreadsheet: your whole collection (the same records as the crate and turntable), edited
+// in place. Tab = next cell, Enter = next row's title (a new record at the end); ✎ opens the full editor (covers,
+// tracks, disc). A friend's room is read-only.
+const RECORD_COLS: [keyof Album, string, string][] = [
+  ["title", "Title", ""], ["artist", "Artist", ""], ["year", "Year", "w-20"], ["genres", "Genre", ""], ["label", "Label", ""], ["review", "Remark", ""],
+];
+function RecordsDialog() {
+  const open = useGame((s) => s.dialog === "records"), albums = useCollection((s) => s.albums), visiting = useCollection((s) => s.visiting);
+  const table = useRef<HTMLTableElement>(null);
+  const { upsert, remove } = useCollection.getState();
+  const focus = (row: number) => requestAnimationFrame(() => table.current?.querySelector<HTMLInputElement>(`[data-cell="${row}-0"]`)?.focus());
+  const add = () => { upsert(newAlbum({ title: "", artist: "" })); focus(useCollection.getState().albums.length - 1); };
+  const enter = (i: number) => (e: React.KeyboardEvent) => {
+    if (e.key !== "Enter" || visiting) return;
+    if (i === albums.length - 1) add(); else focus(i + 1);
+  };
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) close(); }}>
+      <DialogContent className="sm:max-w-6xl">
+        <DialogHeader><DialogTitle>Records{visiting && <span className="font-normal text-zinc-500"> (read-only)</span>}</DialogTitle></DialogHeader>
+        <div className="max-h-[62dvh] overflow-auto rounded-md border border-zinc-700">
+          <table ref={table} className="w-full min-w-[44rem] border-collapse text-sm [&_td]:border [&_td]:border-zinc-700 [&_th]:border [&_th]:border-zinc-700">
+            <thead className="sticky top-0 z-10 bg-zinc-800 text-left text-zinc-300">
+              <tr>
+                <th className="w-10 px-2 py-1.5 text-center">#</th>
+                {RECORD_COLS.map(([k, label, w]) => <th key={k} className={`px-2 py-1.5 ${w}`}>{label}</th>)}
+                {!visiting && <th className="w-16" />}
+              </tr>
+            </thead>
+            <tbody>
+              {albums.map((a, i) => (
+                <tr key={a.id}>
+                  <td className="bg-zinc-800/60 text-center text-zinc-500">{i + 1}</td>
+                  {RECORD_COLS.map(([k, label], c) => (
+                    <td key={k}>
+                      <input data-cell={`${i}-${c}`} aria-label={`${label} ${i + 1}`} className={cell} value={a[k] as string} readOnly={visiting}
+                        onChange={(e) => upsert({ ...a, [k]: e.target.value })} onKeyDown={enter(i)} />
+                    </td>
+                  ))}
+                  {!visiting && (
+                    <td className="whitespace-nowrap text-center">
+                      <button aria-label={`Edit record ${i + 1}`} title="Covers, tracks, disc…" className="px-1.5 text-zinc-500 hover:text-cyan-300" onClick={() => { close(); editAlbum(a); }}>✎</button>
+                      <button aria-label={`Delete record ${i + 1}`} className="px-1.5 text-zinc-500 hover:text-red-400"
+                        onClick={() => { if ((!a.title && !a.artist) || confirm(`Delete “${a.title || a.artist}”?`)) remove(a.id); }}>✕</button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+              {!albums.length && <tr><td colSpan={RECORD_COLS.length + 2} className="px-2 py-6 text-center text-zinc-500">No records yet.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center gap-1">
+          {!visiting && <Button size="sm" variant="outline" onClick={add}>+ Add record</Button>}
+          <span className="ml-2 text-zinc-500">{albums.length} record{albums.length === 1 ? "" : "s"}</span>
+          <Button size="sm" className="ml-auto" onClick={close}>Done</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function NotesDialogs() {
-  return <><NotesDialog /><BoardDialog /><BooksDialog /><MemosDialog /></>;
+  return <><NotesDialog /><BoardDialog /><BooksDialog /><MemosDialog /><RecordsDialog /></>;
 }

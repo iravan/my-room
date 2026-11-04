@@ -39,7 +39,7 @@ type State = {
   draft: Album | null; // album open in the editor
   title: boolean; // title screen showing (every load)
   hideUI: boolean; // showcase mode
-  dialog: "" | "settings" | "controls" | "notes" | "board" | "books" | "memos";
+  dialog: "" | "settings" | "controls" | "notes" | "board" | "books" | "memos" | "records";
   playing: boolean; // needle down / platter spinning
   rpm45: boolean;
   inspectRot: [number, number];

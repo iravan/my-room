@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useCollection, type Album } from "@/lib/collection";
@@ -14,6 +14,7 @@ import { Clickable } from "./Clickable";
 import { RoomItem } from "./RoomItem";
 import { Core } from "./Shell";
 import { HOMES } from "@/lib/room";
+import { hsv, rng } from "@/lib/paint";
 
 const SLEEVE = new THREE.BoxGeometry(0.31, 0.31, 0.006);
 const FACE = new THREE.PlaneGeometry(0.31, 0.31);
@@ -59,7 +60,7 @@ function Spine({ a, position }: { a: Album; position: Vec3 }) {
     if (g) g.position.z += ((out.current ? 0.1 : 0.03) - g.position.z) * (1 - Math.exp(-12 * Math.min(dt, 0.1)));
   });
   return (
-    <Clickable ref={ref} position={position} hint={`${a.title} - ${a.artist}`} onHover={(on) => { out.current = on; }} onTap={() => useGame.getState().inspect(a.id)}>
+    <Clickable ref={ref} position={position} hint={`${a.title} - ${a.artist}`} onHover={(on) => { out.current = on; }} onTap={openRecords}>
       <mesh geometry={SPINE}>
         <meshStandardMaterial map={map} roughness={0.75} />
       </mesh>
@@ -107,16 +108,41 @@ function CrateRecords({ albums }: { albums: Album[] }) {
   );
 }
 
-// Cabinet: every album spine-out, cubby by cubby, top-left first.
+// Clicking anywhere on the record cabinet opens the record list.
+export const openRecords = () => useGame.setState({ dialog: "records" });
+
+// Cabinet: every album spine-out, cubby by cubby, top-left first; the rest of the cubbies are packed with plain
+// spines so it always looks like a big collection.
 // ponytail: fixed 8 cubbies × 26 = 208 records; extend COLS/ROWS (or add a second cabinet) past that.
+const SLOTS = COLS * ROWS * PER_CUBBY;
+function slot(i: number): Vec3 {
+  const cub = Math.floor(i / PER_CUBBY), col = cub % COLS, row = ROWS - 1 - Math.floor(cub / COLS);
+  return [-CABINET_W / 2 + BOARD + col * (CUBBY + BOARD) + 0.01 + (i % PER_CUBBY) * SPINE_GAP, BOARD + row * (CUBBY + BOARD) + 0.156, 0.03];
+}
+
+// The filler spines as one instanced mesh: muted sleeve colours, a few slightly shorter (7" boxes, odd sleeves).
+function FillerSpines({ from }: { from: number }) {
+  const mesh = useMemo(() => {
+    const n = Math.max(0, SLOTS - from), mesh = new THREE.InstancedMesh(SPINE, new THREE.MeshStandardMaterial({ roughness: 0.8 }), Math.max(1, n));
+    const r = rng(7), m = new THREE.Matrix4(), c = new THREE.Color();
+    for (let i = 0; i < n; i++) {
+      const [x, y, z] = slot(from + i), h = r() < 0.15 ? 0.85 + r() * 0.1 : 1;
+      mesh.setMatrixAt(i, m.makeScale(1, h, h).setPosition(x, y - (0.31 * (1 - h)) / 2, z - (0.31 * (1 - h)) / 2));
+      mesh.setColorAt(i, c.setRGB(...hsv(r(), 0.2 + r() * 0.5, 0.2 + r() * 0.55), THREE.SRGBColorSpace));
+    }
+    mesh.count = n;
+    return mesh;
+  }, [from]);
+  useEffect(() => () => { (mesh.material as THREE.Material).dispose(); mesh.dispose(); }, [mesh]);
+  return <primitive object={mesh} />;
+}
+
 function CabinetSpines({ albums }: { albums: Album[] }) {
-  const left = -CABINET_W / 2;
+  const shown = albums.slice(0, SLOTS);
   return (
     <group position={CABINET}>
-      {albums.slice(0, COLS * ROWS * PER_CUBBY).map((a, i) => {
-        const cub = Math.floor(i / PER_CUBBY), col = cub % COLS, row = ROWS - 1 - Math.floor(cub / COLS);
-        return <Spine key={a.id} a={a} position={[left + BOARD + col * (CUBBY + BOARD) + 0.01 + (i % PER_CUBBY) * SPINE_GAP, BOARD + row * (CUBBY + BOARD) + 0.156, 0.03]} />;
-      })}
+      {shown.map((a, i) => <Spine key={a.id} a={a} position={slot(i)} />)}
+      <Clickable onTap={openRecords} hint="Your records"><FillerSpines from={shown.length} /></Clickable>
     </group>
   );
 }

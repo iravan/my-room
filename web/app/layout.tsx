@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Caveat, Geist, Geist_Mono, LXGW_WenKai_TC, Nanum_Pen_Script, Noto_Sans_JP, Noto_Sans_KR, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
 
@@ -24,6 +24,10 @@ const notoKR = Noto_Sans_KR({ weight: ["400", "700"], preload: false, display: "
 const caveat = Caveat({ weight: ["400", "600"], subsets: ["latin"], preload: false, display: "swap", variable: "--font-hand" });
 const handZh = LXGW_WenKai_TC({ weight: "400", preload: false, display: "swap", variable: "--font-hand-zh" });
 const handKo = Nanum_Pen_Script({ weight: "400", preload: false, display: "swap", variable: "--font-hand-ko" });
+
+// A game, not a page: the page never zooms (pinch, double-tap, or iOS zooming into a focused text field);
+// pinching a record is handled by the 3D view itself.
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false };
 
 export const metadata: Metadata = {
   title: "My Room",

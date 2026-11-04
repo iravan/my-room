@@ -17,7 +17,7 @@ import { NotesDialogs } from "./Notes";
 
 const VIEWS: [View, string, string][] = [["room", "Room", "1"], ["turntable", "Turntable", "2"], ["crate", "Crate", "3"], ["shelf", "Cabinet", "4"]];
 const HELP: Record<View, string> = {
-  room: "Drag to look; WASD or the stick (bottom left) to move. Click or tap the turntable, cabinet, crate, lamp, bed, window, framed records, notebook, whiteboard, bookshelf or the memos on the monitor.",
+  room: "Drag to look; WASD or the stick (bottom left) to move. Click or tap the turntable, record cabinet (your record list), crate, lamp, bed, window, framed records, notebook, whiteboard, bookshelf or the memos on the monitor.",
   shelf: "Hover a spine to read it, click to pull it out.",
   crate: "A/D, arrows or scroll to flip. Enter = inspect, Space = put on turntable.",
   turntable: "Space or click the turntable to start/stop.",
@@ -142,7 +142,7 @@ function Dialogs() {
   );
 }
 
-// Keys that work everywhere outside dialogs: title dismiss, L, H, P, ?.
+// Keys that work everywhere outside dialogs: title dismiss, L, H, P, ?. Also keeps the page from pinch-zooming on iOS.
 function useHudKeys() {
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -159,9 +159,12 @@ function useHudKeys() {
     // doesn't also switch a view or toggle the lamp.
     const enter = () => setTimeout(() => useGame.setState({ title: false }), 0);
     const tap = () => { if (useGame.getState().title) enter(); };
+    // iOS Safari ignores the viewport's no-zoom for pinches; its gesture events are the only way to stop them.
+    const noPinch = (e: Event) => e.preventDefault();
     window.addEventListener("keydown", key);
     window.addEventListener("pointerup", tap);
-    return () => { window.removeEventListener("keydown", key); window.removeEventListener("pointerup", tap); };
+    document.addEventListener("gesturestart", noPinch);
+    return () => { window.removeEventListener("keydown", key); window.removeEventListener("pointerup", tap); document.removeEventListener("gesturestart", noPinch); };
   }, []);
 }
 

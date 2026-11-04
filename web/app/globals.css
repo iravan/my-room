@@ -126,5 +126,6 @@
   }
   html {
     @apply font-sans;
+    touch-action: manipulation; /* no double-tap zoom on phones */
   }
 }

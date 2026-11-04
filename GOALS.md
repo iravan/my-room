@@ -13,3 +13,5 @@
 - [x] Click a memo on the monitor → memo grid (auto-aligned); faded memo with + adds one, ✕ removes; always at least one, max 20; the first 6 show on the monitor bezel
 - [x] Phones: left menu hidden by default; ☰ button in the top-right toggles it (drops down below the button)
 - [x] Removed the "Now spinning" info box; the touch move stick sits bottom-left
+- [x] Phones: the page never zooms (pinch, double-tap, or iOS zooming into text fields); record pinch-zoom still works
+- [x] Record cabinet: clicking it opens your records as a spreadsheet (title, artist, year, genre, label, remark; add / delete, ✎ full editor); cubbies packed with spines
