@@ -15,3 +15,4 @@
 - [x] Removed the "Now spinning" info box; the touch move stick sits bottom-left
 - [x] Phones: the page never zooms (pinch, double-tap, or iOS zooming into text fields); record pinch-zoom still works
 - [x] Record cabinet: clicking it opens your records as a spreadsheet (title, artist, year, genre, label, remark; add / delete, ✎ full editor); cubbies packed with spines
+- [x] App icon: neon vinyl record (tab icon SVG, iPhone home-screen icon, favicon.ico)
