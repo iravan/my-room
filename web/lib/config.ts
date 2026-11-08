@@ -21,7 +21,7 @@ export type StyleConfig = {
 export type RoomStylesConfig = { default: string; styles: Record<string, StyleConfig> };
 export const ROOM_STYLES = raw as RoomStylesConfig;
 
-// Everything the config refers to must exist and every value must make sense: a typo fails `npm test`, not the room.
+// Everything the config refers to must exist and every value must make sense: a typo fails `bun run test`, not the room.
 export function validateConfig(c: RoomStylesConfig, styleIds: string[]): string[] {
   const errors: string[] = [];
   if (!c.styles[c.default]) errors.push(`default style "${c.default}" isn't defined`);
