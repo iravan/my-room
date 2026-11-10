@@ -4,6 +4,8 @@ A cozy neon bedroom in the browser for showing off your vinyl collection.
 
 Walk around the room, flip through crates, inspect sleeves, drop a record on the turntable, and share the space with friends. The room itself is customizable too — lighting moods, wall styles, size, and uploaded 3D models.
 
+**Demo:** [my-room-beta.vercel.app](https://my-room-beta.vercel.app)
+
 ## Features
 
 - **3D bedroom** — bed, desk setup, turntable, crate, cabinet, clutter, city outside the window
